@@ -163,7 +163,7 @@ function SummaryCard({ total, count, split }) {
     ? SPLIT.map((s) => ({ ...s, ...split.find((o) => o.key === s.key) })).filter((p) => p.count > 0)
     : [];
   return (
-    <Card style={styles.summary}>
+    <View style={styles.summary}>
       <Text style={styles.summaryLabel}>Total amount</Text>
       <Text style={styles.summaryTotal}>{wholeDollars(total)}</Text>
       <Muted small>
@@ -188,7 +188,7 @@ function SummaryCard({ total, count, split }) {
           </View>
         </>
       )}
-    </Card>
+    </View>
   );
 }
 
@@ -257,7 +257,8 @@ const styles = StyleSheet.create({
   page: { paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   title: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
-  summary: { gap: 2 },
+  // The same spacing as a panel (space.card on every side) but no grey box behind it.
+  summary: { gap: 2, padding: space.card },
   summaryLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
   summaryTotal: { fontSize: 30, fontWeight: "700", letterSpacing: -0.9, color: colors.text, fontVariant: ["tabular-nums"] },
   splitBar: { flexDirection: "row", height: 8, gap: 3, borderRadius: radius.pill, overflow: "hidden", marginTop: 14 },
