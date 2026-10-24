@@ -13,12 +13,13 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `src/app/(tabs)/_layout.js` | Overview / Inbox / Invoices tabs with `BubbleNav` as the tab bar; the round button opens the next invoice awaiting approval. |
 | `src/app/(tabs)/index.js` | Overview, same design as the web dashboard: **Needs your approval** queue → **Invoice volume** hero (total in whole dollars, % paid, paid / withheld) over the 14-day teal volume chart → Received / Completed / Blocked cards with sparklines → **Risk mix** bars → **Received per day** calendar (UTC days) → recent policy violations. |
 | `src/app/(tabs)/inbox.js` | Inbox tab: `InboxCard` (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) and recent messages. |
-| `src/app/(tabs)/invoices.js` | Invoices tab: every invoice with status, risk, masked flag and amount, filtered by All / Pending / Accepted / Rejected (pill bar with counts; Pending = not yet decided, Accepted = approved or completed, Rejected = rejected; failed invoices show under All only). Each row opens the invoice screen. |
+| `src/app/(tabs)/invoices.js` | Invoices tab: every invoice with status, risk, masked flag and amount. A three-line button in the top-right of the header opens a menu to filter by All / Pending / Accepted / Rejected, with counts (Pending = not yet decided, Accepted = approved or completed, Rejected = rejected; failed invoices show under All only); a teal dot on the button means a filter is on. Each row opens the invoice screen. |
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
 | `src/data.js` | `DashboardProvider` / `useDashboard`: summary, invoices and inbox status fetched once for all tabs, polled every 15 s, pull to refresh. |
 | `src/components/ui.js`, `Charts.js` | Sentence-case badges, grey panels, count pills, pill buttons with press feedback, alerts, the TrustPay logo (shield + wordmark, drawn in SVG); SVG volume chart and sparklines, View-based risk bars and the day calendar. |
 | `src/components/BubbleNav.js`, `InboxCard.js` | Floating bottom nav: a white pill of tabs with a grey bubble that springs to the active tab, plus a black round action button with the waiting count. The Gmail inbox card. |
+| `src/components/FilterMenu.js` | The header filter button (three lines, teal dot when filtered) and its menu, which scales in from the top-right corner. |
 | `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (the logo's teal `accent` and navy `brandNavy`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
 ## Running on an iPhone with Expo Go

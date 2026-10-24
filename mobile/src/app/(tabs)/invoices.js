@@ -1,13 +1,16 @@
 // Invoices tab: every invoice, newest first, filterable by outcome; each row opens the invoice screen.
 import { router } from "expo-router";
-import { useState } from "react";
+import { Tabs } from "expo-router/js-tabs";
+import { useHeaderHeight } from "expo-router/react-navigation";
+import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { fmtMoney, fmtTime } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
+import { FilterButton, FilterMenu } from "../../components/FilterMenu.js";
 import { Alert, Badge, Card, CountPill, Muted, RiskBadge, StatusBadge, sentence } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
-import { colors, radius, space } from "../../theme.js";
+import { colors, space } from "../../theme.js";
 
 // Outcome filters over InvoiceStatus. FAILED belongs to none of the three, so it shows under All only.
 const FILTERS = [
@@ -34,6 +37,15 @@ export default function Invoices() {
   const [filterKey, setFilterKey] = useState("all");
   const filter = FILTERS.find((f) => f.key === filterKey);
   const shown = invoices.filter((inv) => matches(filter, inv));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const headerHeight = useHeaderHeight();
+  const options = FILTERS.map((f) => ({ ...f, count: invoices.filter((inv) => matches(f, inv)).length }));
+
+  // Memoized: a new options object on every render would make the navigator re-set the header.
+  const screenOptions = useMemo(
+    () => ({ headerRight: () => <FilterButton filtered={filterKey !== "all"} onPress={() => setMenuOpen(true)} /> }),
+    [filterKey],
+  );
 
   return (
     <ScrollView
@@ -41,6 +53,18 @@ export default function Invoices() {
       contentContainerStyle={styles.page}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.accent} />}
     >
+      <Tabs.Screen options={screenOptions} />
+      <FilterMenu
+        visible={menuOpen}
+        top={headerHeight + 4}
+        options={options}
+        active={filterKey}
+        onSelect={(key) => {
+          setFilterKey(key);
+          setMenuOpen(false);
+        }}
+        onClose={() => setMenuOpen(false)}
+      />
       {error && <Alert kind="danger">{error}</Alert>}
 
       <View style={styles.head}>
@@ -48,25 +72,6 @@ export default function Invoices() {
         {shown.length > 0 && <CountPill n={shown.length} quiet />}
       </View>
 
-      <View style={styles.filters} accessibilityRole="tablist">
-        {FILTERS.map((f) => {
-          const on = f.key === filterKey;
-          const n = invoices.filter((inv) => matches(f, inv)).length;
-          return (
-            <Pressable
-              key={f.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: on }}
-              accessibilityLabel={`${f.label}, ${n}`}
-              onPress={() => setFilterKey(f.key)}
-              style={({ pressed }) => [styles.filter, on && styles.filterOn, pressed && styles.pressed]}
-            >
-              <Text style={[styles.filterText, on && styles.filterTextOn]}>{f.label}</Text>
-              <Text style={[styles.filterCount, on && styles.filterTextOn]}>{n}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
 
       {invoices.length === 0 ? (
         <Card>
@@ -113,29 +118,6 @@ const styles = StyleSheet.create({
   page: { paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   title: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
-  // Same pill-track language as the bottom nav: grey track, the selected option a raised white pill.
-  filters: { flexDirection: "row", padding: 4, gap: 2, marginBottom: 14, borderRadius: radius.pill, backgroundColor: colors.panel },
-  filter: {
-    flex: 1,
-    height: 36,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    borderRadius: radius.pill,
-  },
-  filterOn: {
-    backgroundColor: colors.surface,
-    shadowColor: "#14161e",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  filterText: { fontSize: 13, fontWeight: "600", color: colors.muted },
-  filterCount: { fontSize: 12, fontWeight: "600", color: colors.muted, fontVariant: ["tabular-nums"] },
-  filterTextOn: { color: colors.text },
-  pressed: { transform: [{ scale: 0.97 }] },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 14, paddingHorizontal: space.card, gap: 10 },
