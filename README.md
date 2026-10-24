@@ -60,7 +60,7 @@ TrustPay/
 │   ├── utils/              ← logging config, timestamps, validation helpers
 │   └── inbox/              ← Gmail intake: read-only client, OAuth authorize, PDF parser, sync, poller
 │
-├── scripts/                ← make_invoice_pdfs.py renders the fixtures as PDFs for the email demo
+├── scripts/                ← make_invoice_pdfs.py renders fixture PDFs; seed_history.py adds past demo invoices for the 14-day chart
 │
 ├── frontend/               ← React dashboard
 │   └── src/
