@@ -2,11 +2,15 @@
 
 Usage: `setup_logging()` once at startup, then `logging.getLogger(__name__)` anywhere.
 Pass `extra={"invoice_id": ..., "correlation_id": ...}` to tag a line.
+Lines also go to a dev log file; `log_dev_error` puts a traceback there and returns a ref
+the user-facing message can quote instead of the raw exception.
 """
 
 import json
 import logging
 import sys
+import uuid
+from pathlib import Path
 
 from backend.services.masking_service import mask_text
 from backend.utils.timestamps import now_utc, to_iso
@@ -42,11 +46,23 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload, default=str)
 
 
-def setup_logging(level: str = "INFO") -> None:
+def setup_logging(level: str = "INFO", dev_log_file: str | None = None) -> None:
     root = logging.getLogger()
     root.handlers.clear()
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter())
-    handler.addFilter(MaskingFilter())
-    root.addHandler(handler)
+    handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
+    if dev_log_file:
+        Path(dev_log_file).parent.mkdir(parents=True, exist_ok=True)
+        # shortcut: no rotation, fine for a demo; switch to RotatingFileHandler if it grows.
+        handlers.append(logging.FileHandler(dev_log_file, encoding="utf-8"))
+    for handler in handlers:
+        handler.setFormatter(JsonFormatter())
+        handler.addFilter(MaskingFilter())
+        root.addHandler(handler)
     root.setLevel(level.upper())
+
+
+def log_dev_error(logger: logging.Logger, what: str, **extra) -> str:
+    """Log the current exception with its traceback; return the ref to show the user."""
+    ref = f"ERR-{uuid.uuid4().hex[:8]}"
+    logger.exception("%s ref=%s", what, ref, extra=extra)
+    return ref

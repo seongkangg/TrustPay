@@ -183,6 +183,28 @@ def test_bad_messages_do_not_stop_the_batch(session, gov, fixture_by_id):
     rows = {r.message_id: r for r in session.query(InboxMessageRow)}
     assert rows["m-corrupt"].status == "failed" and "PDF" in rows["m-corrupt"].error
     assert rows["m-down"].status == "failed" and rows["m-down"].invoice_id is None
+    assert rows["m-down"].error == "Couldn't download this email."
+
+
+def test_processing_crash_shows_clean_message_and_logs_detail(
+    session, gov, fixture_by_id, monkeypatch, caplog
+):
+    """The raw exception (e.g. a SQLAlchemy rollback error) goes to the dev log, not the UI."""
+
+    def boom(self, invoice_id):
+        raise RuntimeError("This Session's transaction has been rolled back")
+
+    monkeypatch.setattr(InvoiceService, "process", boom)
+    pdf = render_invoice_pdf(fixture_by_id("INV-1001")["upload"])
+    result = InboxService(session, gov, FakeGmailClient({"m-x": inbox_msg("m-x", pdf)})).sync()
+    error = session.get(InboxMessageRow, "m-x").error
+    assert error.startswith("Couldn't process this invoice (ERR-")
+    assert "rolled back" not in error and "RuntimeError" not in error
+    assert result.failed == [("m-x", error)]
+    ref = error[error.index("ERR-") : -2]
+    assert any(
+        ref in r.getMessage() and "rolled back" in str(r.exc_info[1]) for r in caplog.records
+    )
 
 
 def test_emailed_suspicious_invoice_is_blocked_and_masked(session, gov, fixture_by_id):
@@ -309,3 +331,14 @@ def test_concurrent_syncs_ingest_an_email_once(tmp_path, ref, fixture_by_id):
     with Session() as s:
         assert s.scalar(select(func.count()).select_from(InvoiceRow)) == 1
         assert s.get(InboxMessageRow, "m-once").status == "processed"
+
+
+def test_unexpected_error_returns_generic_500(client, monkeypatch):
+    def boom(*_a, **_k):
+        raise RuntimeError("secret internals")
+
+    monkeypatch.setattr("backend.api.inbox_routes.recent_messages", boom)
+    r = TestClient(app, raise_server_exceptions=False).get("/inbox/status")
+    body = r.json()
+    assert r.status_code == 500 and body["error"] == "INTERNAL_ERROR"
+    assert "ERR-" in body["message"] and "secret" not in body["message"]

@@ -17,6 +17,7 @@ from backend.inbox import InboxError
 from backend.inbox.gmail_client import GmailClient
 from backend.inbox.inbox_service import InboxService
 from backend.llm.granite_client import get_llm_client
+from backend.utils.logging_config import log_dev_error
 from backend.utils.timestamps import now_utc
 
 log = logging.getLogger(__name__)
@@ -59,12 +60,12 @@ async def _loop(state: InboxState, payment_service, poll_seconds: int) -> None:
             state.record(result, None)
             if result["created"] or result["failed"]:
                 log.info("inbox poll: %s", result)
-        except InboxError as exc:
-            state.record(None, str(exc))
-            log.warning("inbox poll: %s", exc)
-        except Exception as exc:  # noqa: BLE001 — the poller must survive anything
-            state.record(None, f"{type(exc).__name__}: {exc}")
-            log.exception("inbox poll crashed")
+        except InboxError:
+            log_dev_error(log, "inbox poll: Gmail unreachable")
+            state.record(None, "Couldn't reach the inbox. Check Gmail authorization.")
+        except Exception:  # noqa: BLE001 — the poller must survive anything
+            ref = log_dev_error(log, "inbox poll crashed")
+            state.record(None, f"Inbox check failed ({ref}).")
         await asyncio.sleep(poll_seconds)
 
 
