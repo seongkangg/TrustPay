@@ -1,23 +1,30 @@
-// Overview: approval queue → tiles → charts → inbox → invoices. Read-only except the inbox
-// sync button; approve / reject happens on the invoice screen.
-import { Link } from "expo-router";
+// Overview: approval queue → invoice volume → counts → risk mix and days → inbox → invoices.
+// Read-only except the inbox sync button; approve / reject happens on the invoice screen.
+import { Link, router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
 import { AWAITING_HUMAN, BASE, api, fmtMoney, fmtTime } from "../api/client.js";
-import { BarChart, TrendChart, riskRows, statusRows } from "../components/Charts.js";
-import { Alert, Badge, Card, Code, H2, Muted, RiskBadge, StatusBadge, Tile } from "../components/ui.js";
-import { colors } from "../theme.js";
+import { DayCalendar, RiskBars, Sparkline, VolumeChart, dayLabel } from "../components/Charts.js";
+import {
+  Alert,
+  Badge,
+  Card,
+  Code,
+  CountPill,
+  H2,
+  Muted,
+  PillButton,
+  RiskBadge,
+  StatusBadge,
+  sentence,
+} from "../components/ui.js";
+import { colors, radius } from "../theme.js";
 
 const REFRESH_MS = 15_000;
+const GUTTER = 16;
+
+const wholeDollars = (amount) => `$${Math.round(amount).toLocaleString("en-US")}`;
 
 export default function Overview() {
   const { width } = useWindowDimensions();
@@ -62,58 +69,117 @@ export default function Overview() {
     (summary?.recent_violations || []).map((v) => [v.invoice_id, v.reason_codes]),
   );
   const amounts = summary?.amounts;
-  const chartWidth = width - 16 * 2 - 14 * 2; // page gutter + card padding
+  const days = summary?.by_day || [];
+  const latest = days[days.length - 1];
+  const paidShare = amounts?.total ? Math.round((amounts.paid / amounts.total) * 100) : null;
+  // by_day is bucketed by UTC calendar day on the backend; say so wherever a day is named.
+  const range = days.length ? `${dayLabel(days[0].date)} – ${dayLabel(latest.date)} (UTC)` : "";
+  const contentWidth = width - GUTTER * 2;
+  const kpiWidth = (contentWidth - 8 * 2) / 3;
 
   return (
     <ScrollView
+      style={{ backgroundColor: colors.bg }}
       contentContainerStyle={styles.page}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.accent} />}
     >
       {error && <Alert kind="danger">{error}</Alert>}
 
-      <H2>
-        Needs your approval{awaiting.length > 0 ? ` · ${awaiting.length}` : ""}
-      </H2>
+      <View style={styles.sectionHead}>
+        <Text style={styles.h2Inline}>Needs your approval</Text>
+        <CountPill n={awaiting.length} />
+      </View>
       {awaiting.length === 0 ? (
-        <Muted>Nothing is waiting for a decision.</Muted>
+        <Muted small>Nothing waiting. New invoices are checked automatically.</Muted>
       ) : (
-        awaiting.map((inv) => <QueueItem key={inv.invoice_id} inv={inv} codes={reasonCodes[inv.invoice_id]} />)
+        <View style={{ gap: 8 }}>
+          {awaiting.map((inv) => (
+            <QueueItem key={inv.invoice_id} inv={inv} codes={reasonCodes[inv.invoice_id]} />
+          ))}
+        </View>
       )}
 
-      <H2>At a glance</H2>
-      <View style={styles.tiles}>
-        <Tile label="Total invoices" value={summary?.total_invoices} />
-        <Tile label="Low risk" value={summary?.by_risk.low} color={colors.riskLow} />
-        <Tile label="Medium risk" value={summary?.by_risk.medium} color={colors.riskMedium} />
-        <Tile label="High risk" value={summary?.by_risk.high} color={colors.riskHigh} />
-        <Tile
-          label="Blocked actions"
-          value={summary?.blocked_actions}
-          color={colors.blocked}
-          highlight={{ border: colors.blocked, bg: colors.blockedBg }}
-        />
-        <Tile
-          label="Pending approvals"
-          value={summary?.pending_approvals}
-          color={colors.pending}
-          highlight={{ border: colors.pending, bg: colors.surface }}
-        />
-        <Tile label="Sensitive-data detections" value={summary?.sensitive_data_detections} />
-      </View>
-      <View style={[styles.tiles, { marginTop: 10 }]}>
-        <Tile label="Total amount" value={amounts && fmtMoney(amounts.total)} />
-        <Tile label="Paid" value={amounts && fmtMoney(amounts.paid)} color={colors.ok} />
-        <Tile label="Withheld (pending + blocked)" value={amounts && fmtMoney(amounts.withheld)} color={colors.blocked} />
+      <View style={styles.hero}>
+        <Text style={styles.heroLabel}>Invoice volume</Text>
+        <View style={styles.figureRow}>
+          <Text style={styles.figure} numberOfLines={1} adjustsFontSizeToFit>
+            {amounts ? wholeDollars(amounts.total) : "—"}
+          </Text>
+          {paidShare !== null && <Badge label={`${paidShare}% paid`} fg={colors.ok} bg={colors.okBg} />}
+        </View>
+        {amounts && (
+          <View style={styles.split}>
+            <Text style={styles.splitText}>
+              <Text style={{ color: colors.ok }}>● </Text>Paid{" "}
+              <Text style={styles.splitValue}>{fmtMoney(amounts.paid)}</Text>
+            </Text>
+            <Text style={styles.splitText}>
+              <Text style={{ color: colors.blocked }}>● </Text>Withheld{" "}
+              <Text style={styles.splitValue}>{fmtMoney(amounts.withheld)}</Text>
+            </Text>
+          </View>
+        )}
+        <View style={styles.legendRow}>
+          <View style={styles.rangePill}>
+            <Text style={styles.rangeText}>Last 14 days</Text>
+          </View>
+          <View style={styles.legend}>
+            <Key color={colors.accent} label="Received" />
+            <Key color={colors.accentSoft} label="Completed" />
+          </View>
+        </View>
+        {summary ? (
+          <VolumeChart days={days} width={contentWidth} />
+        ) : (
+          <View style={[styles.skeleton, { height: 180 }]} />
+        )}
       </View>
 
-      {summary && (
-        <>
-          <H2>Graphs</H2>
-          <BarChart title="Invoices by risk level" rows={riskRows(summary.by_risk)} />
-          <BarChart title="Invoices by status" rows={statusRows(summary.by_status)} />
-          <TrendChart title="Last 14 days" days={summary.by_day || []} width={chartWidth} />
-        </>
-      )}
+      <View style={styles.kpis}>
+        <Kpi
+          label="Received"
+          value={summary?.total_invoices}
+          values={days.map((d) => d.received)}
+          width={kpiWidth}
+          note={latest?.received > 0 ? `↑ ${latest.received} on ${dayLabel(latest.date)}` : null}
+        />
+        <Kpi
+          label="Completed"
+          value={summary ? (summary.by_status.COMPLETED ?? 0) : null}
+          values={days.map((d) => d.completed)}
+          width={kpiWidth}
+        />
+        <Kpi
+          label="Blocked"
+          value={summary ? (summary.by_status.BLOCKED ?? 0) : null}
+          values={days.map((d) => d.blocked)}
+          width={kpiWidth}
+          color={summary?.by_status.BLOCKED ? colors.blocked : colors.accent}
+        />
+      </View>
+
+      <Card style={{ marginTop: 8 }}>
+        <View style={styles.panelHead}>
+          <Text style={styles.panelTitle}>Risk mix</Text>
+          <Muted small>All invoices</Muted>
+        </View>
+        <RiskBars invoices={invoices} />
+        {summary && (
+          <Muted small style={{ marginTop: 12 }}>
+            {summary.blocked_actions} blocked tool call{summary.blocked_actions === 1 ? "" : "s"} ·{" "}
+            {summary.sensitive_data_detections} invoice{summary.sensitive_data_detections === 1 ? "" : "s"} with masked
+            bank or tax data
+          </Muted>
+        )}
+      </Card>
+
+      <Card style={{ marginTop: 8 }}>
+        <View style={styles.panelHead}>
+          <Text style={styles.panelTitle}>Received per day</Text>
+          <Muted small>{range}</Muted>
+        </View>
+        <DayCalendar days={days} />
+      </Card>
 
       <H2>Inbox</H2>
       <InboxCard status={inbox.status} unavailable={inbox.unavailable} onSynced={load} />
@@ -121,9 +187,9 @@ export default function Overview() {
       {summary?.recent_violations?.length > 0 && (
         <>
           <H2>Recent policy violations</H2>
-          <Card>
+          <Card style={{ paddingVertical: 4 }}>
             {summary.recent_violations.map((v, i) => (
-              <View key={i} style={styles.violation}>
+              <View key={i} style={[styles.violation, i > 0 && styles.rule]}>
                 <Link href={`/invoices/${v.invoice_id}`} style={styles.link}>
                   {v.invoice_id}
                 </Link>
@@ -139,31 +205,39 @@ export default function Overview() {
         </>
       )}
 
-      <H2>Invoices</H2>
+      <View style={[styles.sectionHead, { marginTop: 28 }]}>
+        <Text style={styles.h2Inline}>Invoices</Text>
+        {invoices.length > 0 && <CountPill n={invoices.length} quiet />}
+      </View>
       {invoices.length === 0 ? (
-        <Muted>No invoices yet. They appear here as the inbox delivers them.</Muted>
+        <Card>
+          <Muted>No invoices yet. They appear here as the inbox delivers them.</Muted>
+        </Card>
       ) : (
-        <Card style={{ padding: 0 }}>
+        <Card style={{ paddingVertical: 0, paddingHorizontal: 0 }}>
           {invoices.map((inv, i) => (
-            <Link key={inv.invoice_id} href={`/invoices/${inv.invoice_id}`} asChild>
-              <Pressable style={StyleSheet.flatten([styles.row, i > 0 && styles.rowBorder])}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>
+            <Pressable
+              key={inv.invoice_id}
+              accessibilityRole="link"
+              onPress={() => router.push(`/invoices/${inv.invoice_id}`)}
+              style={({ pressed }) => [styles.row, i > 0 && styles.rule, pressed && { backgroundColor: colors.panel2 }]}
+            >
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>
                     {inv.vendor_name || "—"} <Text style={styles.rowId}>{inv.invoice_id}</Text>
                   </Text>
                   <View style={styles.badges}>
                     <StatusBadge status={inv.status} />
                     <RiskBadge level={inv.risk_level} />
-                    {inv.sensitive_data_detected && <Badge label="masked" fg={colors.riskMedium} bg={colors.riskMediumBg} />}
+                    {inv.sensitive_data_detected && <Badge label="Masked" />}
                   </View>
                   <Muted small>
-                    {inv.recommendation ? `${inv.recommendation} · ` : ""}
+                    {inv.recommendation ? `${sentence(inv.recommendation)} · ` : ""}
                     {fmtTime(inv.updated_at)}
                   </Muted>
                 </View>
                 <Text style={styles.rowAmount}>{fmtMoney(inv.amount, inv.currency)}</Text>
-              </Pressable>
-            </Link>
+            </Pressable>
           ))}
         </Card>
       )}
@@ -171,16 +245,50 @@ export default function Overview() {
   );
 }
 
+function Key({ color, label }) {
+  return (
+    <View style={styles.key}>
+      <View style={[styles.keyDot, { backgroundColor: color }]} />
+      <Text style={styles.keyText}>{label}</Text>
+    </View>
+  );
+}
+
+function Kpi({ label, value, values, width, note, color }) {
+  return (
+    <View style={[styles.kpi, { width }]}>
+      <Text style={styles.kpiLabel} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={styles.kpiValue}>{value ?? "—"}</Text>
+      {note ? (
+        <Text style={styles.kpiNote} numberOfLines={1}>
+          {note}
+        </Text>
+      ) : (
+        <Text style={styles.kpiNote}> </Text>
+      )}
+      <Sparkline values={values} width={width - 24} color={color} />
+    </View>
+  );
+}
+
 function QueueItem({ inv, codes = [] }) {
   const blocked = inv.status === "BLOCKED";
   return (
-    <Link href={`/invoices/${inv.invoice_id}`} asChild>
-      <Pressable
-        // Link asChild rejects array styles, so flatten them into one object.
-        style={StyleSheet.flatten([styles.queueItem, { borderColor: blocked ? colors.blocked : colors.pending }])}
-      >
+    <Pressable
+      accessibilityRole="link"
+      onPress={() => router.push(`/invoices/${inv.invoice_id}`)}
+      style={({ pressed }) => [
+        styles.queueItem,
+        { backgroundColor: blocked ? colors.blockedBg : colors.accentBg },
+        pressed && { transform: [{ scale: 0.98 }] },
+      ]}
+    >
         <View style={styles.queueHead}>
-          <Text style={styles.queueVendor}>{inv.vendor_name || "Unknown vendor"}</Text>
+          <Text style={styles.queueVendor} numberOfLines={1}>
+            {inv.vendor_name || "Unknown vendor"}
+          </Text>
           <Text style={styles.queueAmount}>{fmtMoney(inv.amount, inv.currency)}</Text>
         </View>
         <View style={styles.badges}>
@@ -198,10 +306,11 @@ function QueueItem({ inv, codes = [] }) {
           <Muted small>
             {inv.invoice_id} · {fmtTime(inv.updated_at)}
           </Muted>
-          <Text style={styles.link}>Review &amp; decide →</Text>
+          <View style={styles.reviewPill}>
+            <Text style={styles.reviewText}>Review ›</Text>
+          </View>
         </View>
-      </Pressable>
-    </Link>
+    </Pressable>
   );
 }
 
@@ -240,36 +349,39 @@ function InboxCard({ status, unavailable, onSynced }) {
 
   const last = result || status.last_result;
   const authorized = status.enabled && status.authorized;
-  const label = !status.enabled ? "disabled" : status.authorized ? "authorized" : "not authorized";
+  const label = !status.enabled ? "Disabled" : status.authorized ? "Authorized" : "Not authorized";
+  // Red only for the error state; a switched-off inbox is neutral.
+  const tone = authorized
+    ? { fg: colors.ok, bg: colors.okBg }
+    : status.enabled
+      ? { fg: "#fff", bg: colors.blocked }
+      : {};
 
   return (
     <Card>
       <View style={styles.inboxHead}>
-        <Badge
-          label={label}
-          fg={authorized ? colors.ok : colors.blocked}
-          bg={authorized ? colors.okBg : colors.blockedBg}
-          outline={!authorized}
-        />
+        <Badge label={label} {...tone} />
         <Muted small style={{ flex: 1 }}>
           Last sync: {fmtTime(status.last_sync_at)}
           {status.poll_seconds ? ` · polls every ${status.poll_seconds}s` : ""}
         </Muted>
       </View>
-      <Pressable style={[styles.button, busy && styles.buttonDisabled]} disabled={busy} onPress={sync}>
-        <Text style={styles.buttonText}>{busy ? "Checking…" : "Check inbox now"}</Text>
-      </Pressable>
+      <PillButton
+        label={busy ? "Checking…" : "Check inbox now"}
+        disabled={busy || !status.enabled}
+        onPress={sync}
+      />
       {error && <Alert kind="danger">{error}</Alert>}
       {!error && status.last_error && <Alert kind="warn">{status.last_error}</Alert>}
       {last && (
-        <Muted small style={{ marginTop: 8 }}>
+        <Muted small style={{ marginTop: 10 }}>
           {result ? "Just now: " : "Last result: "}
           {last.checked} checked · {last.created?.length ?? 0} created · {last.skipped} skipped ·{" "}
           {last.failed?.length ?? 0} failed
         </Muted>
       )}
       {status.recent?.map((m) => (
-        <View key={m.message_id} style={styles.mail}>
+        <View key={m.message_id} style={[styles.mail, styles.rule]}>
           <Text style={styles.rowTitle} numberOfLines={1}>
             {m.subject || "—"}
           </Text>
@@ -282,9 +394,7 @@ function InboxCard({ status, unavailable, onSynced }) {
               {m.invoice_id}
             </Link>
           ) : (
-            <Muted small style={{ color: colors.blocked }}>
-              {m.error || m.status}
-            </Muted>
+            <Muted small>{m.error || sentence(m.status)}</Muted>
           )}
         </View>
       ))}
@@ -293,32 +403,54 @@ function InboxCard({ status, unavailable, onSynced }) {
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 16, paddingBottom: 48 },
-  tiles: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  badges: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginVertical: 4 },
-  codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 2 },
-  link: { color: colors.accent, fontSize: 13, fontWeight: "600" },
-  queueItem: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderLeftWidth: 4,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
+  page: { paddingHorizontal: GUTTER, paddingTop: 12, paddingBottom: 48 },
+  sectionHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  h2Inline: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
+  hero: { marginTop: 28 },
+  heroLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
+  figureRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 },
+  figure: {
+    flexShrink: 1,
+    fontSize: 38,
+    fontWeight: "700",
+    letterSpacing: -1.3,
+    color: colors.text,
+    fontVariant: ["tabular-nums"],
   },
+  split: { flexDirection: "row", flexWrap: "wrap", columnGap: 18, marginTop: 4 },
+  splitText: { fontSize: 13, color: colors.muted },
+  splitValue: { color: colors.text, fontWeight: "600", fontVariant: ["tabular-nums"] },
+  legendRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 14 },
+  rangePill: { height: 30, paddingHorizontal: 12, borderRadius: radius.pill, backgroundColor: colors.panel, justifyContent: "center" },
+  rangeText: { fontSize: 13, fontWeight: "600", color: colors.text },
+  legend: { flexDirection: "row", gap: 12 },
+  key: { flexDirection: "row", alignItems: "center", gap: 5 },
+  keyDot: { width: 8, height: 8, borderRadius: 4 },
+  keyText: { fontSize: 12, color: colors.muted },
+  skeleton: { backgroundColor: colors.panel, borderRadius: radius.panel, marginTop: 8 },
+  kpis: { flexDirection: "row", gap: 8, marginTop: 16 },
+  kpi: { backgroundColor: colors.panel, borderRadius: radius.panel, paddingHorizontal: 12, paddingVertical: 12 },
+  kpiLabel: { fontSize: 12, fontWeight: "500", color: colors.muted },
+  kpiValue: { fontSize: 26, fontWeight: "700", letterSpacing: -0.8, color: colors.text, fontVariant: ["tabular-nums"] },
+  kpiNote: { fontSize: 11, fontWeight: "600", color: colors.ok, marginBottom: 4 },
+  panelHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 14 },
+  panelTitle: { fontSize: 14, fontWeight: "700", color: colors.text },
+  badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 2 },
+  link: { color: colors.accentInk, fontSize: 13, fontWeight: "600" },
+  rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
+  queueItem: { borderRadius: radius.row, padding: 14, gap: 6 },
   queueHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 },
-  queueVendor: { fontWeight: "600", fontSize: 15, color: colors.text, flex: 1 },
-  queueAmount: { fontWeight: "700", fontSize: 15, color: colors.text, fontVariant: ["tabular-nums"] },
-  queueFoot: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
-  violation: { paddingVertical: 6, gap: 2 },
-  row: { flexDirection: "row", alignItems: "center", padding: 12, gap: 10 },
-  rowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+  queueVendor: { fontWeight: "700", fontSize: 15, color: colors.text, flex: 1 },
+  queueAmount: { fontWeight: "700", fontSize: 16, color: colors.text, fontVariant: ["tabular-nums"] },
+  queueFoot: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
+  reviewPill: { height: 32, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.text, justifyContent: "center" },
+  reviewText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  violation: { paddingVertical: 10, gap: 4 },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, gap: 10 },
   rowTitle: { fontSize: 14, fontWeight: "600", color: colors.text },
   rowId: { fontWeight: "400", color: colors.muted, fontSize: 12 },
   rowAmount: { fontWeight: "700", fontSize: 14, color: colors.text, fontVariant: ["tabular-nums"] },
-  inboxHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-  button: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 10, alignItems: "center" },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
-  mail: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8, marginTop: 8, gap: 2 },
+  inboxHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  mail: { paddingTop: 10, marginTop: 10, gap: 2 },
 });

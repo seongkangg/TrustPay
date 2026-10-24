@@ -1,113 +1,186 @@
-// Charts for the overview. Bars are plain Views; the 14-day trend is a small SVG line chart.
-// Series colors are the same tokens the badges use (theme.js).
+// Overview charts, drawn with react-native-svg and plain Views. Same marks as the web dashboard:
+// a smooth indigo volume line, KPI sparklines, risk bars with high risk in the accent, and the
+// 14 by_day days as a calendar. Series colours are the theme tokens.
 import { StyleSheet, Text, View } from "react-native";
-import Svg, { Line, Path, Text as SvgText } from "react-native-svg";
+import Svg, { Defs, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
 
-import { human } from "../api/client.js";
-import { Card } from "./ui.js";
-import { RISK, STATUS, STATUS_ORDER, colors } from "../theme.js";
+import { fmtMoney } from "../api/client.js";
+import { colors, radius } from "../theme.js";
 
-function Title({ children }) {
-  return <Text style={styles.title}>{children}</Text>;
+// by_day dates are UTC calendar days ("YYYY-MM-DD"); keep them in UTC so the labels never shift.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const utcDate = (iso) => new Date(`${iso}T00:00:00Z`);
+export const dayLabel = (iso) => {
+  const d = utcDate(iso);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+};
+
+// Catmull-Rom through the points, as cubic Béziers, so lines have the reference's soft curves.
+// Control points are clamped to the baseline so a curve never dips below zero.
+function smoothPath(pts, floor) {
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [p0, p1, p2, p3] = [pts[i - 1] || pts[i], pts[i], pts[i + 1], pts[i + 2] || pts[i + 1]];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, Math.min(floor, p1[1] + (p2[1] - p0[1]) / 6)];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, Math.min(floor, p2[1] - (p3[1] - p1[1]) / 6)];
+    d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
+  }
+  return d;
 }
 
-// Horizontal bars: label on the left, bar + count on the right.
-export function BarChart({ title, rows }) {
-  const max = Math.max(1, ...rows.map((r) => r.value));
+// The big chart under the hero figure: received per day, completed as the quiet line.
+export function VolumeChart({ days, width, height = 180 }) {
+  if (days.length < 2 || width <= 0) return <View style={{ height }} />;
+  const padT = 10;
+  const padB = 22;
+  const innerH = height - padT - padB;
+  const floor = padT + innerH;
+  const max = Math.max(2, Math.ceil(Math.max(...days.map((d) => d.received)) * 1.15));
+  const x = (i) => 2 + (i / (days.length - 1)) * (width - 4);
+  const y = (v) => floor - (v / max) * innerH;
+  const received = smoothPath(days.map((d, i) => [x(i), y(d.received)]), floor);
+  const completed = smoothPath(days.map((d, i) => [x(i), y(d.completed)]), floor);
+  const area = `${received} L${x(days.length - 1)},${floor} L${x(0)},${floor} Z`;
+  const ticks = [0, Math.round((days.length - 1) / 2), days.length - 1];
+
   return (
-    <Card style={styles.card}>
-      <Title>{title}</Title>
-      {rows.map((r) => (
-        <View key={r.key} style={styles.barRow}>
-          <Text style={styles.barLabel} numberOfLines={1}>
-            {r.label}
-          </Text>
-          <View style={styles.barTrack}>
-            <View style={[styles.bar, { width: `${(r.value / max) * 100}%`, backgroundColor: r.color }]} />
-          </View>
-          <Text style={styles.barValue}>{r.value}</Text>
-        </View>
+    <Svg width={width} height={height}>
+      <Defs>
+        <LinearGradient id="volumeFade" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.16} />
+          <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
+        </LinearGradient>
+      </Defs>
+      <Path d={area} fill="url(#volumeFade)" />
+      <Path d={completed} stroke={colors.accentSoft} strokeWidth={2} fill="none" strokeLinecap="round" />
+      <Path d={received} stroke={colors.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+      {ticks.map((i, k) => (
+        <SvgText
+          key={days[i].date}
+          x={x(i)}
+          y={height - 4}
+          fontSize={11}
+          fill={colors.muted}
+          textAnchor={k === 0 ? "start" : k === ticks.length - 1 ? "end" : "middle"}
+        >
+          {dayLabel(days[i].date)}
+        </SvgText>
       ))}
-    </Card>
+    </Svg>
   );
 }
 
-export function riskRows(byRisk) {
-  return ["low", "medium", "high"].map((k) => ({ key: k, label: k, value: byRisk?.[k] ?? 0, color: RISK[k].fg }));
-}
-
-export function statusRows(byStatus) {
-  return Object.entries(byStatus || {})
-    .sort(([a], [b]) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b))
-    .map(([k, v]) => ({ key: k, label: human(k).toLowerCase(), value: v, color: STATUS[k]?.fg || colors.muted }));
-}
-
-const SERIES = [
-  { key: "received", color: colors.accent },
-  { key: "completed", color: colors.ok },
-  { key: "blocked", color: colors.blocked },
-];
-
-export function TrendChart({ title, days, width }) {
-  const W = width;
-  const H = 160;
-  const padL = 24;
-  const padB = 18;
-  const padT = 8;
-  const innerW = W - padL - 8;
-  const innerH = H - padB - padT;
-  const max = Math.max(1, ...days.flatMap((d) => SERIES.map((s) => d[s.key] ?? 0)));
-  const n = days.length;
-  const x = (i) => padL + (n > 1 ? (i / (n - 1)) * innerW : innerW / 2);
-  const y = (v) => padT + innerH - (v / max) * innerH;
-  const path = (key) => days.map((d, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(d[key] ?? 0).toFixed(1)}`).join(" ");
-  const ticks = max <= 4 ? Array.from({ length: max + 1 }, (_, i) => i) : [0, Math.round(max / 2), max];
-
+// Smooth sparkline for a KPI card; flat at the baseline when every value is zero.
+export function Sparkline({ values, width, height = 28, color = colors.accent }) {
+  if (values.length < 2 || width <= 0) return <View style={{ height }} />;
+  const pad = 3;
+  const max = Math.max(1, ...values);
+  const floor = height - pad;
+  const pts = values.map((v, i) => [pad + (i / (values.length - 1)) * (width - pad * 2), floor - (v / max) * (height - pad * 2)]);
   return (
-    <Card style={styles.card}>
-      <Title>{title}</Title>
-      <Svg width={W} height={H}>
-        {ticks.map((t) => (
-          <Line key={t} x1={padL} x2={W - 8} y1={y(t)} y2={y(t)} stroke={colors.border} strokeWidth={1} />
-        ))}
-        {ticks.map((t) => (
-          <SvgText key={`l${t}`} x={padL - 6} y={y(t) + 3} fontSize={9} fill={colors.muted} textAnchor="end">
-            {t}
-          </SvgText>
-        ))}
-        {days.map((d, i) =>
-          i % 3 === 0 || i === n - 1 ? (
-            <SvgText key={d.date} x={x(i)} y={H - 4} fontSize={9} fill={colors.muted} textAnchor="middle">
-              {d.date.slice(5)}
-            </SvgText>
-          ) : null,
-        )}
-        {SERIES.map((s) => (
-          <Path key={s.key} d={path(s.key)} stroke={s.color} strokeWidth={2} fill="none" />
-        ))}
-      </Svg>
-      <View style={styles.legend}>
-        {SERIES.map((s) => (
-          <View key={s.key} style={styles.legendItem}>
-            <View style={[styles.swatch, { backgroundColor: s.color }]} />
-            <Text style={styles.legendText}>{s.key}</Text>
+    <Svg width={width} height={height}>
+      <Path d={smoothPath(pts, floor)} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+const RISK_LABEL = { low: "Low risk", medium: "Medium risk", high: "High risk" };
+
+// Risk mix as three soft blocks; the high-risk block is the one in colour because it needs eyes.
+export function RiskBars({ invoices }) {
+  const rows = ["low", "medium", "high"].map((level) => {
+    const items = invoices.filter((inv) => inv.risk_level === level);
+    return { level, count: items.length, amount: items.reduce((sum, inv) => sum + (inv.amount || 0), 0) };
+  });
+  const max = Math.max(1, ...rows.map((r) => r.count));
+  return (
+    <View style={styles.riskbars}>
+      {rows.map((r) => (
+        <View key={r.level} style={styles.riskbar}>
+          <View style={styles.track}>
+            <View
+              style={[
+                styles.fill,
+                { height: `${Math.max(10, (r.count / max) * 100)}%` },
+                r.level === "high" && { backgroundColor: colors.accent },
+              ]}
+            />
           </View>
+          <Text style={styles.riskName}>{RISK_LABEL[r.level]}</Text>
+          <Text style={styles.riskCount}>
+            {r.count} invoice{r.count === 1 ? "" : "s"}
+          </Text>
+          <Text style={styles.riskAmount}>{fmtMoney(r.amount)}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
+
+// The last 14 days as a calendar: invoices received per day, the latest day in the accent.
+export function DayCalendar({ days }) {
+  if (days.length === 0) return null;
+  const lead = utcDate(days[0].date).getUTCDay();
+  const cells = [...Array.from({ length: lead }, () => null), ...days];
+  while (cells.length % 7) cells.push(null);
+  const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+  const last = days[days.length - 1].date;
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={styles.week}>
+        {WEEKDAYS.map((w, i) => (
+          <Text key={i} style={styles.wd}>
+            {w}
+          </Text>
         ))}
       </View>
-    </Card>
+      {weeks.map((week, w) => (
+        <View key={w} style={styles.week}>
+          {week.map((d, i) => {
+            if (!d) return <View key={i} style={[styles.cell, { backgroundColor: "transparent" }]} />;
+            const today = d.date === last;
+            return (
+              <View
+                key={d.date}
+                style={[styles.cell, today && { backgroundColor: colors.accent }]}
+                accessibilityLabel={`${dayLabel(d.date)}: ${d.received} received, ${d.completed} completed, ${d.blocked} blocked`}
+              >
+                <Text style={[styles.cellDate, today && { color: "rgba(255,255,255,0.85)" }]}>
+                  {utcDate(d.date).getUTCDate()}
+                </Text>
+                <Text style={[styles.cellN, d.received === 0 && styles.cellZero, today && { color: "#fff" }]}>
+                  {d.received}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginBottom: 10 },
-  title: { fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 8 },
-  barRow: { flexDirection: "row", alignItems: "center", marginBottom: 6, gap: 8 },
-  barLabel: { width: 110, fontSize: 12, color: colors.text, textTransform: "capitalize" },
-  barTrack: { flex: 1, height: 14, backgroundColor: colors.neutralBg, borderRadius: 4, overflow: "hidden" },
-  bar: { height: "100%", borderRadius: 4 },
-  barValue: { width: 24, textAlign: "right", fontSize: 12, fontWeight: "600", color: colors.text },
-  legend: { flexDirection: "row", gap: 14, marginTop: 4 },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-  swatch: { width: 14, height: 3, borderRadius: 2 },
-  legendText: { fontSize: 11, color: colors.muted },
+  riskbars: { flexDirection: "row", gap: 8 },
+  riskbar: { flex: 1, alignItems: "center" },
+  track: { height: 120, width: "100%", justifyContent: "flex-end" },
+  fill: { width: "100%", backgroundColor: colors.panel2, borderRadius: 14 },
+  riskName: { marginTop: 10, fontSize: 12, color: colors.muted },
+  riskCount: { fontSize: 14, fontWeight: "700", color: colors.text },
+  riskAmount: { fontSize: 12, color: colors.muted, fontVariant: ["tabular-nums"] },
+  week: { flexDirection: "row", gap: 6 },
+  wd: { flex: 1, textAlign: "center", fontSize: 11, fontWeight: "600", color: colors.muted },
+  cell: {
+    flex: 1,
+    height: 48,
+    borderRadius: radius.cell,
+    backgroundColor: colors.panel2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cellDate: { position: "absolute", top: 4, left: 6, fontSize: 11, color: colors.neutralInk },
+  cellN: { fontSize: 16, fontWeight: "700", color: colors.text, fontVariant: ["tabular-nums"], marginTop: 6 },
+  cellZero: { color: "#a3a6b0", fontWeight: "600" },
 });

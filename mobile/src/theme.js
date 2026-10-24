@@ -1,30 +1,43 @@
-// Same palette as frontend/src/styles/dashboard.css so the phone and the web dashboard agree.
+// Same tokens as frontend/src/styles/dashboard.css (recorded in DESIGN.md) so the phone and the web
+// dashboard agree: a white screen, soft grey panels, one indigo on data.
 export const colors = {
-  bg: "#f5f6f8",
+  canvas: "#e9eaee",
+  bg: "#ffffff",
   surface: "#ffffff",
-  text: "#1b1f24",
-  muted: "#5c6670",
-  border: "#e1e4e8",
-  accent: "#0f62fe",
+  panel: "#f5f5f7",
+  panel2: "#ebebef",
+  text: "#15161a",
+  muted: "#6b6f7b",
+  neutralInk: "#565a65",
+  border: "#ececf0",
 
-  riskLow: "#198038",
-  riskLowBg: "#defbe6",
-  riskMedium: "#b28600",
-  riskMediumBg: "#fff4cc",
-  riskHigh: "#da1e28",
-  riskHighBg: "#ffe0e0",
+  accent: "#5b5bf0",
+  accentInk: "#4040d6",
+  accentSoft: "#c9c9fb",
+  accentBg: "#ececfe",
 
-  blocked: "#da1e28",
-  blockedBg: "#ffe0e0",
-  ok: "#198038",
-  okBg: "#defbe6",
-  pending: "#8a3ffc",
-  pendingBg: "#efe4ff",
-  neutralBg: "#eef1f4",
-  infoBg: "#e5f0ff",
-  warnText: "#5a4500",
-  dangerText: "#7a0b12",
+  riskLow: "#18794e",
+  riskLowBg: "#e3f5ea",
+  riskMedium: "#8f6100",
+  riskMediumBg: "#fdf1d6",
+  riskHigh: "#c4202d",
+  riskHighBg: "#fde7e8",
+
+  blocked: "#d92d3a",
+  blockedBg: "#fde7e8",
+  ok: "#18794e",
+  okBg: "#e3f5ea",
+  pending: "#5b5bf0",
+  pendingBg: "#ececfe",
+  neutralBg: "#f0f0f3",
+  infoBg: "#ececfe",
+  infoText: "#2b2b9e",
+  warnText: "#5a3d00",
+  dangerText: "#7a0f19",
+  okText: "#0d4a2f",
 };
+
+export const radius = { panel: 18, row: 16, alert: 14, field: 12, cell: 12, pill: 999 };
 
 export const RISK = {
   low: { fg: colors.riskLow, bg: colors.riskLowBg },
@@ -32,13 +45,14 @@ export const RISK = {
   high: { fg: colors.riskHigh, bg: colors.riskHighBg },
 };
 
+// Blocked / failed / rejected are the only solid-filled badges ("loud block").
 export const STATUS = {
   COMPLETED: { fg: colors.ok, bg: colors.okBg },
   APPROVED: { fg: colors.ok, bg: colors.okBg },
-  PENDING_APPROVAL: { fg: colors.pending, bg: colors.pendingBg },
-  BLOCKED: { fg: colors.blocked, bg: colors.blockedBg },
-  FAILED: { fg: colors.blocked, bg: colors.blockedBg },
-  REJECTED: { fg: colors.blocked, bg: colors.blockedBg },
+  PENDING_APPROVAL: { fg: colors.accentInk, bg: colors.pendingBg },
+  BLOCKED: { fg: "#ffffff", bg: colors.blocked },
+  FAILED: { fg: "#ffffff", bg: colors.blocked },
+  REJECTED: { fg: "#ffffff", bg: colors.blocked },
 };
 
 export const STATUS_ORDER = [

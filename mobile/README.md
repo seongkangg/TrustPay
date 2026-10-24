@@ -10,11 +10,11 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `app.json` | App name, `trustpay://` scheme, `expo-router` plugin. |
 | `.env.example` | `EXPO_PUBLIC_API_URL` — only needed when the backend is not on the laptop running Expo. |
 | `src/app/_layout.js` | Root stack navigator. |
-| `src/app/index.js` | Overview: **Needs your approval** queue → count and amount tiles → risk / status bar charts and a 14-day trend → **Inbox** card (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) → recent policy violations → invoice list. Pull to refresh; auto-refreshes every 15 s. |
+| `src/app/index.js` | Overview, same design as the web dashboard: **Needs your approval** queue → **Invoice volume** hero (total in whole dollars, % paid, paid / withheld) over the 14-day indigo volume chart → Received / Completed / Blocked cards with sparklines → **Risk mix** bars → **Received per day** calendar (UTC days) → **Inbox** card (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) → recent policy violations → invoice list. Pull to refresh; auto-refreshes every 15 s. |
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
-| `src/components/ui.js`, `Charts.js` | Badges, cards, tiles, alerts; View-based bar charts and an SVG line chart. |
-| `src/theme.js` | The same hex values as `frontend/src/styles/dashboard.css` (`--risk-*`, `--blocked`, `--ok`, `--pending`). |
+| `src/components/ui.js`, `Charts.js` | Sentence-case badges, grey panels, count pills, pill buttons with press feedback, alerts, the TrustPay mark; SVG volume chart and sparklines, View-based risk bars and the day calendar. |
+| `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (indigo `accent`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
 ## Running on an iPhone with Expo Go
 

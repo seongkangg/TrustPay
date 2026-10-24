@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -15,8 +14,8 @@ import {
 } from "react-native";
 
 import { AWAITING_HUMAN, api, fmtMoney, fmtPct, fmtTime, human } from "../../api/client.js";
-import { Alert, Badge, Card, Code, H2, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
-import { colors } from "../../theme.js";
+import { Alert, Badge, Card, Code, H2, Muted, PillButton, RiskBadge, StatusBadge, sentence } from "../../components/ui.js";
+import { colors, radius } from "../../theme.js";
 
 export default function InvoiceScreen() {
   const { id } = useLocalSearchParams();
@@ -69,7 +68,7 @@ export default function InvoiceScreen() {
   const blockedCalls = toolCalls.filter((c) => c.authorization !== "allowed").length;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <Stack.Screen options={{ title: invoice.invoice_id }} />
       <ScrollView
         contentContainerStyle={styles.page}
@@ -180,11 +179,11 @@ function KV({ k, v, last }) {
 function AuthBadge({ authorization }) {
   const map = {
     allowed: { fg: colors.ok, bg: colors.okBg },
-    blocked: { fg: colors.blocked, bg: colors.blockedBg },
-    escalated: { fg: colors.pending, bg: colors.pendingBg },
+    blocked: { fg: "#fff", bg: colors.blocked },
+    escalated: { fg: colors.accentInk, bg: colors.pendingBg },
   };
   const c = map[authorization] || {};
-  return <Badge label={authorization || "—"} fg={c.fg} bg={c.bg} outline={authorization === "blocked"} />;
+  return <Badge label={authorization ? sentence(authorization) : "—"} fg={c.fg} bg={c.bg} />;
 }
 
 function TimelineEntry({ entry, last }) {
@@ -302,7 +301,8 @@ function ApprovalPanel({ invoice, decisions, events, onDecided }) {
             style={styles.input}
             value={reviewer}
             onChangeText={setReviewer}
-            placeholder="reviewer email"
+            placeholder="Reviewer email"
+            placeholderTextColor={colors.muted}
             autoCapitalize="none"
             keyboardType="email-address"
             accessibilityLabel="reviewer"
@@ -311,25 +311,26 @@ function ApprovalPanel({ invoice, decisions, events, onDecided }) {
             style={[styles.input, { minHeight: 60 }]}
             value={note}
             onChangeText={setNote}
-            placeholder="note (optional)"
+            placeholder="Note (optional)"
+            placeholderTextColor={colors.muted}
             multiline
             accessibilityLabel="note"
           />
           <View style={styles.actions}>
-            <Pressable
-              style={[styles.button, { backgroundColor: colors.ok }, (busy || !reviewer) && styles.buttonDisabled]}
+            <PillButton
+              label="Approve payment"
+              tone="approve"
+              style={{ flex: 1 }}
               disabled={busy || !reviewer}
               onPress={() => decide("approve")}
-            >
-              <Text style={styles.buttonText}>Approve payment</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, { backgroundColor: colors.blocked }, (busy || !reviewer) && styles.buttonDisabled]}
+            />
+            <PillButton
+              label="Reject"
+              tone="reject"
+              style={{ flex: 1 }}
               disabled={busy || !reviewer}
               onPress={() => decide("reject")}
-            >
-              <Text style={styles.buttonText}>Reject</Text>
-            </Pressable>
+            />
           </View>
           {error && <Alert kind="danger">{error}</Alert>}
         </>
@@ -348,27 +349,25 @@ const styles = StyleSheet.create({
   page: { padding: 16, paddingBottom: 48 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 6 },
   codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
-  kv: { flexDirection: "row", gap: 10, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.border },
+  kv: { flexDirection: "row", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.panel2 },
   kvLast: { borderBottomWidth: 0 },
   k: { width: 120, color: colors.muted, fontSize: 13 },
   v: { color: colors.text, fontSize: 13 },
-  tl: { flexDirection: "row", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tl: { flexDirection: "row", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.panel2 },
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
-  h3: { fontSize: 12, fontWeight: "700", color: colors.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 },
-  big: { fontSize: 20, fontWeight: "700", color: colors.text, textTransform: "capitalize" },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: 14 },
+  h3: { fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 6 },
+  big: { fontSize: 22, fontWeight: "700", color: colors.text, textTransform: "capitalize", letterSpacing: -0.4 },
+  divider: { height: 1, backgroundColor: colors.panel2, marginVertical: 16 },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 10,
+    borderColor: "#dcdde3",
+    borderRadius: radius.field,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 14,
     color: colors.text,
     backgroundColor: colors.surface,
     marginBottom: 8,
   },
-  actions: { flexDirection: "row", gap: 8 },
-  button: { flex: 1, borderRadius: 8, paddingVertical: 11, alignItems: "center" },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
+  actions: { flexDirection: "row", gap: 8, marginTop: 4 },
 });

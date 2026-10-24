@@ -1,35 +1,51 @@
-// Small shared building blocks: badges, cards, tiles, alerts, section headings.
-import { StyleSheet, Text, View } from "react-native";
+// Small shared building blocks: badges, panels, pill buttons, alerts, section headings.
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { Path, Rect } from "react-native-svg";
 
 import { human } from "../api/client.js";
-import { RISK, STATUS, colors } from "../theme.js";
+import { RISK, STATUS, colors, radius } from "../theme.js";
 
-export function Badge({ label, fg = colors.muted, bg = colors.neutralBg, outline = false }) {
+// "PENDING_APPROVAL" -> "Pending approval"
+export const sentence = (s) => {
+  const t = human(s).toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
+export function Badge({ label, fg = colors.neutralInk, bg = colors.neutralBg }) {
   return (
-    <View style={[styles.badge, { backgroundColor: bg }, outline && { borderWidth: 1, borderColor: fg }]}>
+    <View style={[styles.badge, { backgroundColor: bg }]}>
       <Text style={[styles.badgeText, { color: fg }]}>{label}</Text>
     </View>
   );
 }
 
 export function RiskBadge({ level }) {
-  if (!level) return <Badge label="unscored" />;
+  if (!level) return <Badge label="No risk yet" />;
   const c = RISK[level] || {};
-  return <Badge label={`${level} risk`} fg={c.fg} bg={c.bg} />;
+  return <Badge label={`${sentence(level)} risk`} fg={c.fg} bg={c.bg} />;
 }
 
 export function StatusBadge({ status }) {
   const c = STATUS[status] || {};
-  const loud = ["BLOCKED", "FAILED", "REJECTED"].includes(status);
-  return <Badge label={human(status)} fg={c.fg} bg={c.bg} outline={loud} />;
+  return <Badge label={sentence(status)} fg={c.fg} bg={c.bg} />;
 }
 
+// A soft grey panel: separation by one tone step, never a border or shadow.
 export function Card({ children, style }) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-export function H2({ children }) {
-  return <Text style={styles.h2}>{children}</Text>;
+export function H2({ children, style }) {
+  return <Text style={[styles.h2, style]}>{children}</Text>;
+}
+
+// Accent when something is waiting; quiet grey for a plain total or a zero.
+export function CountPill({ n, quiet = n === 0 }) {
+  return (
+    <View style={[styles.countPill, quiet && { backgroundColor: colors.panel2 }]}>
+      <Text style={[styles.countText, quiet && { color: colors.neutralInk }]}>{n}</Text>
+    </View>
+  );
 }
 
 export function Muted({ children, style, small }) {
@@ -39,27 +55,36 @@ export function Muted({ children, style, small }) {
 export function Alert({ kind = "info", children }) {
   const k = ALERT[kind];
   return (
-    <View style={[styles.alert, { backgroundColor: k.bg, borderColor: k.border }]}>
-      <Text style={{ color: k.text, fontSize: 13 }}>{children}</Text>
+    <View style={[styles.alert, { backgroundColor: k.bg }]}>
+      <Text style={{ color: k.text, fontSize: 13, lineHeight: 19 }}>{children}</Text>
     </View>
   );
 }
 
 const ALERT = {
-  info: { bg: colors.infoBg, border: colors.accent, text: "#0b3a8c" },
-  warn: { bg: colors.riskMediumBg, border: colors.riskMedium, text: colors.warnText },
-  danger: { bg: colors.blockedBg, border: colors.blocked, text: colors.dangerText },
-  ok: { bg: colors.okBg, border: colors.ok, text: "#0e4f22" },
+  info: { bg: colors.infoBg, text: colors.infoText },
+  warn: { bg: colors.riskMediumBg, text: colors.warnText },
+  danger: { bg: colors.blockedBg, text: colors.dangerText },
+  ok: { bg: colors.okBg, text: colors.okText },
 };
 
-export function Tile({ label, value, color, highlight }) {
+// Pill button with press feedback (scale 0.97). tone: "primary" (near-black), "approve", "reject", "quiet".
+export function PillButton({ label, onPress, disabled, tone = "primary", style }) {
+  const bg = { primary: colors.text, approve: colors.ok, reject: colors.blocked, quiet: colors.panel2 }[tone];
   return (
-    <View style={[styles.tile, highlight && { borderColor: highlight.border, backgroundColor: highlight.bg }]}>
-      <Text style={styles.tileLabel}>{label}</Text>
-      <Text style={[styles.tileValue, color && { color }]} numberOfLines={1} adjustsFontSizeToFit>
-        {value ?? "—"}
-      </Text>
-    </View>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: disabled ? colors.panel2 : bg },
+        pressed && !disabled && styles.pressed,
+        style,
+      ]}
+    >
+      <Text style={[styles.buttonText, (disabled || tone === "quiet") && { color: colors.neutralInk }]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -67,34 +92,52 @@ export function Code({ children }) {
   return <Text style={styles.code}>{children}</Text>;
 }
 
-const styles = StyleSheet.create({
-  badge: { alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+// TrustPay mark: a rounded indigo tile with a tick, the same mark as the web header.
+export function Mark({ size = 26 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 28 28">
+      <Rect width="28" height="28" rx="8" fill={colors.accent} />
+      <Path
+        d="M8 14.4 12.2 18.5 20 9.8"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export const styles = StyleSheet.create({
+  badge: { alignSelf: "flex-start", height: 22, justifyContent: "center", paddingHorizontal: 9, borderRadius: radius.pill },
   badgeText: { fontSize: 12, fontWeight: "600" },
-  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14 },
-  h2: { fontSize: 15, fontWeight: "700", color: colors.text, marginTop: 22, marginBottom: 8 },
+  card: { backgroundColor: colors.panel, borderRadius: radius.panel, padding: 16 },
+  h2: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16, marginTop: 28, marginBottom: 12 },
+  countPill: {
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 7,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  countText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   muted: { color: colors.muted, fontSize: 14 },
   small: { fontSize: 12 },
-  alert: { padding: 10, borderRadius: 8, borderWidth: 1, marginVertical: 6 },
-  tile: {
-    flexBasis: "47%",
-    flexGrow: 1,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  tileLabel: { color: colors.muted, fontSize: 12 },
-  tileValue: { fontSize: 24, fontWeight: "700", color: colors.text, marginTop: 2 },
+  alert: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.alert, marginVertical: 6 },
+  button: { height: 44, paddingHorizontal: 18, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  pressed: { transform: [{ scale: 0.97 }] },
+  buttonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
   code: {
-    fontFamily: "Menlo",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
     fontSize: 11,
     backgroundColor: colors.neutralBg,
-    color: colors.text,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 3,
+    color: "#3a3d46",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
     overflow: "hidden",
     marginRight: 4,
     marginBottom: 4,
