@@ -14,6 +14,7 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
 | `src/components/ui.js`, `Charts.js` | Sentence-case badges, grey panels, count pills, pill buttons with press feedback, alerts, the TrustPay mark; SVG volume chart and sparklines, View-based risk bars and the day calendar. |
+| `src/components/BubbleNav.js` | Floating bottom nav on the overview: a white pill of tabs (Overview / Inbox / Invoices) with a grey bubble that springs to the active tab and follows the scroll position, plus a black round button that opens the next invoice awaiting approval (with the waiting count). |
 | `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (indigo `accent`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
 ## Running on an iPhone with Expo Go
