@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     height: 44,
     marginTop: 14,
     borderRadius: radius.pill,
-    backgroundColor: colors.brandNavy,
+    backgroundColor: colors.ok, // dark green
   },
   buttonDisabled: { backgroundColor: colors.panel2 },
   buttonPressed: { transform: [{ scale: 0.97 }] },
