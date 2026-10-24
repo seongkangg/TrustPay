@@ -71,10 +71,7 @@ export default function InboxCard({ status, unavailable, onSynced }) {
             <View style={[styles.dot, { backgroundColor: state.dot }]} />
             <Text style={styles.stateText}>{state.label}</Text>
           </View>
-          <Muted small>
-            Last checked {fmtAgo(status.last_sync_at)}
-            {status.poll_seconds ? ` · checks every ${status.poll_seconds}s` : ""}
-          </Muted>
+          <Muted small>Last checked {fmtAgo(status.last_sync_at)}</Muted>
         </View>
       </View>
 
@@ -88,7 +85,6 @@ export default function InboxCard({ status, unavailable, onSynced }) {
           ))}
         </View>
       )}
-      {stats && <Muted small style={{ marginTop: 6 }}>{result ? "From the check just now." : "From the last check."}</Muted>}
 
       {error && <Alert kind="danger">{error}</Alert>}
       {!error && status.last_error && <Alert kind="warn">{status.last_error}</Alert>}
