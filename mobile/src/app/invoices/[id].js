@@ -1,5 +1,5 @@
 // One invoice, laid out around the reviewer's decision: who and how much, what is happening, what the
-// AI recommends and why, then the supporting detail (fields, extraction, activity, tool calls).
+// AI recommends and why, then the supporting detail (fields, activity, tool calls).
 // Approve / reject sit in a bar pinned to the bottom while a decision is needed, behind a confirm;
 // they are the only write action in the app. The AI recommendation and the human decision are
 // never conflated.
@@ -39,7 +39,6 @@ import { colors, radius, space } from "../../theme.js";
 
 const ACTION_BAR = 76; // the floating approve / reject pill (64) plus its gap above the safe-area inset
 const TIMELINE_PREVIEW = 6;
-const LOW_CONFIDENCE = 0.8;
 
 const VERDICT = {
   approve: { fg: colors.ok, bg: colors.okBg },
@@ -242,7 +241,6 @@ export default function InvoiceScreen() {
           <KV k="Received" v={fmtTime(invoice.created_at)} last />
         </Card>
 
-        <Extraction fields={invoice.extraction || []} />
         <Activity timeline={timeline} />
         <ToolCalls calls={toolCalls} blocked={blockedCalls} />
       </ScrollView>
@@ -439,53 +437,6 @@ function Collapsible({ title, summary, alert, children }) {
       </Pressable>
       {open && children}
     </>
-  );
-}
-
-function Extraction({ fields }) {
-  if (fields.length === 0) {
-    return (
-      <>
-        <H2>Extraction</H2>
-        <Card>
-          <Muted>Not extracted yet.</Muted>
-        </Card>
-      </>
-    );
-  }
-  const flagged = fields.filter((f) => f.missing || f.malformed || f.confidence < LOW_CONFIDENCE).length;
-  return (
-    <Collapsible
-      title="Extraction"
-      summary={`${fields.length} fields${flagged ? ` · ${flagged} need attention` : " · all read cleanly"}`}
-      alert={flagged > 0}
-    >
-      <Card style={styles.listCard}>
-        {fields.map((f, i) => {
-          const issue = f.missing ? "Missing" : f.malformed ? "Invalid format" : null;
-          const low = !issue && f.confidence < LOW_CONFIDENCE;
-          return (
-            <View key={f.field} style={[styles.kv, i === fields.length - 1 && styles.kvLast]}>
-              <Text style={styles.k}>{sentence(f.field)}</Text>
-              <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text style={[styles.v, { flex: 1 }]} numberOfLines={2}>
-                  {f.missing ? "—" : String(f.value ?? "—")}
-                </Text>
-                {issue ? (
-                  <Badge label={issue} fg={colors.riskMedium} bg={colors.riskMediumBg} />
-                ) : (
-                  <Badge
-                    label={fmtPct(f.confidence)}
-                    fg={low ? colors.riskMedium : colors.neutralInk}
-                    bg={low ? colors.riskMediumBg : colors.neutralBg}
-                  />
-                )}
-              </View>
-            </View>
-          );
-        })}
-      </Card>
-    </Collapsible>
   );
 }
 
