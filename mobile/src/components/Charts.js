@@ -8,6 +8,19 @@ import Svg, { Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "re
 import { fmtMoney } from "../api/client.js";
 import { colors, radius } from "../theme.js";
 
+const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
+
+// Follows the system Reduce Motion setting, live.
+function useReduceMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduce);
+    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduce);
+    return () => sub.remove();
+  }, []);
+  return reduce;
+}
+
 // by_day dates are UTC calendar days ("YYYY-MM-DD"); keep them in UTC so the labels never shift.
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const utcDate = (iso) => new Date(`${iso}T00:00:00Z`);
@@ -30,26 +43,20 @@ function smoothPath(pts, floor) {
 }
 
 // The big chart under the hero figure: received per day, completed as the quiet line.
-// The grid and day labels stay put; the data draws in left to right whenever `playKey` changes
+// The grid and day labels stay put; the data draws in left to right (900ms) whenever `playKey` changes
 // (each time the Overview tab gains focus). The wipe is two opposing translateX transforms on the
 // native driver: the outer view clips and slides in from the left while the inner one slides back,
 // so the drawing stays in place and is revealed. Reduce motion swaps it for a short fade.
 export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
   const [progress] = useState(() => new Animated.Value(0));
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
-    return () => sub.remove();
-  }, []);
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
     progress.setValue(0);
     const run = Animated.timing(progress, {
       toValue: 1,
-      duration: reduceMotion ? 150 : 550,
-      easing: Easing.bezier(0.23, 1, 0.32, 1),
+      duration: reduceMotion ? 150 : 900,
+      easing: EASE_OUT,
       useNativeDriver: true,
     });
     run.start();
@@ -144,7 +151,25 @@ export function Sparkline({ values, width, height = 28, color = colors.accent })
 const RISK_LABEL = { low: "Low risk", medium: "Medium risk", high: "High risk" };
 
 // Risk mix as three soft blocks; the high-risk block is the one in colour because it needs eyes.
-export function RiskBars({ invoices }) {
+// Whenever `playKey` changes the blocks grow up from the baseline, 80ms apart. Height is animated
+// rather than scaleY so the rounded tops keep their shape; each block is absolutely positioned
+// with no children, so nothing else re-lays out. Reduce Motion swaps the growth for a short fade.
+export function RiskBars({ invoices, playKey = 0 }) {
+  const [grow] = useState(() => [0, 1, 2].map(() => new Animated.Value(0)));
+  const reduceMotion = useReduceMotion();
+
+  useEffect(() => {
+    grow.forEach((v) => v.setValue(0));
+    const run = Animated.stagger(
+      reduceMotion ? 0 : 80,
+      grow.map((v) =>
+        Animated.timing(v, { toValue: 1, duration: reduceMotion ? 150 : 700, easing: EASE_OUT, useNativeDriver: false }),
+      ),
+    );
+    run.start();
+    return () => run.stop();
+  }, [playKey, reduceMotion, grow]);
+
   const rows = ["low", "medium", "high"].map((level) => {
     const items = invoices.filter((inv) => inv.risk_level === level);
     return { level, count: items.length, amount: items.reduce((sum, inv) => sum + (inv.amount || 0), 0) };
@@ -152,24 +177,29 @@ export function RiskBars({ invoices }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <View style={styles.riskbars}>
-      {rows.map((r) => (
-        <View key={r.level} style={styles.riskbar}>
-          <View style={styles.track}>
-            <View
-              style={[
-                styles.fill,
-                { height: `${Math.max(10, (r.count / max) * 100)}%` },
-                r.level === "high" && { backgroundColor: colors.accent },
-              ]}
-            />
+      {rows.map((r, i) => {
+        const pct = `${Math.max(10, (r.count / max) * 100)}%`;
+        return (
+          <View key={r.level} style={styles.riskbar}>
+            <View style={styles.track}>
+              <Animated.View
+                style={[
+                  styles.fill,
+                  r.level === "high" && { backgroundColor: colors.accent },
+                  reduceMotion
+                    ? { height: pct, opacity: grow[i] }
+                    : { height: grow[i].interpolate({ inputRange: [0, 1], outputRange: ["0%", pct] }) },
+                ]}
+              />
+            </View>
+            <Text style={styles.riskName}>{RISK_LABEL[r.level]}</Text>
+            <Text style={styles.riskCount}>
+              {r.count} invoice{r.count === 1 ? "" : "s"}
+            </Text>
+            <Text style={styles.riskAmount}>{fmtMoney(r.amount)}</Text>
           </View>
-          <Text style={styles.riskName}>{RISK_LABEL[r.level]}</Text>
-          <Text style={styles.riskCount}>
-            {r.count} invoice{r.count === 1 ? "" : "s"}
-          </Text>
-          <Text style={styles.riskAmount}>{fmtMoney(r.amount)}</Text>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -224,7 +254,7 @@ const styles = StyleSheet.create({
   riskbars: { flexDirection: "row", gap: 8 },
   riskbar: { flex: 1, alignItems: "center" },
   track: { height: 120, width: "100%", justifyContent: "flex-end" },
-  fill: { width: "100%", backgroundColor: colors.panel2, borderRadius: 14 },
+  fill: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: colors.panel2, borderRadius: 14 },
   riskName: { marginTop: 10, fontSize: 12, color: colors.muted },
   riskCount: { fontSize: 14, fontWeight: "700", color: colors.text },
   riskAmount: { fontSize: 12, color: colors.muted, fontVariant: ["tabular-nums"] },

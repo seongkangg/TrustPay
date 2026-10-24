@@ -18,7 +18,7 @@ const wholeDollars = (amount) => `$${Math.round(amount).toLocaleString("en-US")}
 export default function Overview() {
   const { width } = useWindowDimensions();
   const { summary, invoices, error, refreshing, refresh } = useDashboard();
-  // Bumped each time this tab gains focus, so the volume chart draws in again.
+  // Bumped each time this tab gains focus, so the volume chart and risk bars animate again.
   const [chartPlay, setChartPlay] = useState(0);
   useFocusEffect(useCallback(() => setChartPlay((n) => n + 1), []));
 
@@ -103,7 +103,8 @@ export default function Overview() {
           <Text style={styles.panelTitle}>Risk mix</Text>
           <Muted small>All invoices</Muted>
         </View>
-        <RiskBars invoices={invoices} />
+        {/* Keyed on load too, so the bars grow with real data rather than before it arrives. */}
+        <RiskBars invoices={invoices} playKey={summary ? chartPlay : -1} />
         {summary && (
           <Muted small style={{ marginTop: 12 }}>
             {summary.blocked_actions} blocked tool call{summary.blocked_actions === 1 ? "" : "s"} ·{" "}
