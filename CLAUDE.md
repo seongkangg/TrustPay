@@ -58,3 +58,11 @@ If code and these docs disagree, the docs win until the team changes the doc.
 - [ ] Do the relevant tests pass (`pytest tests/`)?
 - [ ] Did I update the folder `README.md` if a file's purpose changed?
 - [ ] Did I check `.claude/agents.md` and confirm the acceptance checks for the deliverables this task touches pass?
+
+## Progress tracking (required after every commit or push)
+After making a commit or push in this repo, invoke the global
+`progress-tracker` skill before touching `current_progress.md` — it is
+the authoritative, strict spec for how that file is created (if
+missing) and updated (Completed appends, What's Next replacement,
+formatting, attribution). Do not improvise the update from memory or
+from this summary; invoke the skill every time this rule fires.

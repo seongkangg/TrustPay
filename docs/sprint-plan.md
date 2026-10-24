@@ -60,23 +60,34 @@ dashboard summary matches, human approve/reject round-trip, no raw secret in any
 *Demoable via Swagger (`/docs`) from here.*
 
 ## Sprint 5 — Dashboard ✅
+Design skills (project-level in `.claude/skills/`, pinned in `skills-lock.json`):
+- **impeccable** (`pbakaus/impeccable`): run `/impeccable init` once for design context
+  (audience: finance reviewers / compliance; tone: calm, trustworthy, dense but legible;
+  hard rules from `frontend/README.md`), then use it for the critique / polish pass.
+- **design-taste-frontend** (`Leonxlnx/taste-skill`): layout, type scale, palette for the app screens.
+- **emilkowalski/skill** (`emil-design-eng`, `animate`, `improve-animations`, `review-animations`):
+  small CSS-only motion (badge change after approve/reject, timeline stagger,
+  `prefers-reduced-motion`). No animation library, no UI framework.
+
 - [x] `api/client.js`, `App.jsx`, `dashboard.css` (+ `vite.config.js`, `index.html`, `main.jsx`, `eslint.config.js`)
 - [x] components: RiskBadge, StatusBadge, AgentTimeline, ToolCallTable, AuditLog, ApprovalPanel
 - [x] pages: Dashboard (with demo-scenario buttons fed from `data/invoices/*.json`), InvoiceDetails, AuditDetails
 - [x] human approve/reject round-trip
 - [x] fix: API models re-attach UTC to SQLite datetimes so the browser shows one consistent clock
+- [ ] design critique / polish pass with the skills above (not started)
 
 **Done:** scenarios 1–3 walked through in the browser (`.claude/launch.json` starts both servers);
 low-risk auto-completed, policy violation approved by a human to COMPLETED, suspicious invoice
 BLOCKED with masked identifiers; `npm run lint` and `npm run build` clean.
 
-## Sprint 6 — Demo hardening
-- [ ] `docs/demo-script.md`
-- [ ] `docker-compose.yml` one-command start
-- [ ] reliability tests: timeout, mock failure, malformed output, dup/out-of-order events
-- [ ] perf check: < 10 s/invoice, < 1 s/event
-- [ ] demo reset script
-- [ ] backup video
+## Sprint 6 — Demo hardening ✅ (except the video)
+- [x] `docs/demo-script.md` — six-minute click-by-click script with talking points and a fallback table
+- [x] `docker-compose.yml` + `backend/Dockerfile` + `frontend/Dockerfile` — `docker compose up --build`
+- [x] reliability tests (`test_reliability.py`): model timeout, unexpected model exception, PO / limit / payment service down, payment down during human approval is retryable, chain valid under every failure
+- [x] perf check (`test_performance.py`): < 10 s/invoice over HTTP, < 1 s/audit event
+- [x] demo reset: `POST /demo/reset` (disabled in production) + `npm run reset`
+- [x] fix: human approval now pays first and records the decision only once payment took effect, so a payment outage leaves nothing half-recorded
+- [ ] backup video — record it by walking `docs/demo-script.md`
 
 ## Sprint 7 — IBM integration (stretch)
 - [ ] real watsonx.ai / Granite behind a flag
