@@ -18,6 +18,8 @@ export const colors = {
   accentStrong: "#0f766e", // filled teal that carries white text: count pill, today
   accentInk: "#0f3d5e", // links and accent text
   accentSoft: "#99ddd3",
+  accentFaint: "#c6ebe5", // low-risk bar
+  accentMid: "#7ccdc1", // medium-risk bar
   accentBg: "#e3f5f2",
 
   riskLow: "#18794e",

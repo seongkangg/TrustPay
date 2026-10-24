@@ -18,6 +18,8 @@ colors:
   accent-strong: "#0f766e"
   accent-ink: "#0f3d5e"
   accent-soft: "#99ddd3"
+  accent-faint: "#c6ebe5"
+  accent-mid: "#7ccdc1"
   accent-bg: "#e3f5f2"
   ok: "#18794e"
   ok-bg: "#e3f5ea"
@@ -219,6 +221,8 @@ A cool, near-neutral grey world with the logo's teal and navy and a strictly sem
 - **Deep Teal** (accent-strong): teal as a fill that carries white text, for today's calendar cell and count pills with work waiting.
 - **Navy Ink** (accent-ink): the accent as text, for links, pending badges and info alerts.
 - **Pale Teal Line** (accent-soft): the quiet "completed" line in the volume chart, its hover cursor and legend key.
+- **Faint Teal** (accent-faint): the low-risk bar.
+- **Mid Teal** (accent-mid): the medium-risk bar.
 - **Teal Wash** (accent-bg): tint behind pending badges, info alerts, approval-queue rows, text selection and the input focus ring.
 
 ### Semantic
@@ -336,7 +340,7 @@ The total in Display type, followed by a paid-share delta pill, then a muted spl
 A panel with a muted label (and optional delta pill) on top, a Headline value, and a 32px smooth sparkline in teal (2px, round caps). The Blocked card's sparkline turns red when anything is blocked.
 
 ### Risk bars
-Three rounded blocks (14px) on a 150px track: low and medium in Deeper Panel Grey, high in Signal Teal because it needs eyes. Count and amount sit centred below. Bars rise once from 60% scale over 600ms on the ease-out curve.
+Three rounded blocks (14px) on a 150px track (120px on the phone) in one teal family that darkens with risk: low in Faint Teal, medium in Mid Teal, high in Signal Teal. Low and medium stay light so the high-risk bar is the one that reads first. Count and amount sit centred below. Bars rise once from 60% scale over 600ms on the ease-out curve.
 
 ### Day calendar
 A 7-column grid of 64px grey cells (12px corners) for the last 14 UTC days: date top-left, received count centred, "n blocked" or "n done" beneath. Zero days dim their count; today is a solid Deep Teal cell with white text.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T08:07:43Z",
+  "generatedAt": "2026-10-24T08:30:26Z",
   "title": "Design System: TrustPay",
   "extensions": {
     "colorMeta": {
@@ -258,6 +258,38 @@
           "#80b0a9",
           "#afd1cc",
           "#e0f3f0"
+        ]
+      },
+      "accent-faint": {
+        "role": "primary",
+        "displayName": "Faint Teal",
+        "canonical": "#c6ebe5",
+        "oklch": "oklch(91.2% 0.039 184.6)",
+        "tonalRamp": [
+          "#090c0b",
+          "#1e2726",
+          "#354643",
+          "#4e6763",
+          "#688a85",
+          "#91aba7",
+          "#bbcecb",
+          "#e6f1ef"
+        ]
+      },
+      "accent-mid": {
+        "role": "primary",
+        "displayName": "Mid Teal",
+        "canonical": "#7ccdc1",
+        "oklch": "oklch(79.3% 0.082 183.7)",
+        "tonalRamp": [
+          "#060d0c",
+          "#152926",
+          "#234a45",
+          "#316d65",
+          "#429287",
+          "#78b2a9",
+          "#abd3cc",
+          "#ddf4f0"
         ]
       },
       "accent-bg": {

@@ -130,7 +130,7 @@ export function Sparkline({ values, tone = "accent" }) {
 
 const RISK_LABEL = { low: "Low risk", medium: "Medium risk", high: "High risk" };
 
-// Risk mix as three soft blocks; the high-risk block is the one in colour because it needs eyes.
+// Risk mix as three blocks in one teal family that darkens with risk: light, mid, then the full accent.
 export function RiskBars({ invoices }) {
   const rows = ["low", "medium", "high"].map((level) => {
     const items = invoices.filter((inv) => inv.risk_level === level);

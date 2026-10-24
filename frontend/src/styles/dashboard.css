@@ -19,6 +19,8 @@
   --accent-strong: #0f766e;  /* filled teal that carries white text: count pill, today */
   --accent-ink: #0f3d5e;     /* links and accent text */
   --accent-soft: #99ddd3;
+  --accent-faint: #c6ebe5;   /* low-risk bar */
+  --accent-mid: #7ccdc1;     /* medium-risk bar */
   --accent-bg: #e3f5f2;
 
   --risk-low: #18794e;
@@ -142,6 +144,9 @@ code { font: 12px/1.4 var(--mono); background: var(--neutral-bg); color: #3a3d46
 .riskbars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .riskbar .track { height: 150px; display: flex; align-items: flex-end; }
 .riskbar .fill { width: 100%; background: var(--panel-2); border-radius: 14px; transform-origin: bottom; animation: rise 600ms var(--ease-out) both; }
+/* one teal family that darkens with risk */
+.riskbar.low .fill { background: var(--accent-faint); }
+.riskbar.medium .fill { background: var(--accent-mid); }
 .riskbar.high .fill { background: var(--accent); }
 .riskbar .meta { margin-top: 10px; text-align: center; }
 .riskbar .name { color: var(--muted); font-size: 12px; }

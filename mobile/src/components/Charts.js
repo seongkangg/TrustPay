@@ -148,9 +148,11 @@ export function Sparkline({ values, width, height = 28, color = colors.accent })
   );
 }
 
+const RISK_BAR = { low: colors.accentFaint, medium: colors.accentMid, high: colors.accent };
+
 const RISK_LABEL = { low: "Low risk", medium: "Medium risk", high: "High risk" };
 
-// Risk mix as three soft blocks; the high-risk block is the one in colour because it needs eyes.
+// Risk mix as three blocks in one teal family that darkens with risk: light, mid, then the full accent.
 // Whenever `playKey` changes the blocks grow up from the baseline, 80ms apart. Height is animated
 // rather than scaleY so the rounded tops keep their shape; each block is absolutely positioned
 // with no children, so nothing else re-lays out. Reduce Motion swaps the growth for a short fade.
@@ -185,7 +187,7 @@ export function RiskBars({ invoices, playKey = 0 }) {
               <Animated.View
                 style={[
                   styles.fill,
-                  r.level === "high" && { backgroundColor: colors.accent },
+                  { backgroundColor: RISK_BAR[r.level] },
                   reduceMotion
                     ? { height: pct, opacity: grow[i] }
                     : { height: grow[i].interpolate({ inputRange: [0, 1], outputRange: ["0%", pct] }) },
