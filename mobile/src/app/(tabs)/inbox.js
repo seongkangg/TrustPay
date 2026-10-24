@@ -74,8 +74,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   clearTitle: { fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 2 },
-  // Sits straight on the page, no panel, so the invoices card below is the only box.
-  summary: { gap: 2, marginBottom: 14, paddingHorizontal: 4 },
+  // The same spacing as a panel (space.card on every side) but no grey box behind it.
+  summary: { gap: 2, marginBottom: 14, padding: space.card },
   summaryLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
   summaryRow: { flexDirection: "row", alignItems: "baseline", gap: 8 },
   summaryCount: { fontSize: 34, fontWeight: "700", letterSpacing: -1, color: colors.text, fontVariant: ["tabular-nums"] },
