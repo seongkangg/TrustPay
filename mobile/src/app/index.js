@@ -146,7 +146,7 @@ export default function Overview() {
         <Card style={{ padding: 0 }}>
           {invoices.map((inv, i) => (
             <Link key={inv.invoice_id} href={`/invoices/${inv.invoice_id}`} asChild>
-              <Pressable style={[styles.row, i > 0 && styles.rowBorder]}>
+              <Pressable style={StyleSheet.flatten([styles.row, i > 0 && styles.rowBorder])}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowTitle}>
                     {inv.vendor_name || "—"} <Text style={styles.rowId}>{inv.invoice_id}</Text>
@@ -175,7 +175,10 @@ function QueueItem({ inv, codes = [] }) {
   const blocked = inv.status === "BLOCKED";
   return (
     <Link href={`/invoices/${inv.invoice_id}`} asChild>
-      <Pressable style={[styles.queueItem, { borderColor: blocked ? colors.blocked : colors.pending }]}>
+      <Pressable
+        // Link asChild rejects array styles, so flatten them into one object.
+        style={StyleSheet.flatten([styles.queueItem, { borderColor: blocked ? colors.blocked : colors.pending }])}
+      >
         <View style={styles.queueHead}>
           <Text style={styles.queueVendor}>{inv.vendor_name || "Unknown vendor"}</Text>
           <Text style={styles.queueAmount}>{fmtMoney(inv.amount, inv.currency)}</Text>
