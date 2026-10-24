@@ -25,7 +25,7 @@ from backend.models import (
 from backend.orchestration.state_machine import AWAITING_HUMAN, transition
 from backend.services.errors import ForbiddenError, InvalidStateError, UpstreamUnavailableError
 from backend.services.invoice_service import InvoiceService, row_to_invoice
-from backend.utils.timestamps import now_utc
+from backend.utils.timestamps import as_utc, now_utc
 
 
 class ApprovalService:
@@ -40,6 +40,20 @@ class ApprovalService:
         if (row.amount or 0.0) > limit:
             raise ForbiddenError(
                 f"amount {row.amount} exceeds the human reviewer limit {limit}; invoice stays {row.status}",
+                invoice_id=invoice_id,
+                correlation_id=row.correlation_id,
+            )
+        # Checked before payment so money never moves without a decidable, unexpired request.
+        request = self.invoices.open_approval(invoice_id)
+        if request is None or request["human_decision"] is not None:
+            raise InvalidStateError(
+                f"invoice {invoice_id} has no open approval request",
+                invoice_id=invoice_id,
+                correlation_id=row.correlation_id,
+            )
+        if as_utc(request["expires_at"]) <= now_utc():
+            raise InvalidStateError(
+                f"approval request {request['approval_id']} expired; invoice stays {row.status} and unpaid",
                 invoice_id=invoice_id,
                 correlation_id=row.correlation_id,
             )
