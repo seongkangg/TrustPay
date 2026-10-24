@@ -60,7 +60,7 @@ export const ApproveIcon = (p) => (
   </Icon>
 );
 
-// tabs: [{ key, label, Icon }]; action: { label, count, onPress }.
+// tabs: [{ key, label, Icon, badge? }]; action: { label, onPress }.
 export default function BubbleNav({ tabs, active, onSelect, action }) {
   const insets = useSafeAreaInsets();
   const [tabWidth, setTabWidth] = useState(0);
@@ -121,11 +121,18 @@ export default function BubbleNav({ tabs, active, onSelect, action }) {
               key={t.key}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={t.label}
+              accessibilityLabel={t.badge ? `${t.label}, ${t.badge} waiting` : t.label}
               onPress={() => onSelect(t.key)}
               style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
             >
-              <t.Icon color={tint} />
+              <View>
+                <t.Icon color={tint} />
+                {t.badge > 0 && (
+                  <View style={styles.tabBadge}>
+                    <Text style={styles.tabBadgeText}>{t.badge > 99 ? "99+" : t.badge}</Text>
+                  </View>
+                )}
+              </View>
               <Text
                 style={[styles.label, { color: tint }, on && styles.labelOn]}
               >
@@ -143,11 +150,6 @@ export default function BubbleNav({ tabs, active, onSelect, action }) {
         style={({ pressed }) => [styles.action, pressed && styles.pressed]}
       >
         <ApproveIcon color="#fff" size={24} />
-        {action.count > 0 && (
-          <View style={styles.count}>
-            <Text style={styles.countText}>{action.count}</Text>
-          </View>
-        )}
       </Pressable>
     </View>
   );
@@ -209,19 +211,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...float,
   },
-  count: {
+  // Waiting count on a tab icon's top-right corner: Deep Teal, the colour for "work waiting".
+  tabBadge: {
     position: "absolute",
-    top: 6,
-    right: 6,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
-    borderRadius: 10,
+    top: -6,
+    right: -11,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
     backgroundColor: colors.accentStrong,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: colors.brandNavy,
+    borderColor: colors.surface,
   },
-  countText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+  tabBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700", fontVariant: ["tabular-nums"] },
 });

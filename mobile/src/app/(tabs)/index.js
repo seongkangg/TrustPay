@@ -1,12 +1,12 @@
-// Overview tab: approval queue → invoice volume → counts → risk mix and days → policy violations.
-// Read-only; approve / reject happens on the invoice screen.
-import { Link, router } from "expo-router";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+// Overview tab: invoice volume → counts → risk mix and days → policy violations. Read-only; the
+// waiting count lives on the Inbox tab in the bottom nav, and approve / reject on the invoice screen.
+import { Link } from "expo-router";
+import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
 import { fmtMoney, fmtTime } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { DayCalendar, RiskBars, Sparkline, VolumeChart, dayLabel } from "../../components/Charts.js";
-import { Alert, Badge, Card, CountPill, H2, Muted, ReasonTag, RiskBadge, StatusBadge } from "../../components/ui.js";
+import { Alert, Badge, Card, H2, Muted, ReasonTag } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
@@ -16,11 +16,8 @@ const wholeDollars = (amount) => `$${Math.round(amount).toLocaleString("en-US")}
 
 export default function Overview() {
   const { width } = useWindowDimensions();
-  const { summary, invoices, awaiting, error, refreshing, refresh } = useDashboard();
+  const { summary, invoices, error, refreshing, refresh } = useDashboard();
 
-  const reasonCodes = Object.fromEntries(
-    (summary?.recent_violations || []).map((v) => [v.invoice_id, v.reason_codes]),
-  );
   const amounts = summary?.amounts;
   const days = summary?.by_day || [];
   const latest = days[days.length - 1];
@@ -37,20 +34,6 @@ export default function Overview() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.accent} />}
     >
       {error && <Alert kind="danger">{error}</Alert>}
-
-      <View style={styles.sectionHead}>
-        <Text style={styles.h2Inline}>Needs your approval</Text>
-        <CountPill n={awaiting.length} />
-      </View>
-      {awaiting.length === 0 ? (
-        <Muted small>Nothing waiting. New invoices are checked automatically.</Muted>
-      ) : (
-        <View style={{ gap: 8 }}>
-          {awaiting.map((inv) => (
-            <QueueItem key={inv.invoice_id} inv={inv} codes={reasonCodes[inv.invoice_id]} />
-          ))}
-        </View>
-      )}
 
       <View style={styles.hero}>
         <Text style={styles.heroLabel}>Invoice volume</Text>
@@ -186,53 +169,10 @@ function Kpi({ label, value, values, width, note, color }) {
   );
 }
 
-function QueueItem({ inv, codes = [] }) {
-  const blocked = inv.status === "BLOCKED";
-  return (
-    <Pressable
-      accessibilityRole="link"
-      onPress={() => router.push(`/invoices/${inv.invoice_id}`)}
-      style={({ pressed }) => [
-        styles.queueItem,
-        { backgroundColor: blocked ? colors.blockedBg : colors.accentBg },
-        pressed && { transform: [{ scale: 0.98 }] },
-      ]}
-    >
-      <View style={styles.queueHead}>
-        <Text style={styles.queueVendor} numberOfLines={1}>
-          {inv.vendor_name || "Unknown vendor"}
-        </Text>
-        <Text style={styles.queueAmount}>{fmtMoney(inv.amount, inv.currency)}</Text>
-      </View>
-      <View style={styles.badges}>
-        <StatusBadge status={inv.status} />
-        <RiskBadge level={inv.risk_level} />
-      </View>
-      {codes.length > 0 && (
-        <View style={styles.codes}>
-          {codes.map((c) => (
-            <ReasonTag key={c} code={c} />
-          ))}
-        </View>
-      )}
-      <View style={styles.queueFoot}>
-        <Muted small>
-          {inv.invoice_id} · {fmtTime(inv.updated_at)}
-        </Muted>
-        <View style={styles.reviewPill}>
-          <Text style={styles.reviewText}>Review ›</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   // Bottom padding clears the floating nav (bar + its gap from the screen edge).
   page: { paddingHorizontal: GUTTER, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
-  sectionHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-  h2Inline: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
-  hero: { marginTop: 28 },
+  hero: { marginTop: 8 },
   heroLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
   figureRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 },
   figure: {
@@ -261,16 +201,8 @@ const styles = StyleSheet.create({
   kpiNote: { fontSize: 11, fontWeight: "600", color: colors.ok, marginBottom: 4 },
   panelHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 14 },
   panelTitle: { fontSize: 14, fontWeight: "700", color: colors.text },
-  badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 2 },
   link: { color: colors.accentInk, fontSize: 13, fontWeight: "600" },
   rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
-  queueItem: { borderRadius: radius.row, paddingVertical: 16, paddingHorizontal: 18, gap: 6 },
-  queueHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 },
-  queueVendor: { fontWeight: "700", fontSize: 15, color: colors.text, flex: 1 },
-  queueAmount: { fontWeight: "700", fontSize: 16, color: colors.text, fontVariant: ["tabular-nums"] },
-  queueFoot: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
-  reviewPill: { height: 32, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.brandNavy, justifyContent: "center" },
-  reviewText: { color: "#fff", fontWeight: "600", fontSize: 13 },
   violation: { paddingVertical: 10, gap: 4 },
 });
