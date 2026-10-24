@@ -1,9 +1,11 @@
 // Invoices tab: every invoice, newest first, filterable by outcome; each row opens the invoice screen.
+// The list shows a page at a time with a "Show more" row at the bottom.
 import { router } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import Svg, { Path } from "react-native-svg";
 
 import { fmtMoney, fmtTime } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
@@ -32,11 +34,16 @@ const EMPTY = {
 
 const matches = (filter, inv) => !filter.statuses || filter.statuses.includes(inv.status);
 
+const PAGE = 8;
+
 export default function Invoices() {
   const { invoices, summary, error, refreshing, refresh } = useDashboard();
   const [filterKey, setFilterKey] = useState("all");
   const filter = FILTERS.find((f) => f.key === filterKey);
   const shown = invoices.filter((inv) => matches(filter, inv));
+  const [limit, setLimit] = useState(PAGE);
+  const visible = shown.slice(0, limit);
+  const remaining = shown.length - visible.length;
   const [menuOpen, setMenuOpen] = useState(false);
   const headerHeight = useHeaderHeight();
   const options = FILTERS.map((f) => ({ ...f, count: invoices.filter((inv) => matches(f, inv)).length }));
@@ -61,6 +68,7 @@ export default function Invoices() {
         active={filterKey}
         onSelect={(key) => {
           setFilterKey(key);
+          setLimit(PAGE); // a new filter starts back at the first page
           setMenuOpen(false);
         }}
         onClose={() => setMenuOpen(false)}
@@ -72,7 +80,6 @@ export default function Invoices() {
         {shown.length > 0 && <CountPill n={shown.length} quiet />}
       </View>
 
-
       {invoices.length === 0 ? (
         <Card>
           <Muted>{summary ? "No invoices yet. They appear here as the inbox delivers them." : "Loading…"}</Muted>
@@ -83,7 +90,7 @@ export default function Invoices() {
         </Card>
       ) : (
         <Card style={{ paddingVertical: 0, paddingHorizontal: 0 }}>
-          {shown.map((inv, i) => (
+          {visible.map((inv, i) => (
             <Pressable
               key={inv.invoice_id}
               accessibilityRole="link"
@@ -107,9 +114,36 @@ export default function Invoices() {
               <Text style={styles.rowAmount}>{fmtMoney(inv.amount, inv.currency)}</Text>
             </Pressable>
           ))}
+          {remaining > 0 ? (
+            <MoreRow
+              label={`Show ${Math.min(PAGE, remaining)} more`}
+              note={`${remaining} left`}
+              onPress={() => setLimit((n) => n + PAGE)}
+            />
+          ) : (
+            shown.length > PAGE && <MoreRow label="Show less" up onPress={() => setLimit(PAGE)} />
+          )}
         </Card>
       )}
     </ScrollView>
+  );
+}
+
+// Last row of the list: reveals the next page (caret down) or folds the list back (caret up).
+function MoreRow({ label, note, up, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={note ? `${label}, ${note}` : label}
+      style={({ pressed }) => [styles.row, styles.rule, styles.more, pressed && { backgroundColor: colors.panel2 }]}
+    >
+      <Text style={styles.moreText}>{label}</Text>
+      {note ? <Text style={styles.moreNote}>· {note}</Text> : null}
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={colors.accentInk} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+        <Path d={up ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} />
+      </Svg>
+    </Pressable>
   );
 }
 
@@ -124,4 +158,7 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 14, fontWeight: "600", color: colors.text },
   rowId: { fontWeight: "400", color: colors.muted, fontSize: 12 },
   rowAmount: { fontWeight: "700", fontSize: 14, color: colors.text, fontVariant: ["tabular-nums"] },
+  more: { justifyContent: "center", gap: 6, paddingVertical: 12 },
+  moreText: { fontSize: 14, fontWeight: "600", color: colors.accentInk },
+  moreNote: { fontSize: 13, color: colors.muted, fontVariant: ["tabular-nums"] },
 });
