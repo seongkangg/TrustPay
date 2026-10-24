@@ -332,12 +332,6 @@ function SourceDocument({ invoice }) {
       </span>
       <div className="doc-text">
         <strong>{`${invoice.invoice_id}-${hasPdf ? "redacted" : "masked"}.pdf`}</strong>
-        <span className="muted small">{invoice.source_document || "Source document"}</span>
-        <span className="muted small">
-          {hasPdf
-            ? "The original PDF, with bank, routing and tax numbers blacked out."
-            : "Masked copy rebuilt from the original's text: bank, routing and tax numbers are hidden."}
-        </span>
         {error && <span className="warn-text small">{error}</span>}
       </div>
       <button className="primary" onClick={download} disabled={busy}>

@@ -230,7 +230,6 @@ export default function InvoiceScreen() {
                 multiline
                 accessibilityLabel="Note"
               />
-              <Muted small>Approve and Reject are at the bottom of the screen.</Muted>
               {decideError && <Alert kind="danger">{decideError}</Alert>}
             </Card>
           </>
@@ -602,14 +601,8 @@ function SourceDocument({ invoiceId, name, hasText, hasPdf }) {
           <Text style={styles.docName} numberOfLines={2}>
             {`${invoiceId}-${hasPdf ? "redacted" : "masked"}.pdf`}
           </Text>
-          <Muted small>{name || "Source document"}</Muted>
         </View>
       </View>
-      <Muted small style={{ marginTop: 10 }}>
-        {hasPdf
-          ? "The original PDF, with bank, routing and tax numbers blacked out."
-          : "Masked copy rebuilt from the original's text: bank, routing and tax numbers are hidden."}
-      </Muted>
       <Pressable
         onPress={download}
         accessibilityRole="button"
