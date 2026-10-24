@@ -119,13 +119,6 @@ export default function Overview() {
         </View>
         {/* Keyed on load too, so the bars grow with real data rather than before it arrives. */}
         <RiskBars invoices={invoices} playKey={summary ? chartPlay : -1} />
-        {summary && (
-          <Muted small style={{ marginTop: 12 }}>
-            {summary.blocked_actions} blocked tool call{summary.blocked_actions === 1 ? "" : "s"} ·{" "}
-            {summary.sensitive_data_detections} invoice{summary.sensitive_data_detections === 1 ? "" : "s"} with masked
-            bank or tax data
-          </Muted>
-        )}
       </Card>
 
       <Card style={{ marginTop: 8 }}>

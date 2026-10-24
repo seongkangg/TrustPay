@@ -122,12 +122,6 @@ export default function Dashboard() {
             <span className="muted small">All invoices</span>
           </div>
           <RiskBars invoices={invoices} />
-          {summary && (
-            <p className="panel-foot small muted">
-              {summary.blocked_actions} blocked tool call{summary.blocked_actions === 1 ? "" : "s"} ·{" "}
-              {summary.sensitive_data_detections} with masked bank or tax data
-            </p>
-          )}
         </div>
         <div className="panel" aria-labelledby="days-h">
           <div className="panel-head">
