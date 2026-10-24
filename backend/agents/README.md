@@ -11,6 +11,7 @@ and evidence IDs.
 | `verification_agent.py` | Verification | Compare invoice to vendor and PO records. With no vendor ID but a vendor name, looks the name up (exact after normalization) and adopts the matched ID. Detect unknown vendors, amount mismatches, invalid POs, duplicate invoice IDs, duplicate vendor/amount combos. | `vendor_lookup`, `po_lookup` | Change vendor or PO records |
 | `policy_risk_agent.py` | Policy / Risk | Check approval thresholds, vendor verification status, data-access permissions, suspicious conditions. Assign **low / medium / high** risk with explicit reason codes. | `approval_limit_lookup`, `risk_rules` | Approve payment |
 | `approval_agent.py` | Approval | Produce **Approve / Reject / Escalate** recommendation with confidence score. Must escalate anything high-risk — cannot complete payment without a human. | `approval_request_create` | Execute high-risk actions |
+| `explanations.py` | — | Reviewer-facing explanation for the Approval Agent: one plain-English reason per flag (what was found, why it matters, what to check) and a numbered next step, built only from recorded evidence — no model text. | — | Call the LLM or any tool |
 
 ## How an agent runs
 
