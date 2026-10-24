@@ -63,20 +63,3 @@ export const ChevronRightIcon = (p) => (
     <path d="m9.5 6 6 6-6 6" />
   </Icon>
 );
-
-// TrustPay mark: a rounded indigo tile with a tick, the "approved" stroke the product is about.
-export function Mark({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden="true">
-      <rect width="28" height="28" rx="8" fill="var(--accent)" />
-      <path
-        d="M8 14.4 12.2 18.5 20 9.8"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}

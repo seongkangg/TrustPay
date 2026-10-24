@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T05:59:45Z",
+  "generatedAt": "2026-10-24T06:55:43Z",
   "title": "Design System: TrustPay",
   "extensions": {
     "colorMeta": {
@@ -71,17 +71,17 @@
       "text": {
         "role": "neutral",
         "displayName": "Ink",
-        "canonical": "#15161a",
-        "oklch": "oklch(20.1% 0.008 274.5)",
+        "canonical": "#0f2233",
+        "oklch": "oklch(24.5% 0.041 247.3)",
         "tonalRamp": [
-          "#0b0b0c",
-          "#252526",
-          "#414244",
-          "#606165",
-          "#818287",
-          "#a4a5a9",
-          "#c8c9cc",
-          "#eeeef0"
+          "#090b0e",
+          "#20262b",
+          "#38434e",
+          "#536373",
+          "#6f859a",
+          "#96a7b8",
+          "#becbd7",
+          "#e8eff7"
         ]
       },
       "muted": {
@@ -148,68 +148,116 @@
           "#eeeeef"
         ]
       },
+      "brand-teal": {
+        "role": "primary",
+        "displayName": "Logo Teal",
+        "canonical": "#14b8a6",
+        "oklch": "oklch(70.4% 0.123 182.5)",
+        "tonalRamp": [
+          "#030e0c",
+          "#082b27",
+          "#004e45",
+          "#007366",
+          "#009988",
+          "#59b8aa",
+          "#9ad8cd",
+          "#d5f7f0"
+        ]
+      },
+      "brand-navy": {
+        "role": "primary",
+        "displayName": "Logo Navy",
+        "canonical": "#0f3d5e",
+        "oklch": "oklch(34.7% 0.075 244.6)",
+        "tonalRamp": [
+          "#070c10",
+          "#1b2630",
+          "#2f4557",
+          "#446581",
+          "#5b87ac",
+          "#87aac7",
+          "#b4cde2",
+          "#e2f1fd"
+        ]
+      },
       "accent": {
         "role": "primary",
-        "displayName": "Signal Indigo",
-        "canonical": "#5b5bf0",
-        "oklch": "oklch(56.1% 0.218 276.8)",
+        "displayName": "Signal Teal",
+        "canonical": "#0d9488",
+        "oklch": "oklch(60.0% 0.104 184.7)",
         "tonalRamp": [
-          "#080919",
-          "#1d2047",
-          "#343781",
-          "#4c50bf",
-          "#676bff",
-          "#8c98ff",
-          "#b6c2ff",
-          "#e3ebff"
+          "#040d0c",
+          "#0f2a27",
+          "#144c46",
+          "#147067",
+          "#19968a",
+          "#68b5ab",
+          "#a1d5cd",
+          "#d9f6f1"
+        ]
+      },
+      "accent-strong": {
+        "role": "primary",
+        "displayName": "Deep Teal",
+        "canonical": "#0f766e",
+        "oklch": "oklch(51.1% 0.086 186.4)",
+        "tonalRamp": [
+          "#050d0c",
+          "#142a27",
+          "#204a46",
+          "#2c6e67",
+          "#3b938a",
+          "#74b3ab",
+          "#a9d3ce",
+          "#dcf5f1"
         ]
       },
       "accent-ink": {
         "role": "primary",
-        "displayName": "Deep Indigo Ink",
-        "canonical": "#4040d6",
-        "oklch": "oklch(47.8% 0.222 274.1)",
+        "displayName": "Navy Ink",
+        "canonical": "#0f3d5e",
+        "oklch": "oklch(34.7% 0.075 244.6)",
         "tonalRamp": [
-          "#070a19",
-          "#1b2148",
-          "#303882",
-          "#4751c2",
-          "#5f6dff",
-          "#869aff",
-          "#b1c3ff",
-          "#e0ecff"
+          "#070c10",
+          "#1b2630",
+          "#2f4557",
+          "#446581",
+          "#5b87ac",
+          "#87aac7",
+          "#b4cde2",
+          "#e2f1fd"
         ]
       },
       "accent-soft": {
         "role": "primary",
-        "displayName": "Pale Indigo Line",
-        "canonical": "#c9c9fb",
-        "oklch": "oklch(85.3% 0.069 284.8)",
+        "displayName": "Pale Teal Line",
+        "canonical": "#99ddd3",
+        "oklch": "oklch(84.9% 0.070 184.5)",
         "tonalRamp": [
-          "#0b0b0f",
-          "#242430",
-          "#403f56",
-          "#5e5d7f",
-          "#7e7daa",
-          "#a1a1c5",
-          "#c6c6e1",
-          "#ecedfc"
+          "#070d0c",
+          "#182926",
+          "#294944",
+          "#3a6c65",
+          "#4e9087",
+          "#80b0a9",
+          "#afd1cc",
+          "#e0f3f0"
         ]
       },
       "accent-bg": {
         "role": "primary",
-        "displayName": "Indigo Wash",
-        "canonical": "#ececfe",
-        "oklch": "oklch(94.8% 0.024 285.9)",
+        "displayName": "Teal Wash",
+        "canonical": "#e3f5f2",
+        "oklch": "oklch(95.6% 0.019 184.9)",
         "tonalRamp": [
-          "#0b0b0d",
-          "#252529",
-          "#414149",
-          "#60606c",
-          "#818190",
-          "#a4a4b0",
-          "#c8c8d1",
-          "#eeeef3"
+          "#0a0c0b",
+          "#222625",
+          "#3c4443",
+          "#586462",
+          "#768684",
+          "#9ba8a6",
+          "#c2cbca",
+          "#eaf0ef"
         ]
       },
       "ok": {
@@ -422,7 +470,7 @@
       {
         "name": "focus-halo",
         "value": "0 0 0 3px var(--accent-bg)",
-        "purpose": "Text fields on focus, with an indigo border."
+        "purpose": "Text fields on focus, with a teal border."
       }
     ],
     "motion": [
@@ -468,9 +516,9 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Ink pill for the one forward action in a row, e.g. Review.",
+      "description": "Navy pill for the one forward action in a row, e.g. Review.",
       "html": "<button class=\"ds-btn ds-btn-primary\">Review <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9.5 6 6 6-6 6\"/></svg></button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font: 600 14px/1.5 var(--font); height: 36px; padding: 0 16px; border-radius: var(--radius-control); border: 0; cursor: pointer; white-space: nowrap; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-btn:active:not(:disabled) { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-btn-primary { background: var(--text); color: #fff; } .ds-btn-primary:hover { background: #2c2e36; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font: 600 14px/1.5 var(--font); height: 36px; padding: 0 16px; border-radius: var(--radius-control); border: 0; cursor: pointer; white-space: nowrap; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-btn:active:not(:disabled) { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-btn-primary { background: var(--brand-navy); color: #fff; } .ds-btn-primary:hover { background: #0b2f49; }"
     },
     {
       "name": "Secondary Button",
@@ -492,7 +540,7 @@
       "name": "Text Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "White field with an indigo border and wash halo on focus.",
+      "description": "White field with a teal border and wash halo on focus.",
       "html": "<input class=\"ds-input\" placeholder=\"Reviewer name\" />",
       "css": ".ds-input { width: 100%; padding: 9px 12px; border: 1px solid #dcdde3; border-radius: 12px; background: var(--surface); color: var(--text); font: 14px/1.5 var(--font); transition: border-color 150ms ease; } .ds-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-bg); }"
     },
@@ -516,7 +564,7 @@
       "name": "KPI Card",
       "kind": "card",
       "refersTo": "panel",
-      "description": "Borderless grey panel with label, headline value and an indigo sparkline.",
+      "description": "Borderless grey panel with label, headline value and a teal sparkline.",
       "html": "<div class=\"ds-kpi\"><span class=\"ds-kpi-label\">Received</span><span class=\"ds-kpi-value\">0</span><svg class=\"ds-spark\" viewBox=\"0 0 120 32\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><path d=\"M3,26 C14,24 20,14 31,16 C42,18 48,8 59,10 C70,12 76,22 87,18 C98,14 106,6 117,5\" vector-effect=\"non-scaling-stroke\"/></svg></div>",
       "css": ".ds-kpi { display: flex; flex-direction: column; gap: 4px; background: var(--panel); border-radius: var(--radius-panel); padding: 18px 20px; max-width: 280px; font-family: var(--font); font-variant-numeric: tabular-nums; } .ds-kpi-label { color: var(--muted); font-size: 13px; font-weight: 550; } .ds-kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text); } .ds-spark { width: 100%; height: 32px; margin-top: 6px; overflow: visible; } .ds-spark path { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }"
     },
@@ -532,17 +580,17 @@
       "name": "Approval Queue Row",
       "kind": "custom",
       "refersTo": "queue-row",
-      "description": "Indigo-wash row (blush when blocked) routing the approver to an invoice that needs a human.",
+      "description": "Teal-wash row (blush when blocked) routing the approver to an invoice that needs a human.",
       "html": "<div class=\"ds-queue\"><div class=\"ds-who\"><span class=\"ds-vendor\">Vendor name</span><span class=\"ds-sub\">INV-0000 · timestamp</span></div><div class=\"ds-why\"><span class=\"ds-qbadge\">Pending approval</span><code class=\"ds-code\">REASON_CODE</code></div><span class=\"ds-amt\">$0.00</span><a class=\"ds-review\" href=\"#\">Review</a></div>",
-      "css": ".ds-queue { display: grid; grid-template-columns: minmax(160px,1.1fr) 2fr auto auto; align-items: center; gap: 16px; padding: 12px 12px 12px 18px; background: var(--accent-bg); border-radius: 16px; font: 14px/1.5 var(--font); color: var(--text); } .ds-who { display: flex; flex-direction: column; } .ds-vendor { font-weight: 650; } .ds-sub { font-size: 12px; color: var(--muted); } .ds-why { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .ds-qbadge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--pending-bg); color: var(--accent-ink); } .ds-code { font: 12px/1.4 var(--mono); background: var(--neutral-bg); color: #3a3d46; padding: 2px 6px; border-radius: 6px; } .ds-amt { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; } .ds-review { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--text); color: #fff; font-weight: 600; text-decoration: none; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-review:hover { background: #2c2e36; } .ds-review:active { transform: scale(0.97); } .ds-review:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+      "css": ".ds-queue { display: grid; grid-template-columns: minmax(160px,1.1fr) 2fr auto auto; align-items: center; gap: 16px; padding: 12px 12px 12px 18px; background: var(--accent-bg); border-radius: 16px; font: 14px/1.5 var(--font); color: var(--text); } .ds-who { display: flex; flex-direction: column; } .ds-vendor { font-weight: 650; } .ds-sub { font-size: 12px; color: var(--muted); } .ds-why { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .ds-qbadge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--pending-bg); color: var(--accent-ink); } .ds-code { font: 12px/1.4 var(--mono); background: var(--neutral-bg); color: #3a3d46; padding: 2px 6px; border-radius: 6px; } .ds-amt { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; } .ds-review { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--brand-navy); color: #fff; font-weight: 600; text-decoration: none; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-review:hover { background: #0b2f49; } .ds-review:active { transform: scale(0.97); } .ds-review:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
     }
   ],
   "narrative": {
     "northStar": "The Window on the Desk",
-    "overview": "TrustPay is one calm white window resting on a grey desk. Inside it, money comes first, then its shape over time, then whatever needs a human. The page refuses the stacked-tiles-and-tables admin look it replaced: there are no bordered cards and no header bars, only a floating white window and one-step grey panels set into it, separated by space rather than lines.\n\nThe direction is pinned by a reference image the user supplied, and its distinctive devices are kept on purpose: a single indigo on data and on the active nav pill, sparklines on the KPI cards, a raised white active pill in a centred icon nav, the soft-shadowed window on the grey canvas, and a large hero figure in whole dollars. Density is moderate. An approver who visits a few times a day should be able to read the totals at a glance and reach the next decision in one click.\n\nColour carries meaning, not decoration. Indigo means \"data\" or \"here\". Green and red mean money polarity, risk or status, nothing else. Amber means medium risk only. Healthy states stay quiet; blocked and withheld money is loud.",
+    "overview": "TrustPay is one calm white window resting on a grey desk. Inside it, money comes first, then its shape over time, then whatever needs a human. The page refuses the stacked-tiles-and-tables admin look it replaced: there are no bordered cards and no header bars, only a floating white window and one-step grey panels set into it, separated by space rather than lines.\n\nThe direction is pinned by a reference image the user supplied, and its distinctive devices are kept on purpose: a single accent on data, sparklines on the KPI cards, a raised white active pill in a centred icon nav, the soft-shadowed window on the grey canvas, and a large hero figure in whole dollars. Colours come from the TrustPay logo (`frontend/public/trustpay-logo.svg`): its teal is the accent and its navy is the ink of links and primary buttons; the logo replaced the reference's indigo. Density is moderate. An approver who visits a few times a day should be able to read the totals at a glance and reach the next decision in one click.\n\nColour carries meaning, not decoration. Teal means \"data\" or \"here\". Green and red mean money polarity, risk or status, nothing else. Amber means medium risk only. Healthy states stay quiet; blocked and withheld money is loud.",
     "keyCharacteristics": [
       "Floating white window (28px corners) on a cool grey canvas; borderless grey panels (18px) inside.",
-      "One indigo accent on data, the chart, sparklines, the highlighted risk bar, today's calendar cell and the active nav state.",
+      "The TrustPay logo (teal-to-navy shield and wordmark) in the header; one teal accent on data, the chart, sparklines, the highlighted risk bar and today's calendar cell; navy on links and primary buttons.",
       "Pill-shaped controls everywhere: nav, buttons, badges, count pills, deltas.",
       "Tabular numerals throughout; the hero figure is 44px whole dollars.",
       "Sentence-case badges; missing values print as an em dash (—).",
@@ -550,8 +598,8 @@
     ],
     "rules": [
       {
-        "name": "The One Indigo Rule",
-        "body": "Indigo is the only accent. It marks data and \"you are here\"; it never decorates a heading, a border or an empty area.",
+        "name": "The One Teal Rule",
+        "body": "Teal is the only accent. It marks data and \"you are here\"; it never decorates a heading, a border or an empty area. Logo Teal stays in the logo; the UI uses Signal Teal and Deep Teal.",
         "section": "colors"
       },
       {
@@ -586,7 +634,7 @@
       }
     ],
     "dos": [
-      "**Do** keep indigo (#5b5bf0) to data, the active nav pill, today's cell, the high-risk bar and waiting-count pills.",
+      "**Do** keep teal (#0d9488, or #0f766e under white text) to data, today's cell, the high-risk bar and waiting-count pills, and use the logo file rather than redrawing it.",
       "**Do** use green and red only for paid/withheld money, risk and status, and amber only for medium risk.",
       "**Do** give non-risk states (Disabled, Masked, \"No risk yet\") the neutral badge, in sentence case.",
       "**Do** print missing values as an em dash (—) and label UTC day ranges \"(UTC)\".",
@@ -596,7 +644,7 @@
     ],
     "donts": [
       "**Don't** add borders or shadows to inner panels; only the window, the active nav pill and tooltips float.",
-      "**Don't** introduce a second accent hue, or use indigo for decoration.",
+      "**Don't** introduce a second accent hue, use teal for decoration, or set text in Logo Teal.",
       "**Don't** use green, red or amber for anything that is not money polarity, risk or status.",
       "**Don't** fill a badge solid unless it is blocked, failed or rejected.",
       "**Don't** uppercase or track out labels and badges.",

@@ -4,8 +4,8 @@ import { fmtMoney } from "../api/client.js";
 
 // Same hex values as the tokens in styles/dashboard.css so charts and badges agree.
 const COLOR = {
-  accent: "#5b5bf0", // --accent
-  accentSoft: "#c9c9fb", // --accent-soft
+  accent: "#0d9488", // --accent
+  accentSoft: "#99ddd3", // --accent-soft
   blocked: "#d92d3a", // --blocked
   muted: "#6b6f7b", // --muted
 };

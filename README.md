@@ -221,8 +221,9 @@ Scan the QR code with the phone. The app finds the backend on the laptop running
 
 ## Design
 
-Both dashboards follow one design system: a calm white surface, soft grey panels, and a single
-indigo for data, with green and red kept for money and risk. Reason codes appear as plain-English
+Both dashboards follow one design system built on the TrustPay logo: a calm white surface, soft
+grey panels, the logo's teal for data and its navy for links and buttons, with green and red kept
+for money and risk. Reason codes appear as plain-English
 tags. [PRODUCT.md](PRODUCT.md) says who the dashboard is for; [DESIGN.md](DESIGN.md) records the
 colours, type, components and rules. Read both before changing either UI.
 

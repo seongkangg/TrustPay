@@ -1,6 +1,6 @@
 // Small shared building blocks: badges, panels, pill buttons, alerts, section headings.
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import Svg, { Path, Rect } from "react-native-svg";
+import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
 import { human } from "../api/client.js";
 import { RISK, STATUS, colors, radius, space } from "../theme.js";
@@ -70,7 +70,7 @@ const ALERT = {
 
 // Pill button with press feedback (scale 0.97). tone: "primary" (near-black), "approve", "reject", "quiet".
 export function PillButton({ label, onPress, disabled, tone = "primary", style }) {
-  const bg = { primary: colors.text, approve: colors.ok, reject: colors.blocked, quiet: colors.panel2 }[tone];
+  const bg = { primary: colors.brandNavy, approve: colors.ok, reject: colors.blocked, quiet: colors.panel2 }[tone];
   return (
     <Pressable
       onPress={onPress}
@@ -92,20 +92,32 @@ export function Code({ children }) {
   return <Text style={styles.code}>{children}</Text>;
 }
 
-// TrustPay mark: a rounded indigo tile with a tick, the same mark as the web header.
-export function Mark({ size = 26 }) {
+// TrustPay logo: the teal-to-navy shield with a tick, then "Trust" in navy and "Pay" in teal
+// (the same artwork as frontend/public/trustpay-logo.svg).
+export function Logo({ height = 26 }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 28 28">
-      <Rect width="28" height="28" rx="8" fill={colors.accent} />
-      <Path
-        d="M8 14.4 12.2 18.5 20 9.8"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: height * 0.22 }} accessibilityLabel="TrustPay">
+      <Svg width={height * 0.86} height={height} viewBox="22 14 96 114">
+        <Defs>
+          <LinearGradient id="shield" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={colors.brandTeal} />
+            <Stop offset="1" stopColor={colors.brandNavy} />
+          </LinearGradient>
+        </Defs>
+        <Path d="M70 14 L118 30 V68 C118 98 98 118 70 128 C42 118 22 98 22 68 V30 Z" fill="url(#shield)" />
+        <Path
+          d="M48 70 L64 86 L94 54"
+          fill="none"
+          stroke="#fff"
+          strokeWidth={10}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+      <Text style={{ fontSize: height * 0.72, fontWeight: "800", letterSpacing: -0.5, color: colors.brandNavy }}>
+        Trust<Text style={{ color: colors.brandTeal }}>Pay</Text>
+      </Text>
+    </View>
   );
 }
 
@@ -119,7 +131,7 @@ export const styles = StyleSheet.create({
     height: 22,
     paddingHorizontal: 7,
     borderRadius: radius.pill,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.accentStrong,
     alignItems: "center",
     justifyContent: "center",
   },

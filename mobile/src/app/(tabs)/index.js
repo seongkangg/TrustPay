@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   queueVendor: { fontWeight: "700", fontSize: 15, color: colors.text, flex: 1 },
   queueAmount: { fontWeight: "700", fontSize: 16, color: colors.text, fontVariant: ["tabular-nums"] },
   queueFoot: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
-  reviewPill: { height: 32, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.text, justifyContent: "center" },
+  reviewPill: { height: 32, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.brandNavy, justifyContent: "center" },
   reviewText: { color: "#fff", fontWeight: "600", fontSize: 13 },
   violation: { paddingVertical: 10, gap: 4 },
 });

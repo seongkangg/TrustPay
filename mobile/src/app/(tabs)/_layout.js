@@ -1,10 +1,9 @@
 // Overview, Inbox and Invoices as tabs, with the floating bubble nav as the tab bar.
 import { router } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
-import { Text, View } from "react-native";
 
 import BubbleNav, { HomeIcon, InboxIcon, ListIcon } from "../../components/BubbleNav.js";
-import { Mark } from "../../components/ui.js";
+import { Logo } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors } from "../../theme.js";
 
@@ -13,15 +12,6 @@ const TABS = {
   inbox: { label: "Inbox", Icon: InboxIcon },
   invoices: { label: "Invoices", Icon: ListIcon },
 };
-
-function BrandTitle() {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <Mark size={24} />
-      <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 }}>TrustPay</Text>
-    </View>
-  );
-}
 
 function TabBar({ state, emitter, navigateToTab }) {
   const { awaiting } = useDashboard();
@@ -66,7 +56,7 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Overview", headerTitle: () => <BrandTitle /> }} />
+      <Tabs.Screen name="index" options={{ title: "Overview", headerTitle: () => <Logo /> }} />
       <Tabs.Screen name="inbox" options={{ title: "Inbox" }} />
       <Tabs.Screen name="invoices" options={{ title: "Invoices" }} />
     </Tabs>

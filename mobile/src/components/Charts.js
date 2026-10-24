@@ -1,5 +1,5 @@
 // Overview charts, drawn with react-native-svg and plain Views. Same marks as the web dashboard:
-// a smooth indigo volume line, KPI sparklines, risk bars with high risk in the accent, and the
+// a smooth teal volume line, KPI sparklines, risk bars with high risk in the accent, and the
 // 14 by_day days as a calendar. Series colours are the theme tokens.
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
@@ -144,7 +144,7 @@ export function DayCalendar({ days }) {
             return (
               <View
                 key={d.date}
-                style={[styles.cell, today && { backgroundColor: colors.accent }]}
+                style={[styles.cell, today && { backgroundColor: colors.accentStrong }]}
                 accessibilityLabel={`${dayLabel(d.date)}: ${d.received} received, ${d.completed} completed, ${d.blocked} blocked`}
               >
                 <Text style={[styles.cellDate, today && { color: "rgba(255,255,255,0.85)" }]}>

@@ -36,9 +36,12 @@ action is visible and auditable.
 ## Brand Commitments
 
 - The overview follows a user-supplied reference: soft grey canvas, one large white rounded app
-  window, centred pill icon nav, hero figure with a delta pill, a large smooth indigo line chart, KPI
-  cards with sparklines, a bar block with one highlighted indigo bar, and a calendar grid. The user
-  chose to keep the indigo, sparklines and pill nav from the reference.
+  window, centred pill icon nav, hero figure with a delta pill, a large smooth line chart, KPI
+  cards with sparklines, a bar block with one highlighted bar, and a calendar grid. The user chose
+  to keep the sparklines and pill nav from the reference.
+- The TrustPay logo (`frontend/public/trustpay-logo.svg`: teal-to-navy shield with a tick, "Trust"
+  in navy #0F3D5E and "Pay" in teal #14B8A6) is used as-is in both apps, and its teal and navy set
+  the UI colours. It replaced the reference's indigo.
 
 ## Evidence on Hand
 

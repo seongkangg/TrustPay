@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { api } from "./api/client.js";
-import { ApprovalIcon, HomeIcon, InboxIcon, ListIcon, Mark } from "./components/Icons.jsx";
+import { ApprovalIcon, HomeIcon, InboxIcon, ListIcon } from "./components/Icons.jsx";
 import AuditDetails from "./pages/AuditDetails.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import InvoiceDetails from "./pages/InvoiceDetails.jsx";
@@ -51,9 +51,8 @@ export default function App() {
   return (
     <div className="window">
       <header className="topbar">
-        <Link to="/" className="brand">
-          <Mark />
-          TrustPay
+        <Link to="/" className="brand" aria-label="TrustPay overview">
+          <img src="/trustpay-logo.svg" alt="TrustPay" width="131" height="46" />
         </Link>
         <PillNav />
         <span className={`health ${health ? (ok ? "up" : "down") : ""}`}>
