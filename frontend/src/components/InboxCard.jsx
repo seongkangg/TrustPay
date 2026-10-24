@@ -66,7 +66,7 @@ export default function InboxCard({ status, unavailable, onSynced }) {
       {last && (
         <p className="result small muted">
           {result ? "Just now: " : "Last result: "}
-          {last.checked} checked · {last.created?.length ?? 0} created · {last.skipped} skipped ·{" "}
+          {last.checked} checked · {last.created?.length ?? 0} created ·{" "}
           {last.failed?.length ?? 0} failed
         </p>
       )}

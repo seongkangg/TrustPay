@@ -68,7 +68,6 @@ export default function InboxCard({ status, unavailable, onSynced }) {
     ? [
         { label: "Checked", value: last.checked ?? 0 },
         { label: "Created", value: last.created?.length ?? 0 },
-        { label: "Skipped", value: last.skipped ?? 0 },
         { label: "Failed", value: last.failed?.length ?? 0, alert: (last.failed?.length ?? 0) > 0 },
       ]
     : null;
