@@ -12,7 +12,7 @@ const serveSpaForNavigation = (req) =>
   req.headers.accept?.includes("text/html") ? "/index.html" : undefined;
 
 const proxy = Object.fromEntries(
-  ["/invoices", "/dashboard", "/governance", "/mock", "/health"].map((p) => [
+  ["/invoices", "/dashboard", "/governance", "/inbox", "/mock", "/health"].map((p) => [
     p,
     { target: API, changeOrigin: true, bypass: serveSpaForNavigation },
   ]),
@@ -23,7 +23,5 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy,
-    // the demo-scenario buttons import the fixtures straight from ../data so there is one source of truth
-    fs: { allow: [".."] },
   },
 });

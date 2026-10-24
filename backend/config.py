@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     # Comma-separated mock names forced into failure mode: vendor, purchase_order, approval_limit, payment
     mock_failures: str = ""
 
+    # Gmail intake (read-only). Off by default; needs the one-time `python -m backend.inbox.authorize`.
+    inbox_enabled: bool = False
+    inbox_poll_seconds: int = 60
+    inbox_lookback_days: int = 30
+    gmail_credentials_file: str = "./secrets/credentials.json"
+    gmail_token_file: str = "./secrets/token.json"
+
     @property
     def failing_mocks(self) -> set[str]:
         return {m.strip() for m in self.mock_failures.split(",") if m.strip()}

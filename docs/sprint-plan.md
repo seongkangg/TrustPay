@@ -97,6 +97,15 @@ BLOCKED with masked identifiers; `npm run lint` and `npm run build` clean.
 - [ ] OpenShift manifests
 - [ ] observability export
 
+## Sprint 8 — Email intake + dashboard refocus
+Invoices now arrive from Gmail; the web app shows graphs and data and takes the human decision.
+- [x] `backend/inbox/`: read-only Gmail client, `authorize` script, PDF → fields parser, `InboxService.sync` with dedupe, background poller, `GET /inbox/status`, `POST /inbox/sync`
+- [x] `inbox_messages` table (cleared by `/demo/reset`); `INBOX_*` / `GMAIL_*` settings; `secrets/` ignored
+- [x] `scripts/make_invoice_pdfs.py` → `data/invoices/pdf/*.pdf` (labels shared with the parser)
+- [x] tests: `test_pdf_parser`, `test_inbox` (fake Gmail service + fake client, no network)
+- [x] dashboard refocus: demo buttons / "Run agents" removed; "Needs your approval" queue, amount tiles, three Recharts graphs, inbox card, 15 s refresh; `dashboard_summary` gains `by_day` + `amounts` (`test_dashboard_summary.py`)
+- [ ] one-time OAuth on the demo machine, then an end-to-end emailed invoice
+
 ## Parallelization
 - Frontend starts after Sprint 0 against a static JSON mock of the API contract.
 - Sprints 2 and 3 can run in parallel once the interceptor interface is agreed.

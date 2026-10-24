@@ -25,3 +25,11 @@ final status, masked values, dashboard state, and audit event sequence) so
 
 Policy constants live in `approval_limits.json → thresholds`: auto-approve max **$10,000**,
 confidence threshold **0.75**, approval timeout 48 h.
+
+## PDFs for the email demo (`invoices/pdf/`)
+
+`python scripts/make_invoice_pdfs.py` renders each fixture's `upload` as a labelled one-page PDF
+(`low_risk.pdf`, `policy_violation.pdf`, `suspicious.pdf`, `duplicate.pdf`). Email one to the
+watched Gmail account **as `invoice.pdf`** and the inbox poller ingests it. The labels match
+`backend/inbox/pdf_parser.py`, so parsing a rendered PDF gives back the fixture exactly
+(`tests/test_pdf_parser.py` asserts this). Regenerate after changing a fixture.

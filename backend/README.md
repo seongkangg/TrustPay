@@ -20,5 +20,6 @@ the workflow orchestrator, the mock enterprise systems, and the SQLite audit sto
 | `database/` | SQLite engine/session, table definitions, seed loader that reads `data/`. |
 | `llm/` | watsonx.ai / Granite client, prompt templates, and schema-validated output parser. |
 | `utils/` | Logging config, UTC timestamp helpers, generic validation helpers. |
+| `inbox/` | Gmail intake: read-only client, OAuth authorize script, PDF → fields parser, sync service, background poller. Emailed invoices enter the same `create → process` path as API uploads. |
 
 Each subfolder has its own `README.md` with per-file detail.

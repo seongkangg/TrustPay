@@ -12,7 +12,6 @@ export default function InvoiceDetails() {
   const { id } = useParams();
   const [invoice, setInvoice] = useState(null);
   const [timeline, setTimeline] = useState([]);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
@@ -29,19 +28,6 @@ export default function InvoiceDetails() {
   useEffect(() => {
     load();
   }, [load]);
-
-  async function process() {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.processInvoice(id);
-      await load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   if (error && !invoice) return <div className="alert danger">{error}</div>;
   if (!invoice) return <p className="muted">Loading…</p>;
@@ -107,13 +93,6 @@ export default function InvoiceDetails() {
             <dt>Received</dt>
             <dd>{fmtTime(invoice.created_at)}</dd>
           </dl>
-          {invoice.status === "RECEIVED" && (
-            <div style={{ marginTop: 12 }}>
-              <button className="primary" disabled={busy} onClick={process}>
-                {busy ? "Running agents…" : "Run agents"}
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="card grow">

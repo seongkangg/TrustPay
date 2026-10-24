@@ -32,3 +32,8 @@ class ForbiddenError(ServiceError):
 class UpstreamUnavailableError(ServiceError):
     status_code = 503
     code = "MOCK_SYSTEM_UNAVAILABLE"
+
+
+class InboxNotAuthorizedError(ServiceError):
+    status_code = 503
+    code = "INBOX_NOT_AUTHORIZED"

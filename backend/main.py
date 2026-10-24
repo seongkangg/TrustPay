@@ -8,9 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from backend.api.deps import get_payment_service
 from backend.config import get_settings
 from backend.database.database import engine, init_db
 from backend.database.seed_data import get_reference_data
+from backend.inbox.gmail_client import GmailClient
+from backend.inbox.poller import InboxState, start_poller
 from backend.orchestration.state_machine import InvalidTransition
 from backend.services.errors import ServiceError
 from backend.utils.logging_config import setup_logging
@@ -32,7 +35,19 @@ async def lifespan(app: FastAPI):
         len(ref.approval_limits),
         settings.llm_mode,
     )
+    app.state.inbox = InboxState()
+    poller = None
+    if settings.inbox_enabled:
+        if GmailClient.token_exists(settings.gmail_token_file):
+            poller = start_poller(
+                app.state.inbox, get_payment_service(), settings.inbox_poll_seconds
+            )
+            log.info("inbox poller started (every %ss)", settings.inbox_poll_seconds)
+        else:
+            log.warning("INBOX_ENABLED but no Gmail token; run `python -m backend.inbox.authorize`")
     yield
+    if poller:
+        poller.cancel()
 
 
 def create_app() -> FastAPI:

@@ -57,7 +57,10 @@ TrustPay/
 │   ├── mock_systems/       ← simulated enterprise APIs (vendors, POs, payments, approval limits)
 │   ├── database/           ← SQLite engine, table definitions, seed loader
 │   ├── llm/                ← Granite / watsonx.ai client, prompts, structured-output parser
-│   └── utils/              ← logging config, timestamps, validation helpers
+│   ├── utils/              ← logging config, timestamps, validation helpers
+│   └── inbox/              ← Gmail intake: read-only client, OAuth authorize, PDF parser, sync, poller
+│
+├── scripts/                ← make_invoice_pdfs.py renders the fixtures as PDFs for the email demo
 │
 ├── frontend/               ← React dashboard
 │   └── src/
@@ -154,3 +157,17 @@ npm run reset
 ```
 
 Then follow [docs/demo-script.md](docs/demo-script.md).
+
+## Invoices by email (Gmail)
+
+The backend watches a Gmail inbox (read-only) for emails whose attachment is named
+`invoice.pdf` — any case — and runs each one through the agents automatically.
+
+1. Google Cloud: create a project, enable the **Gmail API**, create an **OAuth client ID (Desktop app)**, download it to `secrets/credentials.json` (gitignored).
+2. `python -m backend.inbox.authorize` — browser consent, writes `secrets/token.json`.
+3. `.env`: `INBOX_ENABLED=true`, restart the backend. Poll interval `INBOX_POLL_SECONDS` (60).
+4. `python scripts/make_invoice_pdfs.py` → `data/invoices/pdf/*.pdf`; email one to that account as `invoice.pdf`.
+
+The dashboard's **Inbox** card shows authorization, the last poll, and a **Check inbox now**
+button; `GET /inbox/status` and `POST /inbox/sync` are the API behind it. Details in
+[backend/inbox/README.md](backend/inbox/README.md).

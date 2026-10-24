@@ -15,6 +15,11 @@ Open <http://localhost:5173>. If the Overview shows invoices from a previous run
 npm run reset                    # POST /demo/reset — wipes invoice state, keeps reference data
 ```
 
+Invoices arrive **by email**: Gmail must be authorized once (`backend/inbox/README.md`) and
+`INBOX_ENABLED=true`. Have the four PDFs from `python scripts/make_invoice_pdfs.py`
+(`data/invoices/pdf/*.pdf`) ready in a mail draft, each to be sent **as `invoice.pdf`**.
+The poller checks every 60 s; **Check inbox now** on the Overview forces it.
+
 Keep <http://localhost:8000/docs> in a second tab for the "look, it's a real API" moment.
 Record a backup video of this script before the session.
 
@@ -31,7 +36,7 @@ Point at the empty tiles: *Total 0 · Blocked actions 0 · Pending approvals 0.*
 
 ## 1. Low-risk invoice — automatic processing (1 min)
 
-Click **1 - Low-risk invoice → Submit & process**.
+Email `low_risk.pdf` as `invoice.pdf` → click **Check inbox now** → it appears in the table; open it.
 
 On the detail page:
 - Badges: **COMPLETED · low risk**.
@@ -44,7 +49,7 @@ On the detail page:
 
 ## 2. Policy violation — blocked, human approves (1.5 min)
 
-Back to **Overview**. Tiles: *1 total, 1 low.* Click **2 - Policy violation → Submit & process**.
+Back to **Overview**. Tiles: *1 total, 1 low.* Email `policy_violation.pdf` as `invoice.pdf` → **Check inbox now** → it shows under **Needs your approval**; open it.
 
 - Badges: **PENDING APPROVAL · high risk**.
 - "Why": *amount 25000.0 > approval_agent limit 10000.0* — rule **POLICY-003**.
@@ -61,7 +66,7 @@ Enter a reviewer email, click **Approve payment**.
 
 ## 3. Suspicious invoice — masked, blocked, escalated (1.5 min)
 
-Overview → **3 - Suspicious / sensitive invoice → Submit & process**.
+Email `suspicious.pdf` as `invoice.pdf` → **Check inbox now** → open it from **Needs your approval**.
 
 - Badges: **BLOCKED · high risk**. Two banners: *Sensitive data detected and masked* and *Payment blocked*.
 - Invoice card: Bank account `****6789`, Routing `****0021`, Tax ID `****4321`.
@@ -77,7 +82,7 @@ Click **Reject** with a note → status **REJECTED**, decision recorded.
 
 ## 4. Duplicate — the quiet one (30 s)
 
-Overview → **3b - Duplicate invoice → Submit & process**.
+Email `duplicate.pdf` as `invoice.pdf` → **Check inbox now**.
 
 - **BLOCKED · high risk**, recommendation **Reject**, rule POLICY-006, evidence `DUP-CHECK-…`.
 
@@ -125,6 +130,8 @@ Overview tiles now read: *4 total · 1 low · 3 high · blocked actions · pendi
 |---------|----|
 | Overview shows old invoices | `npm run reset`, reload |
 | "backend: unreachable" in the top bar | `docker compose ps` / restart backend; the page recovers on reload |
-| A scenario button errors with 409 | that invoice already exists — reset |
+| Inbox card says *not authorized* | `python -m backend.inbox.authorize`, set `INBOX_ENABLED=true`, restart backend |
+| Sync finds nothing | the attachment must be named exactly `invoice.pdf`; already-seen emails are skipped — `npm run reset` clears that memory |
+| Need the invoice without email | `POST /invoices` + `/process` from Swagger with a fixture's `upload` block still works |
 | Need to show a failure path live | `MOCK_FAILURES=vendor` in `.env`, restart backend, run scenario 1 → `PENDING APPROVAL` with `MOCK_SYSTEM_UNAVAILABLE` |
 | Anything else | play the backup video |

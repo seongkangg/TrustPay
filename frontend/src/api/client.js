@@ -18,7 +18,12 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await res.text();
-  const body = text ? JSON.parse(text) : null;
+  let body = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = null; // non-JSON error page (e.g. a proxy 404) — ApiError falls back to the HTTP status
+  }
   if (!res.ok) throw new ApiError(res.status, body);
   return body;
 }
@@ -39,6 +44,8 @@ export const api = {
   audit: (id) => request(`/invoices/${id}/audit`),
   approve: (id, reviewer, note) => request(`/invoices/${id}/approve`, json("POST", { reviewer, note })),
   reject: (id, reviewer, note) => request(`/invoices/${id}/reject`, json("POST", { reviewer, note })),
+  inboxStatus: () => request("/inbox/status"),
+  inboxSync: () => request("/inbox/sync", json("POST")),
 };
 
 export const fmtMoney = (amount, currency = "USD") =>

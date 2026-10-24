@@ -45,6 +45,7 @@
 |-----------|-------|--------|-------|
 | Dashboard | Frontend | `frontend/` | Read-only except the explicit human approve/reject action. Never receives raw sensitive values. |
 | REST API | Backend | `backend/api/` | Thin routers; all responses pass through `masking_service`. |
+| Gmail intake | Ingestion | `backend/inbox/` | Read-only poll for `invoice.pdf` attachments → PDF text → fields → the same `create → process` path as the API. PDF bytes are never stored. |
 | Orchestrator | Orchestration | `backend/orchestration/` | In-process sequential runner. Stand-in for watsonx Orchestrate. Owns the state machine. |
 | Agents | Agent services | `backend/agents/` | Stateless; receive `WorkflowContext`, return `AgentDecision`. No direct tool access. |
 | LLM client | Agent services | `backend/llm/` | Granite via watsonx.ai, or `MockLLM` returning fixture responses. |
@@ -56,7 +57,7 @@
 
 ## Request flow for one invoice
 
-1. `POST /invoices` stores an `InvoiceUpload` → status `RECEIVED`, emits `invoice_received`.
+1. An invoice arrives — by email (the inbox poller finds an `invoice.pdf` attachment, extracts the text, parses labelled fields) or via `POST /invoices` — and is stored as an `InvoiceUpload` → status `RECEIVED`, emits `invoice_received`.
 2. Sensitive-data scanner masks bank/tax fields **before** anything is persisted or passed to a model → `sensitive_data_masked` if anything was found.
 3. `POST /invoices/{id}/process` starts `invoice_workflow`.
 4. Intake agent → `document_parser` → `EXTRACTED`, emits `invoice_extracted`.

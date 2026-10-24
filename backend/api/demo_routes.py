@@ -15,6 +15,7 @@ from backend.database.tables import (
     AgentDecisionRow,
     ApprovalRow,
     AuditEventRow,
+    InboxMessageRow,
     InvoiceRow,
     ToolCallRow,
 )
@@ -23,7 +24,14 @@ from backend.services.errors import ForbiddenError
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
-STATE_TABLES = (AuditEventRow, ToolCallRow, AgentDecisionRow, ApprovalRow, InvoiceRow)
+STATE_TABLES = (
+    AuditEventRow,
+    ToolCallRow,
+    AgentDecisionRow,
+    ApprovalRow,
+    InboxMessageRow,
+    InvoiceRow,
+)
 
 
 @router.post("/reset")

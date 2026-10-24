@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import duplicate from "../../../data/invoices/duplicate_invoice.json";
-import lowRisk from "../../../data/invoices/low_risk_invoice.json";
-import policyViolation from "../../../data/invoices/policy_violation_invoice.json";
-import suspicious from "../../../data/invoices/suspicious_invoice.json";
-import { api, fmtMoney, fmtTime } from "../api/client.js";
+import { api, AWAITING_HUMAN, fmtMoney, fmtTime } from "../api/client.js";
+import ApprovalQueue from "../components/ApprovalQueue.jsx";
+import InboxCard from "../components/InboxCard.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
+import SummaryCharts from "../components/SummaryCharts.jsx";
 
-// Same fixtures the tests use (data/invoices/*.json) — one source of truth for the demo.
-const SCENARIOS = [lowRisk, policyViolation, suspicious, duplicate];
+const REFRESH_MS = 15_000;
 
 function Tile({ label, value, className = "" }) {
   return (
@@ -21,11 +19,13 @@ function Tile({ label, value, className = "" }) {
   );
 }
 
+// Read-only overview. Invoices arrive from the inbox and are processed automatically; the only
+// action here is routing a reviewer to an invoice that needs a human decision.
 export default function Dashboard() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [invoices, setInvoices] = useState([]);
-  const [busy, setBusy] = useState(null);
+  const [inbox, setInbox] = useState({ status: null, unavailable: false });
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
@@ -33,33 +33,41 @@ export default function Dashboard() {
       const [s, list] = await Promise.all([api.summary(), api.listInvoices({ limit: 100 })]);
       setSummary(s);
       setInvoices(list.items);
+      setError(null);
     } catch (err) {
       setError(err.message);
+    }
+    try {
+      setInbox({ status: await api.inboxStatus(), unavailable: false });
+    } catch (err) {
+      // 404 = the inbox feature is not on this backend; anything else is a transient error.
+      if (err.status === 404) setInbox({ status: null, unavailable: true });
     }
   }, []);
 
   useEffect(() => {
     load();
+    const timer = window.setInterval(load, REFRESH_MS);
+    return () => window.clearInterval(timer);
   }, [load]);
 
-  async function runScenario(fx) {
-    setBusy(fx.scenario);
-    setError(null);
-    try {
-      const created = await api.createInvoice(fx.upload);
-      await api.processInvoice(created.invoice_id);
-      navigate(`/invoices/${created.invoice_id}`);
-    } catch (err) {
-      setError(`${fx.scenario}: ${err.message}`);
-      setBusy(null);
-    }
-  }
+  const awaiting = invoices.filter((inv) => AWAITING_HUMAN.includes(inv.status));
+  const reasonCodes = Object.fromEntries(
+    (summary?.recent_violations || []).map((v) => [v.invoice_id, v.reason_codes]),
+  );
+  const amounts = summary?.amounts;
 
   return (
     <>
       <h1>Invoice governance overview</h1>
       {error && <div className="alert danger">{error}</div>}
 
+      <h2>
+        Needs your approval{awaiting.length > 0 && <span className="muted"> · {awaiting.length}</span>}
+      </h2>
+      <ApprovalQueue items={awaiting} reasonCodes={reasonCodes} />
+
+      <h2>At a glance</h2>
       <div className="tiles">
         <Tile label="Total invoices" value={summary?.total_invoices} />
         <Tile label="Low risk" value={summary?.by_risk.low} className="low" />
@@ -69,21 +77,25 @@ export default function Dashboard() {
         <Tile label="Pending approvals" value={summary?.pending_approvals} className="pending" />
         <Tile label="Sensitive-data detections" value={summary?.sensitive_data_detections} />
       </div>
-
-      <h2>Submit a demo invoice</h2>
-      <div className="scenarios">
-        {SCENARIOS.map((fx) => (
-          <div className="scenario" key={fx.scenario}>
-            <div className="name">{fx.scenario}</div>
-            <div className="small muted" style={{ margin: "4px 0 8px" }}>
-              {fx.upload.vendor_name} · {fmtMoney(fx.upload.amount, fx.upload.currency)}
-            </div>
-            <button className="primary" disabled={busy != null} onClick={() => runScenario(fx)}>
-              {busy === fx.scenario ? "Running agents…" : "Submit & process"}
-            </button>
-          </div>
-        ))}
+      <div className="tiles" style={{ marginTop: 12 }}>
+        <Tile label="Total amount" value={amounts && fmtMoney(amounts.total)} className="money" />
+        <Tile label="Paid" value={amounts && fmtMoney(amounts.paid)} className="money low" />
+        <Tile
+          label="Withheld (pending + blocked)"
+          value={amounts && fmtMoney(amounts.withheld)}
+          className="money high"
+        />
       </div>
+
+      {summary && (
+        <>
+          <h2>Graphs</h2>
+          <SummaryCharts summary={summary} />
+        </>
+      )}
+
+      <h2>Inbox</h2>
+      <InboxCard status={inbox.status} unavailable={inbox.unavailable} onSynced={load} />
 
       {summary?.recent_violations?.length > 0 && (
         <>
@@ -106,7 +118,7 @@ export default function Dashboard() {
 
       <h2>Invoices</h2>
       {invoices.length === 0 ? (
-        <p className="muted">No invoices yet. Submit a demo scenario above.</p>
+        <p className="muted">No invoices yet. They appear here as the inbox delivers them.</p>
       ) : (
         <table>
           <thead>

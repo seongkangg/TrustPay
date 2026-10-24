@@ -102,6 +102,23 @@ class AuditEventRow(Base):
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class InboxMessageRow(Base):
+    """One row per Gmail message we have looked at, so a message is never ingested twice."""
+
+    __tablename__ = "inbox_messages"
+
+    message_id: Mapped[str] = mapped_column(String, primary_key=True)
+    thread_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    sender: Mapped[str | None] = mapped_column(String, nullable=True)
+    subject: Mapped[str | None] = mapped_column(String, nullable=True)
+    received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    attachment_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    invoice_id: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
+    status: Mapped[str] = mapped_column(String)  # processed | failed
+    error: Mapped[str | None] = mapped_column(String, nullable=True)
+    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class ApprovalRow(Base):
     __tablename__ = "approvals"
 

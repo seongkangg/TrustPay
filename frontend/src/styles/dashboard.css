@@ -107,7 +107,7 @@ tr.clickable:hover td { background: #f3f6fb; cursor: pointer; }
 .approval .recommendation { border-right: 1px dashed var(--border); padding-right: 16px; }
 .approval h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .approval .big { font-size: 20px; font-weight: 700; text-transform: capitalize; }
-.approval input, .approval textarea, .scenarios textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; margin-bottom: 8px; }
+.approval input, .approval textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; margin-bottom: 8px; }
 button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -115,10 +115,28 @@ button.approve { background: var(--ok); color: #fff; border-color: var(--ok); }
 button.reject { background: var(--blocked); color: #fff; border-color: var(--blocked); }
 .actions { display: flex; gap: 8px; }
 
-/* demo scenarios */
-.scenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-.scenario { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface); }
-.scenario .name { font-weight: 600; }
+/* approval queue (overview) */
+.queue { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.queue .item { display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--pending); border-left-width: 4px; border-radius: 8px; padding: 10px 12px; }
+.queue .item.blocked { border-color: var(--blocked); }
+.queue .head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.queue .vendor { font-weight: 600; }
+.queue .amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.queue .codes code { margin-right: 4px; }
+.queue .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px; }
+.tile.money .value { font-size: 20px; font-variant-numeric: tabular-nums; }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.chart { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px 6px; min-width: 0; }
+.chart h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.chart .recharts-wrapper { font-size: 11px; }
+
+/* inbox card */
+.inbox .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.inbox .head .spacer { margin-left: auto; }
+.inbox .result { margin: 8px 0 0; }
+.inbox table { margin-top: 10px; }
 
 @media (max-width: 760px) {
   .approval { grid-template-columns: 1fr; }

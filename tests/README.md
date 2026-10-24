@@ -22,6 +22,8 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 
 | `test_reliability.py` | Model timeout and unexpected model exceptions end in `FAILED` + escalated with the chain intact; PO / approval-limit / payment service outages escalate rather than fail; a payment outage during human approval is a clean 503 that can be retried once the service is back. |
 | `test_performance.py` | Each demo invoice processes in < 10 s over HTTP; 50 audit appends each < 1 s. |
+| `test_pdf_parser.py` | Every fixture round-trips render → PDF → text → upload exactly; label variants and number cleanup; corrupt bytes raise; an emailed suspicious PDF is stored masked. |
+| `test_inbox.py` | `GmailClient` against a fake Gmail service (pagination, nested `Invoice.PDF`, attachment decode, name must be exactly `invoice.pdf`, provider errors wrapped); `InboxService.sync` with a fake client (create + process, dedupe on re-sync, corrupt PDF / fetch failure don't stop the batch, suspicious → BLOCKED and masked, unreadable PDF → escalated never paid, Gmail down raises); `/inbox/status` and `/inbox/sync` over HTTP including 503 when unauthorized and re-ingest after `/demo/reset`. |
 
 ## Target metrics (hackathon)
 

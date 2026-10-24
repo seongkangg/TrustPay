@@ -3,6 +3,7 @@ from backend.api import (
     dashboard_routes,
     demo_routes,
     governance_routes,
+    inbox_routes,
     invoice_routes,
     mock_routes,
 )
@@ -14,6 +15,7 @@ ROUTERS = (
     dashboard_routes.router,
     mock_routes.router,
     demo_routes.router,
+    inbox_routes.router,
 )
 
 __all__ = ["ROUTERS"]

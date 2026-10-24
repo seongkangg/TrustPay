@@ -151,6 +151,30 @@ optional context fields: `payment_permitted` (bool, default false) and `risk_lev
 }
 ```
 
+### `GET /inbox/status`
+Gmail intake state.
+**Response 200**
+```json
+{
+  "enabled": true,
+  "authorized": true,
+  "poll_seconds": 60,
+  "last_sync_at": "2026-10-24T10:00:00Z",
+  "last_result": { "checked": 2, "created": ["INV-1005"], "skipped": 1, "failed": [] },
+  "last_error": null,
+  "recent": [
+    { "message_id": "18f3…", "sender": "ap@vendor.example", "subject": "Invoice", "received_at": "…",
+      "attachment_name": "invoice.pdf", "invoice_id": "INV-1005", "status": "processed", "error": null, "synced_at": "…" }
+  ]
+}
+```
+`status` ∈ `processed` (invoice created and run) · `skipped` (no `invoice.pdf` on the email) · `failed` (unreadable PDF or processing error; see `error`).
+
+### `POST /inbox/sync`
+Run one intake pass now. Same result shape as `last_result`.
+**503** `INBOX_NOT_AUTHORIZED` — no OAuth token yet (message says which command to run) · **503** `MOCK_SYSTEM_UNAVAILABLE` — Gmail unreachable.
+**Audit events:** per created invoice, the full workflow sequence (starting `invoice_received`).
+
 ### `GET /health`
 **Response 200** — `{ "status": "ok", "llm_mode": "mock" | "watsonx" | "ollama", "db": "ok" }`
 

@@ -5,7 +5,7 @@ and the stored row never held them in the first place.
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select
@@ -29,6 +29,7 @@ from backend.services.errors import InvalidStateError, NotFoundError
 from backend.utils.timestamps import now_utc
 
 FIRST_INVOICE_NUMBER = 1001
+DASHBOARD_DAYS = 14  # days of history in dashboard_summary.by_day
 
 
 def _utc(dt: datetime | None) -> datetime | None:
@@ -249,6 +250,33 @@ class InvoiceService:
             }
             for e in self.session.scalars(violations_stmt)
         ]
+        # Last 14 days (oldest first) of received / completed / blocked counts by created_at.
+        today = now_utc().date()
+        days = [today - timedelta(days=i) for i in range(DASHBOARD_DAYS - 1, -1, -1)]
+        by_day = {
+            d.isoformat(): {"date": d.isoformat(), "received": 0, "completed": 0, "blocked": 0}
+            for d in days
+        }
+        for r in rows:
+            created = _utc(r.created_at)
+            key = created.astimezone(UTC).date().isoformat() if created else None
+            bucket = by_day.get(key)
+            if bucket is None:
+                continue
+            bucket["received"] += 1
+            if r.status == InvoiceStatus.COMPLETED.value:
+                bucket["completed"] += 1
+            elif r.status == InvoiceStatus.BLOCKED.value:
+                bucket["blocked"] += 1
+
+        withheld_statuses = (InvoiceStatus.PENDING_APPROVAL.value, InvoiceStatus.BLOCKED.value)
+        amounts = {
+            "total": round(sum(r.amount or 0 for r in rows), 2),
+            "paid": round(
+                sum(r.amount or 0 for r in rows if r.status == InvoiceStatus.COMPLETED.value), 2
+            ),
+            "withheld": round(sum(r.amount or 0 for r in rows if r.status in withheld_statuses), 2),
+        }
         return {
             "total_invoices": len(rows),
             "by_risk": by_risk,
@@ -257,6 +285,8 @@ class InvoiceService:
             "pending_approvals": pending_approvals,
             "sensitive_data_detections": sum(1 for r in rows if r.sensitive_data_detected),
             "recent_violations": recent_violations,
+            "by_day": list(by_day.values()),
+            "amounts": amounts,
         }
 
     # ------------------------------------------------------------ internals

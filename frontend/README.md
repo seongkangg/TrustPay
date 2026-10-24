@@ -6,13 +6,13 @@ pending approvals, and the audit trail.
 
 | Path | What it does |
 |------|--------------|
-| `package.json` | Dependencies and `dev` / `build` / `lint` scripts (Vite 5 + React 18 + react-router 6, ESLint 9 flat config). |
-| `vite.config.js` | Dev server on 5173; proxies `/invoices`, `/dashboard`, `/governance`, `/mock`, `/health` to the backend (`VITE_API_BASE_URL`, default `http://localhost:8000`); allows importing the demo fixtures from `../data`. |
+| `package.json` | Dependencies and `dev` / `build` / `lint` scripts (Vite 5 + React 18 + react-router 6 + Recharts 2, ESLint 9 flat config). |
+| `vite.config.js` | Dev server on 5173; proxies `/invoices`, `/dashboard`, `/governance`, `/inbox`, `/mock`, `/health` to the backend (`API_PROXY_TARGET`, default `http://localhost:8000`). Browser navigations still get the SPA. |
 | `index.html`, `src/main.jsx` | Entry point; mounts `App` inside a `BrowserRouter`. |
 | `eslint.config.js` | ESLint flat config: recommended + react + react-hooks. |
 | `src/App.jsx` | Top bar with backend health, routes: `/` → Dashboard, `/invoices/:id` → InvoiceDetails, `/invoices/:id/audit` → AuditDetails. |
-| `src/api/client.js` | Thin fetch wrapper for every backend endpoint, `ApiError` carrying the contract's error body, and formatting helpers (`fmtMoney`, `fmtTime`, `fmtPct`, `human`). |
-| `src/styles/dashboard.css` | Plain CSS. Risk colors are tokens (`--risk-low/medium/high`), blocked states share `--blocked`; badges, tiles, tables, timeline, approval panel. |
+| `src/api/client.js` | Thin fetch wrapper for every backend endpoint (including `inboxStatus` / `inboxSync`), `ApiError` carrying the contract's error body and HTTP status, and formatting helpers (`fmtMoney`, `fmtTime`, `fmtPct`, `human`). |
+| `src/styles/dashboard.css` | Plain CSS. Risk colors are tokens (`--risk-low/medium/high`), blocked states share `--blocked`; badges, tiles, tables, timeline, approval panel, approval queue, chart panels, inbox card. The chart series reuse the same hex values as the tokens. |
 
 ## Running
 
@@ -21,9 +21,13 @@ npm install
 npm run dev        # http://localhost:5173, backend expected on :8000
 ```
 
-The Overview page has a **Submit a demo invoice** strip that posts each fixture from
-`data/invoices/*.json` to `POST /invoices` and then `POST /invoices/{id}/process` — the same
-files the tests assert on, so the demo and the test suite can never drift apart.
+The dashboard is read-only: invoices arrive from the Gmail inbox (`backend/inbox/`) and are
+processed automatically, so there are no "submit" or "run agents" buttons. The one action a
+person takes in the UI is the explicit approve / reject on the invoice page. The Overview
+re-fetches the summary, the invoice list and the inbox status every 15 seconds.
+
+To seed data without the inbox, post a fixture from `data/invoices/*.json` to `POST /invoices`
+and `POST /invoices/{id}/process` with curl or the API docs at `http://localhost:8000/docs`.
 
 ## Components (`src/components/`)
 
@@ -35,13 +39,16 @@ files the tests assert on, so the demo and the test suite can never drift apart.
 | `ToolCallTable.jsx` | Every tool call made for an invoice: agent, tool, purpose, allowed/blocked, result summary, timestamp. |
 | `AuditLog.jsx` | Immutable event list: actor, action, timestamp, policy result, integrity (hash chain) status. |
 | `ApprovalPanel.jsx` | Explicit human approve/reject controls, clearly separated from the AI recommendation. Shows the "why" (reasons + evidence) next to the recommendation. |
+| `ApprovalQueue.jsx` | Overview list of invoices in `PENDING_APPROVAL` / `BLOCKED`: vendor, amount, status and risk badges, reason codes when known, link to the invoice page where the decision is made. |
+| `SummaryCharts.jsx` | Recharts panels fed by `GET /dashboard/summary`: bar chart of `by_risk`, bar chart of `by_status`, line chart of `by_day` (received / completed / blocked per day, last 14 days). |
+| `InboxCard.jsx` | `GET /inbox/status`: authorized or not, last sync, "Check inbox now" (`POST /inbox/sync`, shows the backend's message on 503 `INBOX_NOT_AUTHORIZED`), recent messages with links to their invoices. Renders "Inbox not available" when the backend answers 404. |
 
 ## Pages (`src/pages/`)
 
 | File | Screen |
 |------|--------|
-| `Dashboard.jsx` | Overview: total invoices, risk counts, blocked actions, pending approvals, recent policy violations. |
-| `InvoiceDetails.jsx` | Invoice fields (sensitive data masked), current status, risk level, final recommendation, sensitive-data warnings, approval controls, agent timeline, tool calls. |
+| `Dashboard.jsx` | Overview, top to bottom: **Needs your approval** queue → count tiles plus amount tiles (total / paid / withheld from `summary.amounts`) → **Graphs** → **Inbox** card → recent policy violations → invoices table. Auto-refreshes every 15 s. |
+| `InvoiceDetails.jsx` | Invoice fields (sensitive data masked), current status, risk level, final recommendation, sensitive-data warnings, approval controls (the only write action in the UI), agent timeline, tool calls. |
 | `AuditDetails.jsx` | Full audit view for one invoice. |
 
 ## Design rules
