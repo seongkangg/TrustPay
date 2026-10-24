@@ -28,7 +28,6 @@ import {
   Code,
   H2,
   Muted,
-  PillButton,
   ReasonTag,
   RiskBadge,
   StatusBadge,
@@ -38,7 +37,7 @@ import ConfidenceChart from "../../components/ConfidenceChart.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
-const ACTION_BAR = 76; // height of the pinned approve / reject bar, above the safe-area inset
+const ACTION_BAR = 76; // the floating approve / reject pill (64) plus its gap above the safe-area inset
 const TIMELINE_PREVIEW = 6;
 const LOW_CONFIDENCE = 0.8;
 
@@ -249,18 +248,11 @@ export default function InvoiceScreen() {
       </ScrollView>
 
       {needsDecision && (
-        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <PillButton
-            label="Reject"
-            tone="reject"
-            style={{ flex: 1 }}
-            disabled={busy || !reviewer}
-            onPress={() => confirm("reject")}
-          />
-          <PillButton
+        <View style={[styles.actionBar, { bottom: Math.max(insets.bottom, 12) }]}>
+          <DecisionBubble kind="reject" label="Reject" disabled={busy || !reviewer} onPress={() => confirm("reject")} />
+          <DecisionBubble
+            kind="approve"
             label={busy ? "Saving…" : `Approve ${amount}`}
-            tone="approve"
-            style={{ flex: 1.6 }}
             disabled={busy || !reviewer}
             onPress={() => confirm("approve")}
           />
@@ -589,6 +581,32 @@ function AuthBadge({ authorization }) {
   return <Badge label={authorization ? sentence(authorization) : "—"} fg={c.fg} bg={c.bg} />;
 }
 
+// A decision button in the bottom nav's bubble style: soft red Reject, solid green Approve.
+function DecisionBubble({ kind, label, disabled, onPress }) {
+  const approve = kind === "approve";
+  const fg = disabled ? colors.neutralInk : approve ? "#fff" : colors.riskHigh;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        styles.bubble,
+        { flex: approve ? 1.6 : 1, backgroundColor: disabled ? colors.panel2 : approve ? colors.ok : colors.blockedBg },
+        pressed && !disabled && styles.bubblePressed,
+      ]}
+    >
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={fg} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+        <Path d={approve ? "m5 12.5 4.5 4.5L19 7.5" : "M6 6l12 12M18 6 6 18"} />
+      </Svg>
+      <Text style={[styles.bubbleText, { color: fg }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function Chevron({ open }) {
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={colors.muted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -645,21 +663,24 @@ const styles = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 5, borderWidth: 2, borderColor: colors.panel },
   railLine: { flex: 1, width: 2, backgroundColor: colors.panel2, marginTop: 2 },
   tlTitle: { fontSize: 14, fontWeight: "600", color: colors.text },
-  // Pinned decision bar: floats over the page, so it carries the soft upward shadow.
+  // Pinned decision bar in the bottom nav's language: a floating white pill holding two bubbles.
   actionBar: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
+    left: space.gutter,
+    right: space.gutter,
+    height: 64,
     flexDirection: "row",
-    gap: 10,
-    paddingTop: 12,
-    paddingHorizontal: space.gutter,
+    gap: 6,
+    padding: 6,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
     shadowColor: "#14161e",
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 12,
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
+  bubble: { height: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: radius.pill, paddingHorizontal: 14 },
+  bubblePressed: { transform: [{ scale: 0.96 }] },
+  bubbleText: { fontSize: 15, fontWeight: "700", fontVariant: ["tabular-nums"] },
 });
