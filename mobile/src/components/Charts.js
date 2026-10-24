@@ -3,7 +3,7 @@
 // 14 by_day days as a calendar. Series colours are the theme tokens.
 import { useEffect, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from "react-native";
-import Svg, { Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
 
 import { fmtMoney } from "../api/client.js";
 import { colors, radius } from "../theme.js";
@@ -47,9 +47,15 @@ function smoothPath(pts, floor) {
 // (each time the Overview tab gains focus). The wipe is two opposing translateX transforms on the
 // native driver: the outer view clips and slides in from the left while the inner one slides back,
 // so the drawing stays in place and is revealed. Reduce motion swaps it for a short fade.
+//
+// Touch and drag to scrub (the phone's version of the desktop hover tooltip): the nearest day gets a
+// cursor line, dots on both series and a card with its counts. The selection snaps to days, so state
+// changes only when the finger crosses into another day, not on every move. A vertical swipe is
+// handed to the page's ScrollView, which ends the scrub.
 export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
   const [progress] = useState(() => new Animated.Value(0));
   const reduceMotion = useReduceMotion();
+  const [active, setActive] = useState(null);
 
   useEffect(() => {
     progress.setValue(0);
@@ -83,9 +89,27 @@ export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
         inner: { transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [width, 0] }) }] },
       };
 
+  const pick = (e) => {
+    const i = Math.round(((e.nativeEvent.locationX - 2) / (width - 4)) * (days.length - 1));
+    setActive(Math.min(days.length - 1, Math.max(0, i)));
+  };
+  const clear = () => setActive(null);
+  const day = active === null ? null : days[active];
+  const TIP_W = 132;
+  const tipLeft = day ? Math.min(width - TIP_W, Math.max(0, x(active) - TIP_W / 2)) : 0;
+
   return (
-    <View style={{ width, height }}>
-      <Svg width={width} height={height}>
+    <View
+      style={{ width, height }}
+      onStartShouldSetResponder={() => true}
+      onResponderGrant={pick}
+      onResponderMove={pick}
+      onResponderRelease={clear}
+      onResponderTerminate={clear}
+      accessibilityLabel="Invoices received per day, last 14 days. Touch and drag to see each day."
+    >
+      {/* Layers ignore touches, so locationX is always measured against this chart's own box. */}
+      <Svg width={width} height={height} pointerEvents="none">
         {/* Faint dashed grid behind the data: one vertical line per day, quarters of the height. */}
         {days.map((d, i) => (
           <Line key={`v${d.date}`} x1={x(i)} x2={x(i)} y1={padT} y2={floor} stroke={colors.grid} strokeWidth={1} strokeDasharray="3 5" />
@@ -130,6 +154,30 @@ export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
           </Svg>
         </Animated.View>
       </Animated.View>
+      {day && (
+        <>
+          <Svg width={width} height={height} style={styles.wipe} pointerEvents="none">
+            <Line x1={x(active)} x2={x(active)} y1={padT} y2={floor} stroke={colors.accentSoft} strokeWidth={1.5} />
+            <Circle cx={x(active)} cy={y(day.completed)} r={4} fill={colors.accentSoft} stroke={colors.surface} strokeWidth={2} />
+            <Circle cx={x(active)} cy={y(day.received)} r={5} fill={colors.accent} stroke={colors.surface} strokeWidth={2} />
+          </Svg>
+          <View pointerEvents="none" style={[styles.tip, { left: tipLeft, width: TIP_W }]}>
+            <Text style={styles.tipDate}>{dayLabel(day.date)}</Text>
+            <TipRow color={colors.accent} label={`${day.received} received`} />
+            <TipRow color={colors.accentSoft} label={`${day.completed} completed`} />
+            {day.blocked > 0 && <TipRow color={colors.blocked} label={`${day.blocked} blocked`} />}
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+function TipRow({ color, label }) {
+  return (
+    <View style={styles.tipRow}>
+      <View style={[styles.tipDot, { backgroundColor: color }]} />
+      <Text style={styles.tipText}>{label}</Text>
     </View>
   );
 }
@@ -253,6 +301,24 @@ export function DayCalendar({ days }) {
 
 const styles = StyleSheet.create({
   wipe: { position: "absolute", left: 0, top: 0, overflow: "hidden" },
+  // The scrub card floats over the chart, so it carries the one soft shadow.
+  tip: {
+    position: "absolute",
+    top: -6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.field,
+    backgroundColor: colors.surface,
+    shadowColor: "#14161e",
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  tipDate: { fontSize: 12, fontWeight: "700", color: colors.text, marginBottom: 2 },
+  tipRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  tipDot: { width: 8, height: 8, borderRadius: 4 },
+  tipText: { fontSize: 12, color: colors.text, fontVariant: ["tabular-nums"], lineHeight: 18 },
   riskbars: { flexDirection: "row", gap: 8 },
   riskbar: { flex: 1, alignItems: "center" },
   track: { height: 120, width: "100%", justifyContent: "flex-end" },
