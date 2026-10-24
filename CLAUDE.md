@@ -57,3 +57,4 @@ If code and these docs disagree, the docs win until the team changes the doc.
 - [ ] Did I add anything the spec does not call for?
 - [ ] Do the relevant tests pass (`pytest tests/`)?
 - [ ] Did I update the folder `README.md` if a file's purpose changed?
+- [ ] Did I check `.claude/agents.md` and confirm the acceptance checks for the deliverables this task touches pass?
