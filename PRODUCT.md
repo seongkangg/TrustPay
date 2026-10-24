@@ -4,11 +4,11 @@
 
 ## Platform
 
-ios
+mobile phone
 
 ## Users
 
-Primary: a finance approver who opens the dashboard a few times a day to clear invoices waiting
+Primary: an entity or finance approver who opens the dashboard a few times a day to clear invoices waiting
 for a human decision (PENDING_APPROVAL / BLOCKED), then checks totals. The same screens are also
 shown live in demos.
 
@@ -42,8 +42,7 @@ action is visible and auditable.
 
 ## Evidence on Hand
 
-Demo fixtures in `data/invoices/*.json`. No customers, testimonials or business statistics exist;
-none may be invented.
+Demo fixtures in `data/invoices/*.json`. Customers business statistics exist for purposes of prototyping.
 
 ## Product Principles
 
