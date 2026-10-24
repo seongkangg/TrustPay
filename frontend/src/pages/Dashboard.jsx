@@ -1,16 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
-import { api, AWAITING_HUMAN, fmtMoney, fmtTime, human } from "../api/client.js";
-import ApprovalQueue from "../components/ApprovalQueue.jsx";
+import { fmtMoney, fmtTime } from "../api/client.js";
 import { ArrowUpIcon, CalendarIcon } from "../components/Icons.jsx";
-import InboxCard from "../components/InboxCard.jsx";
 import ReasonTag from "../components/ReasonTag.jsx";
-import RiskBadge from "../components/RiskBadge.jsx";
-import StatusBadge from "../components/StatusBadge.jsx";
+import RollingNumber, { useRolling } from "../components/RollingNumber.jsx";
 import { dayLabel, DayCalendar, RiskBars, Sparkline, VolumeChart } from "../components/SummaryCharts.jsx";
-
-const REFRESH_MS = 15_000;
+import { useDashboard } from "../data.jsx";
 
 const wholeDollars = (amount) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
@@ -28,54 +24,25 @@ function Kpi({ label, value, values, tone, note }) {
   );
 }
 
-// Read-only overview. Invoices arrive from the inbox and are processed automatically; the only
-// action here is routing a reviewer to an invoice that needs a human decision.
+// The "% paid" pill rolls with the hero figures; its own component so only the pill re-renders.
+function PaidPill({ share }) {
+  const shown = useRolling(share);
+  return <span className="delta up">{Math.round(shown)}% paid</span>;
+}
+
+// Overview: invoice volume (hover the chart to read any day), counts, risk mix, days and recent
+// violations. Approving happens from the Inbox page; every invoice is on the Invoices page.
 export default function Dashboard() {
-  const { hash } = useLocation();
-  const navigate = useNavigate();
-  const [summary, setSummary] = useState(null);
-  const [invoices, setInvoices] = useState([]);
-  const [inbox, setInbox] = useState({ status: null, unavailable: false });
-  const [error, setError] = useState(null);
+  const { summary, invoices, error } = useDashboard();
+  const [hover, setHover] = useState(null); // index of the day under the pointer, or null
 
-  const load = useCallback(async () => {
-    try {
-      const [s, list] = await Promise.all([api.summary(), api.listInvoices({ limit: 100 })]);
-      setSummary(s);
-      setInvoices(list.items);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    }
-    try {
-      setInbox({ status: await api.inboxStatus(), unavailable: false });
-    } catch (err) {
-      // 404 = the inbox feature is not on this backend; anything else is a transient error.
-      if (err.status === 404) setInbox({ status: null, unavailable: true });
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-    const timer = window.setInterval(load, REFRESH_MS);
-    return () => window.clearInterval(timer);
-  }, [load]);
-
-  // The top nav links to sections of this page; scroll there once the data has rendered.
-  const loaded = summary !== null;
-  useEffect(() => {
-    if (!loaded) return;
-    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
-    else window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [hash, loaded]);
-
-  const awaiting = invoices.filter((inv) => AWAITING_HUMAN.includes(inv.status));
-  const reasonCodes = Object.fromEntries(
-    (summary?.recent_violations || []).map((v) => [v.invoice_id, v.reason_codes]),
-  );
-  const amounts = summary?.amounts;
   const days = summary?.by_day || [];
   const today = days[days.length - 1];
+  // While a day is hovered the hero shows that day's money (from by_day); otherwise the totals.
+  const hoverDay = hover !== null && days[hover]?.amount !== undefined ? days[hover] : null;
+  const amounts = hoverDay
+    ? { total: hoverDay.amount, paid: hoverDay.paid, withheld: hoverDay.withheld }
+    : summary?.amounts;
   const paidShare = amounts?.total ? Math.round((amounts.paid / amounts.total) * 100) : null;
   // by_day is bucketed by UTC calendar day on the backend; say so wherever a day is named.
   const range = days.length ? `${dayLabel(days[0].date)} – ${dayLabel(days[days.length - 1].date)} (UTC)` : "";
@@ -85,32 +52,24 @@ export default function Dashboard() {
       <h1 className="sr-only">Invoice governance overview</h1>
       {error && <div className="alert danger">{error}</div>}
 
-      <section id="approvals" className="approvals" aria-labelledby="approvals-h">
-        <h2 id="approvals-h">
-          Needs your approval
-          <span className={`count-pill ${awaiting.length ? "" : "quiet"}`}>{awaiting.length}</span>
-          {awaiting.length === 0 && <span className="h-note">Nothing waiting. New invoices are checked automatically.</span>}
-        </h2>
-        <ApprovalQueue items={awaiting} reasonCodes={reasonCodes} />
-      </section>
-
-      <section className="hero" aria-labelledby="volume-h">
+      <section className="hero panel-plain" aria-labelledby="volume-h">
         <div className="hero-head">
           <div>
             <h2 id="volume-h" className="label">
-              Invoice volume
+              Invoice volume{hoverDay ? ` · ${dayLabel(hoverDay.date)} (UTC)` : ""}
             </h2>
             <div className="figure-row">
-              <span className="figure">{amounts ? wholeDollars(amounts.total) : "—"}</span>
-              {paidShare !== null && <span className="delta up">{paidShare}% paid</span>}
+              <RollingNumber className="figure" value={amounts?.total} format={wholeDollars} />
+              {paidShare !== null && <PaidPill share={paidShare} />}
             </div>
             {amounts && (
               <div className="split">
                 <span>
-                  <span className="key paid" /> Paid <strong>{fmtMoney(amounts.paid)}</strong>
+                  <span className="key paid" /> Paid <RollingNumber className="strong" value={amounts.paid} format={fmtMoney} />
                 </span>
                 <span>
-                  <span className="key withheld" /> Withheld <strong>{fmtMoney(amounts.withheld)}</strong>
+                  <span className="key withheld" /> Withheld{" "}
+                  <RollingNumber className="strong" value={amounts.withheld} format={fmtMoney} />
                 </span>
               </div>
             )}
@@ -127,9 +86,10 @@ export default function Dashboard() {
                 <span className="key completed" /> Completed
               </span>
             </span>
+            <span className="hint">Hover the chart to see any day</span>
           </div>
         </div>
-        {summary ? <VolumeChart days={days} /> : <div className="volume-chart skeleton" />}
+        {summary ? <VolumeChart days={days} onHover={setHover} /> : <div className="volume-chart skeleton" />}
       </section>
 
       <section className="kpis" aria-label="Invoice counts">
@@ -164,8 +124,7 @@ export default function Dashboard() {
           {summary && (
             <p className="panel-foot small muted">
               {summary.blocked_actions} blocked tool call{summary.blocked_actions === 1 ? "" : "s"} ·{" "}
-              {summary.sensitive_data_detections} invoice{summary.sensitive_data_detections === 1 ? "" : "s"} with
-              masked bank or tax data
+              {summary.sensitive_data_detections} with masked bank or tax data
             </p>
           )}
         </div>
@@ -176,78 +135,35 @@ export default function Dashboard() {
           </div>
           <DayCalendar days={days} />
         </div>
-      </section>
-
-      <section id="inbox" aria-labelledby="inbox-h">
-        <h2 id="inbox-h">Inbox</h2>
-        <InboxCard status={inbox.status} unavailable={inbox.unavailable} onSynced={load} />
-      </section>
-
-      {summary?.recent_violations?.length > 0 && (
-        <section aria-labelledby="violations-h">
-          <h2 id="violations-h">Recent policy violations</h2>
-          <ul className="panel violations">
-            {summary.recent_violations.map((v, i) => (
-              <li key={i}>
-                <Link to={`/invoices/${v.invoice_id}`}>{v.invoice_id}</Link>
-                <span className="codes">
-                  {v.reason_codes.map((c) => (
-                    <ReasonTag key={c} code={c} />
-                  ))}
-                </span>
-                <span className="muted small">{fmtTime(v.timestamp)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section id="invoices" aria-labelledby="invoices-h">
-        <h2 id="invoices-h">
-          Invoices{invoices.length > 0 && <span className="count-pill quiet">{invoices.length}</span>}
-        </h2>
-        {invoices.length === 0 ? (
-          <p className="panel empty muted">No invoices yet. They appear here as the inbox delivers them.</p>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Invoice</th>
-                  <th>Vendor</th>
-                  <th className="right">Amount</th>
-                  <th className="hide-sm">Risk</th>
-                  <th>Status</th>
-                  <th className="hide-sm">Recommendation</th>
-                  <th className="hide-sm">Sensitive data</th>
-                  <th className="hide-sm">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.invoice_id} className="clickable" onClick={() => navigate(`/invoices/${inv.invoice_id}`)}>
-                    <td>
-                      <Link to={`/invoices/${inv.invoice_id}`} className="rowlink">
-                        {inv.invoice_id}
-                      </Link>
-                    </td>
-                    <td>{inv.vendor_name || "—"}</td>
-                    <td className="right num">{fmtMoney(inv.amount, inv.currency)}</td>
-                    <td className="hide-sm">
-                      <RiskBadge level={inv.risk_level} />
-                    </td>
-                    <td>
-                      <StatusBadge status={inv.status} />
-                    </td>
-                    <td className="hide-sm">{human(inv.recommendation)}</td>
-                    <td className="hide-sm">{inv.sensitive_data_detected ? <span className="badge">Masked</span> : "—"}</td>
-                    <td className="small muted hide-sm">{fmtTime(inv.updated_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="panel" aria-labelledby="violations-h">
+          <div className="panel-head">
+            <h2 id="violations-h">Recent policy violations</h2>
+            <Link to="/invoices" className="small">
+              All invoices
+            </Link>
           </div>
-        )}
+          {summary?.recent_violations?.length ? (
+            <ul className="violations">
+              {summary.recent_violations.map((v, i) => (
+                <li key={i}>
+                  <div className="violation-head">
+                    <Link to={`/invoices/${v.invoice_id}`} className="rowlink">
+                      {v.invoice_id}
+                    </Link>
+                    <span className="muted small">{fmtTime(v.timestamp)}</span>
+                  </div>
+                  <span className="codes">
+                    {v.reason_codes.map((c) => (
+                      <ReasonTag key={c} code={c} />
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted small empty">{summary ? "No policy violations." : "Loading…"}</p>
+          )}
+        </div>
       </section>
     </>
   );

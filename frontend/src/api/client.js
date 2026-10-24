@@ -63,6 +63,22 @@ export const api = {
   reject: (id, reviewer, note) => request(`/invoices/${id}/reject`, json("POST", { reviewer, note })),
   inboxStatus: () => request("/inbox/status"),
   inboxSync: () => request("/inbox/sync", json("POST")),
+  // Policy constants from data/approval_limits.json (auto-approve max, confidence threshold, ...).
+  thresholds: () => request("/mock/thresholds"),
+  // The source document as a PDF (redacted original, else masked copy), saved as a file. Fetched
+  // rather than linked so the dev proxy forwards it (browser navigations get the SPA instead).
+  downloadDocument: async (id) => {
+    const res = await fetch(`${BASE}/invoices/${id}/document.pdf`);
+    if (!res.ok) throw new ApiError(res.status, null);
+    const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") || "")?.[1] || `${id}.pdf`;
+    const url = window.URL.createObjectURL(await res.blob());
+    const link = Object.assign(document.createElement("a"), { href: url, download: name });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    return name;
+  },
 };
 
 export const fmtMoney = (amount, currency = "USD") =>
@@ -71,6 +87,16 @@ export const fmtMoney = (amount, currency = "USD") =>
     : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 
 export const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
+
+// "12 min ago", "3 h ago", "2 d ago" (same as the phone app's).
+export const fmtAgo = (iso) => {
+  if (!iso) return "—";
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)} h ago`;
+  return `${Math.round(mins / (60 * 24))} d ago`;
+};
 
 export const fmtPct = (x) => (x == null ? "—" : `${Math.round(x * 100)}%`);
 
