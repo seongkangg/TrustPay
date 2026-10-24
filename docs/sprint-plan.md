@@ -14,16 +14,17 @@ governance → agents → orchestration → API → dashboard → demo polish �
 - [x] `.env.example`, `requirements.txt`, `package.json`, lint config
 - [ ] Assign owners per folder
 
-## Sprint 1 — Foundation + mock systems
-- [ ] `database/` engine, tables, seed loader
-- [ ] `utils/` logging, timestamps, validation
-- [ ] `mock_systems/` vendor, PO, limits, payment (+ failure toggle)
-- [ ] `main.py` app factory + `/health`
-- [ ] `services/audit_service.py` (append-only, hash chain, dup/out-of-order)
-- [ ] `services/masking_service.py`
-- [ ] Tests: masking, audit chain
+## Sprint 1 — Foundation + mock systems ✅
+- [x] `database/` engine, tables, seed loader
+- [x] `utils/` logging, timestamps, validation
+- [x] `mock_systems/` vendor, PO, limits, payment (+ failure toggle)
+- [x] `main.py` app factory + `/health` (+ `config.py` settings)
+- [x] `services/audit_service.py` (append-only, hash chain, dup/out-of-order)
+- [x] `services/masking_service.py`
+- [x] Tests: masking, audit chain, mock systems — 23 passing
 
 **Done:** server boots, mocks return seeded records.
+Deferred to Sprint 4: HTTP exposure of mocks under `/mock/*` (they are plain Python services until the API routers land).
 
 ## Sprint 2 — Governance layer ⭐
 - [ ] `permission_checker.py`

@@ -1,11 +1,14 @@
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["backend", "tests"]
+src = ["."]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["E501"]
+ignore = ["E501", "UP042"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

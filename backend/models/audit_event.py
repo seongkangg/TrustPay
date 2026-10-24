@@ -6,7 +6,6 @@ rejected; out-of-order arrivals are flagged (`out_of_order=True`) rather than re
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,13 +21,15 @@ class AuditEvent(BaseModel):
     severity: Severity
     actor: AgentName
     reason_codes: list[ReasonCode] = Field(default_factory=list)
-    policy_result: Optional[Authorization] = None
-    input_summary: Optional[str] = Field(None, description="Masked")
-    output_summary: Optional[str] = Field(None, description="Masked")
+    policy_result: Authorization | None = None
+    input_summary: str | None = Field(None, description="Masked")
+    output_summary: str | None = Field(None, description="Masked")
     evidence_refs: list[str] = Field(default_factory=list)
-    related_decision_id: Optional[str] = None
-    related_tool_call_id: Optional[str] = None
-    previous_event_hash: Optional[str] = Field(None, description="SHA-256 of prior event; null for first")
+    related_decision_id: str | None = None
+    related_tool_call_id: str | None = None
+    previous_event_hash: str | None = Field(
+        None, description="SHA-256 of prior event; null for first"
+    )
     event_hash: str = Field(..., description="SHA-256 over this event's canonical fields")
     out_of_order: bool = False
     timestamp: datetime

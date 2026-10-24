@@ -8,7 +8,8 @@ the workflow orchestrator, the mock enterprise systems, and the SQLite audit sto
 
 | Path | Purpose |
 |------|---------|
-| `main.py` | FastAPI app factory. Mounts the routers in `api/`, initializes the database, loads seed data, configures structured JSON logging. |
+| `main.py` | FastAPI app factory. Mounts the routers in `api/`, initializes the database, loads seed data, configures structured JSON logging. Exposes `GET /health`. |
+| `config.py` | `Settings` loaded once from `.env` (database URL, LLM mode, watsonx keys, `MOCK_FAILURES`, CORS). The only place that reads environment variables. |
 | `api/` | HTTP route handlers. Thin — they validate input, call a service, return a model. |
 | `agents/` | The four agents (Intake, Verification, Policy/Risk, Approval) and their shared base class. |
 | `governance/` | Deterministic governance layer: permission allowlist, policy matrix, sensitive-data scanner, tool-call interceptor, decision validator. |

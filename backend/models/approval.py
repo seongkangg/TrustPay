@@ -5,7 +5,6 @@ dashboard can never conflate them.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,16 +22,18 @@ class ApprovalRequest(BaseModel):
     reason_codes: list[ReasonCode]
     evidence_ids: list[str]
     requested_at: datetime
-    expires_at: Optional[datetime] = Field(None, description="Timeout → remains blocked, never auto-approves")
+    expires_at: datetime | None = Field(
+        None, description="Timeout → remains blocked, never auto-approves"
+    )
 
-    reviewer: Optional[str] = None
-    human_decision: Optional[HumanDecision] = None
-    reviewer_note: Optional[str] = None
-    decided_at: Optional[datetime] = None
+    reviewer: str | None = None
+    human_decision: HumanDecision | None = None
+    reviewer_note: str | None = None
+    decided_at: datetime | None = None
 
 
 class HumanDecisionInput(BaseModel):
     """Body of POST /invoices/{id}/approve and /reject."""
 
     reviewer: str = Field(..., min_length=1, examples=["finance.reviewer@example.com"])
-    note: Optional[str] = Field(None, max_length=500)
+    note: str | None = Field(None, max_length=500)

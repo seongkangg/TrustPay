@@ -5,6 +5,9 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 
 | File | Covers |
 |------|--------|
+| `conftest.py` | Fixtures: fresh in-memory SQLite `session` per test, `ref` (reference data), `demo_invoices` (the four fixtures). |
+| `test_mock_systems.py` | Mock vendor/PO/limit lookups return seeded records; unknown IDs raise `NotFound`; outage mode raises `MockSystemUnavailable`; payment service refuses agents and double payment; `agents/` never imports `mock_systems`. |
+| `test_audit_trail.py` | Hash chain per invoice, duplicate `event_id` ignored idempotently, out-of-order events flagged not reordered, tampering breaks `verify_chain`, summaries masked before storage. |
 | `test_intake_agent.py` | Field extraction from the demo invoices, extraction confidence, flagging missing due date / invalid amount / malformed fields. |
 | `test_verification_agent.py` | Unknown vendor, PO amount mismatch, invalid PO, duplicate invoice ID, duplicate vendor+amount combination. |
 | `test_policy_engine.py` | Each row of the policy matrix maps to the right risk level, action, and reason code. Thresholds are deterministic. |

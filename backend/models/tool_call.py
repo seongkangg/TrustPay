@@ -5,7 +5,7 @@ layer, which checks the allowlist, executes (or blocks) the call, and records a 
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -31,10 +31,10 @@ class ToolCall(BaseModel):
     parameters: dict[str, Any] = Field(default_factory=dict)
     is_write: bool = Field(False, description="Mutating operations require stricter authorization")
     authorization: Authorization
-    denial_reason: Optional[ReasonCode] = None
-    result_summary: Optional[str] = Field(None, description="Human-readable, masked summary")
-    evidence_id: Optional[str] = Field(
+    denial_reason: ReasonCode | None = None
+    result_summary: str | None = Field(None, description="Human-readable, masked summary")
+    evidence_id: str | None = Field(
         None, description="ID agents cite as evidence, e.g. VENDOR-LOOKUP-14"
     )
-    latency_ms: Optional[int] = Field(None, ge=0)
+    latency_ms: int | None = Field(None, ge=0)
     timestamp: datetime
