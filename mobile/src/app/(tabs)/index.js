@@ -7,6 +7,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions
 import { fmtMoney, fmtTime } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { DayCalendar, RiskBars, Sparkline, VolumeChart, dayLabel } from "../../components/Charts.js";
+import RollingText, { useRolling } from "../../components/RollingText.js";
 import { Alert, Badge, Card, H2, Muted, ReasonTag } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
@@ -51,20 +52,24 @@ export default function Overview() {
           Invoice volume{scrubDay ? ` · ${dayLabel(scrubDay.date)} (UTC)` : ""}
         </Text>
         <View style={styles.figureRow}>
-          <Text style={styles.figure} numberOfLines={1} adjustsFontSizeToFit>
-            {amounts ? wholeDollars(amounts.total) : "—"}
-          </Text>
-          {paidShare !== null && <Badge label={`${paidShare}% paid`} fg={colors.ok} bg={colors.okBg} />}
+          <RollingText
+            value={amounts?.total}
+            format={wholeDollars}
+            style={styles.figure}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          />
+          {paidShare !== null && <PaidPill share={paidShare} />}
         </View>
         {amounts && (
           <View style={styles.split}>
             <Text style={styles.splitText}>
               <Text style={{ color: colors.ok }}>● </Text>Paid{" "}
-              <Text style={styles.splitValue}>{fmtMoney(amounts.paid)}</Text>
+              <RollingText value={amounts.paid} format={fmtMoney} style={styles.splitValue} />
             </Text>
             <Text style={styles.splitText}>
               <Text style={{ color: colors.blocked }}>● </Text>Withheld{" "}
-              <Text style={styles.splitValue}>{fmtMoney(amounts.withheld)}</Text>
+              <RollingText value={amounts.withheld} format={fmtMoney} style={styles.splitValue} />
             </Text>
           </View>
         )}
@@ -153,6 +158,12 @@ export default function Overview() {
       )}
     </ScrollView>
   );
+}
+
+// The "% paid" pill rolls with the hero figures; its own component so only the pill re-renders.
+function PaidPill({ share }) {
+  const shown = useRolling(share);
+  return <Badge label={`${Math.round(shown)}% paid`} fg={colors.ok} bg={colors.okBg} />;
 }
 
 function Key({ color, label }) {

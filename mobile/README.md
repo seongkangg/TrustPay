@@ -17,10 +17,12 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
 | `src/data.js` | `DashboardProvider` / `useDashboard`: summary, invoices and inbox status fetched once for all tabs, polled every 15 s, pull to refresh. |
+| `src/useReduceMotion.js` | The live system Reduce Motion setting, shared by the charts and rolling numbers. |
 | `src/components/ui.js`, `Charts.js` | Sentence-case badges, grey panels, count pills, pill buttons with press feedback, alerts, the TrustPay logo (shield + wordmark, drawn in SVG); SVG volume chart and sparklines, View-based risk bars and the day calendar. |
 | `src/components/BubbleNav.js`, `InboxCard.js` | Floating bottom nav: a white pill of tabs with a grey bubble that springs to the active tab, an optional count badge on a tab icon's top-right corner, and a navy round action button. The Gmail inbox card. |
 | `src/components/FilterMenu.js` | The header filter button (three lines, teal dot when filtered) and its menu, which scales in from the top-right corner. |
 | `src/components/ApprovalQueue.js` | Rows for invoices awaiting a human decision (teal wash, blush when blocked): vendor, amount, status, risk, reason tags, a "Review" pill. |
+| `src/components/RollingText.js` | `RollingText` / `useRolling`: a figure that rolls to its new value over 300ms (interruptible) instead of jumping; used by the Overview hero while scrubbing the chart. |
 | `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (the logo's teal `accent` and navy `brandNavy`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
 ## Running on an iPhone with Expo Go

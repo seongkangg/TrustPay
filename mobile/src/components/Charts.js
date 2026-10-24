@@ -2,24 +2,14 @@
 // a smooth teal volume line, KPI sparklines, risk bars with high risk in the accent, and the
 // 14 by_day days as a calendar. Series colours are the theme tokens.
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
 
 import { fmtMoney } from "../api/client.js";
 import { colors, radius } from "../theme.js";
+import useReduceMotion from "../useReduceMotion.js";
 
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
-
-// Follows the system Reduce Motion setting, live.
-function useReduceMotion() {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduce);
-    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduce);
-    return () => sub.remove();
-  }, []);
-  return reduce;
-}
 
 // by_day dates are UTC calendar days ("YYYY-MM-DD"); keep them in UTC so the labels never shift.
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
