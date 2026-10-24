@@ -7,6 +7,7 @@
 4. 2026-10-23 — Alex Nguyen — Added an isolated multi-agent orchestration workflow (six `wf-*` subagents, `orchestrate` skill, `run.py` audit/state script) under `.claude/`.
 5. 2026-10-23 — Alex Nguyen — Replaced raw reason-code text in the dashboard with plain-English `ReasonTag` pills that show a summary on hover/focus.
 6. 2026-10-23 — Alex Nguyen — Closed governance leaks: no auto-pay on low-confidence or failed AI decisions, no payment on expired approvals, and masking of stored decisions, reviewer notes and upload free text, with regression tests.
+7. 2026-10-23 — Alex Nguyen — Let the orchestrate `test-design` stage read `backend/` folder `README.md` files without being flagged as reading implementation.
 
 ## What's next
 **Audit the design docs against the implementation with the `orchestrate` workflow, one area at a time, to confirm current code works and matches its intended spec.**

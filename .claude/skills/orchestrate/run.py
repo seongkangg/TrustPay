@@ -68,7 +68,7 @@ def validate(stage: str, out: dict) -> list[str]:
     if stage == "test-design":
         leaked = [
             p for p in out.get("sources_read", [])
-            if p.startswith("backend/") and not p.startswith("backend/models/")
+            if p.startswith("backend/") and not p.startswith("backend/models/") and not p.endswith("README.md")
         ]
         if leaked:
             errs.append(f"test design read implementation: {leaked}")

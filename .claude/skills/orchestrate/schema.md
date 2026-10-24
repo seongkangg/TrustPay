@@ -39,4 +39,4 @@ The orchestrator saves it and runs `run.py record`; an invalid envelope counts a
 - `status: complete` on `implement` and `test-run` needs at least one `verification.commands`
   entry with an `exit_code`. Work without a run command is not complete.
 - `test-design` must not list implementation sources in `sources_read`: anything under `backend/`
-  except `backend/models/` (public data contracts) is rejected.
+  except `backend/models/` (public data contracts) and `README.md` files is rejected.
