@@ -13,7 +13,7 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `src/app/(tabs)/_layout.js` | Overview / Inbox / Invoices tabs with `BubbleNav` as the tab bar; the round button opens the next invoice awaiting approval. |
 | `src/app/(tabs)/index.js` | Overview, same design as the web dashboard: **Needs your approval** queue → **Invoice volume** hero (total in whole dollars, % paid, paid / withheld) over the 14-day teal volume chart → Received / Completed / Blocked cards with sparklines → **Risk mix** bars → **Received per day** calendar (UTC days) → recent policy violations. |
 | `src/app/(tabs)/inbox.js` | Inbox tab: `InboxCard` (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) and recent messages. |
-| `src/app/(tabs)/invoices.js` | Invoices tab: every invoice with status, risk, masked flag and amount; each row opens the invoice screen. |
+| `src/app/(tabs)/invoices.js` | Invoices tab: every invoice with status, risk, masked flag and amount, filtered by All / Pending / Accepted / Rejected (pill bar with counts; Pending = not yet decided, Accepted = approved or completed, Rejected = rejected; failed invoices show under All only). Each row opens the invoice screen. |
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
 | `src/data.js` | `DashboardProvider` / `useDashboard`: summary, invoices and inbox status fetched once for all tabs, polled every 15 s, pull to refresh. |
