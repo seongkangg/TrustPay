@@ -75,6 +75,35 @@ def test_by_day_counts_todays_invoices_by_outcome(invoices, demo_invoices):
     assert all(d["received"] == 0 for d in summary["by_day"][:-1])
 
 
+def test_by_day_amounts_match_the_money_tiles(invoices, demo_invoices):
+    # Each day carries the same money split as the `amounts` tiles, so a client can show any one
+    # day's volume / paid / withheld; with every invoice created today, today equals the totals.
+    _process_all(invoices, demo_invoices)
+    summary = invoices.dashboard_summary()
+    today = summary["by_day"][-1]
+
+    assert {k: today[k] for k in ("amount", "paid", "withheld")} == {
+        "amount": summary["amounts"]["total"],
+        "paid": summary["amounts"]["paid"],
+        "withheld": summary["amounts"]["withheld"],
+    }
+    assert all(d["amount"] == d["paid"] == d["withheld"] == 0 for d in summary["by_day"][:-1])
+    assert today["paid"] + today["withheld"] <= today["amount"]
+
+
+def test_older_invoices_leave_by_day_amounts_but_stay_in_the_tiles(
+    invoices, demo_invoices, session
+):
+    _process_all(invoices, demo_invoices)
+    row = invoices.get_row("INV-1001")
+    row.created_at = now_utc() - timedelta(days=DASHBOARD_DAYS + 1)
+    session.commit()
+
+    summary = invoices.dashboard_summary()
+    in_window = round(sum(d["amount"] for d in summary["by_day"]), 2)
+    assert in_window == round(summary["amounts"]["total"] - (row.amount or 0), 2)
+
+
 def test_invoices_older_than_the_window_are_excluded_from_by_day(invoices, demo_invoices, session):
     _process_all(invoices, demo_invoices)
     row = invoices.get_row("INV-1001")

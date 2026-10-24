@@ -21,10 +21,17 @@ export default function Overview() {
   // Bumped each time this tab gains focus, so the volume chart and risk bars animate again.
   const [chartPlay, setChartPlay] = useState(0);
   useFocusEffect(useCallback(() => setChartPlay((n) => n + 1), []));
+  // Index of the day being scrubbed on the volume chart, or null.
+  const [scrub, setScrub] = useState(null);
 
-  const amounts = summary?.amounts;
   const days = summary?.by_day || [];
   const latest = days[days.length - 1];
+  // While a day is scrubbed the hero shows that day's money (from by_day); otherwise the totals.
+  // A backend without per-day amounts keeps the totals.
+  const scrubDay = scrub !== null && days[scrub]?.amount !== undefined ? days[scrub] : null;
+  const amounts = scrubDay
+    ? { total: scrubDay.amount, paid: scrubDay.paid, withheld: scrubDay.withheld }
+    : summary?.amounts;
   const paidShare = amounts?.total ? Math.round((amounts.paid / amounts.total) * 100) : null;
   // by_day is bucketed by UTC calendar day on the backend; say so wherever a day is named.
   const range = days.length ? `${dayLabel(days[0].date)} – ${dayLabel(latest.date)} (UTC)` : "";
@@ -40,7 +47,9 @@ export default function Overview() {
       {error && <Alert kind="danger">{error}</Alert>}
 
       <View style={styles.hero}>
-        <Text style={styles.heroLabel}>Invoice volume</Text>
+        <Text style={styles.heroLabel}>
+          Invoice volume{scrubDay ? ` · ${dayLabel(scrubDay.date)} (UTC)` : ""}
+        </Text>
         <View style={styles.figureRow}>
           <Text style={styles.figure} numberOfLines={1} adjustsFontSizeToFit>
             {amounts ? wholeDollars(amounts.total) : "—"}
@@ -69,7 +78,7 @@ export default function Overview() {
           </View>
         </View>
         {summary ? (
-          <VolumeChart days={days} width={contentWidth} playKey={chartPlay} />
+          <VolumeChart days={days} width={contentWidth} playKey={chartPlay} onScrub={setScrub} />
         ) : (
           <View style={[styles.skeleton, { height: 180 }]} />
         )}

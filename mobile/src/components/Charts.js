@@ -51,8 +51,9 @@ function smoothPath(pts, floor) {
 // Touch and drag to scrub (the phone's version of the desktop hover tooltip): the nearest day gets a
 // cursor line, dots on both series and a card with its counts. The selection snaps to days, so state
 // changes only when the finger crosses into another day, not on every move. A vertical swipe is
-// handed to the page's ScrollView, which ends the scrub.
-export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
+// handed to the page's ScrollView, which ends the scrub. `onScrub(index | null)` tells the screen
+// which day is under the finger, so it can show that day's figures.
+export function VolumeChart({ days, width, height = 180, playKey = 0, onScrub }) {
   const [progress] = useState(() => new Animated.Value(0));
   const reduceMotion = useReduceMotion();
   const [active, setActive] = useState(null);
@@ -90,10 +91,16 @@ export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
       };
 
   const pick = (e) => {
-    const i = Math.round(((e.nativeEvent.locationX - 2) / (width - 4)) * (days.length - 1));
-    setActive(Math.min(days.length - 1, Math.max(0, i)));
+    const raw = Math.round(((e.nativeEvent.locationX - 2) / (width - 4)) * (days.length - 1));
+    const i = Math.min(days.length - 1, Math.max(0, raw));
+    if (i === active) return;
+    setActive(i);
+    onScrub?.(i);
   };
-  const clear = () => setActive(null);
+  const clear = () => {
+    setActive(null);
+    onScrub?.(null);
+  };
   const day = active === null ? null : days[active];
   const TIP_W = 132;
   const tipLeft = day ? Math.min(width - TIP_W, Math.max(0, x(active) - TIP_W / 2)) : 0;

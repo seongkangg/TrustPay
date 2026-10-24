@@ -251,11 +251,22 @@ class InvoiceService:
             }
             for e in self.session.scalars(violations_stmt)
         ]
-        # Last 14 days (oldest first) of received / completed / blocked counts by created_at.
+        # Last 14 days (oldest first) of received / completed / blocked counts by created_at, with
+        # the same day's money split the way the `amounts` tiles are (paid = completed, withheld =
+        # pending approval or blocked).
+        withheld_statuses = (InvoiceStatus.PENDING_APPROVAL.value, InvoiceStatus.BLOCKED.value)
         today = now_utc().date()
         days = [today - timedelta(days=i) for i in range(DASHBOARD_DAYS - 1, -1, -1)]
         by_day = {
-            d.isoformat(): {"date": d.isoformat(), "received": 0, "completed": 0, "blocked": 0}
+            d.isoformat(): {
+                "date": d.isoformat(),
+                "received": 0,
+                "completed": 0,
+                "blocked": 0,
+                "amount": 0.0,
+                "paid": 0.0,
+                "withheld": 0.0,
+            }
             for d in days
         }
         for r in rows:
@@ -265,12 +276,18 @@ class InvoiceService:
             if bucket is None:
                 continue
             bucket["received"] += 1
+            bucket["amount"] += r.amount or 0
             if r.status == InvoiceStatus.COMPLETED.value:
                 bucket["completed"] += 1
+                bucket["paid"] += r.amount or 0
             elif r.status == InvoiceStatus.BLOCKED.value:
                 bucket["blocked"] += 1
+            if r.status in withheld_statuses:
+                bucket["withheld"] += r.amount or 0
+        for bucket in by_day.values():
+            for key in ("amount", "paid", "withheld"):
+                bucket[key] = round(bucket[key], 2)
 
-        withheld_statuses = (InvoiceStatus.PENDING_APPROVAL.value, InvoiceStatus.BLOCKED.value)
         amounts = {
             "total": round(sum(r.amount or 0 for r in rows), 2),
             "paid": round(
