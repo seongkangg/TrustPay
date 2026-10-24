@@ -15,10 +15,12 @@ import {
 
 import { AWAITING_HUMAN, api, fmtMoney, fmtPct, fmtTime, human } from "../../api/client.js";
 import { Alert, Badge, Card, Code, H2, Muted, PillButton, RiskBadge, StatusBadge, sentence } from "../../components/ui.js";
+import { useDashboard } from "../../data.js";
 import { colors, radius } from "../../theme.js";
 
 export default function InvoiceScreen() {
   const { id } = useLocalSearchParams();
+  const dashboard = useDashboard();
   const [invoice, setInvoice] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [error, setError] = useState(null);
@@ -97,7 +99,16 @@ export default function InvoiceScreen() {
         )}
 
         <H2>Recommendation &amp; approval</H2>
-        <ApprovalPanel invoice={invoice} decisions={decisions} events={events} onDecided={load} />
+        <ApprovalPanel
+          invoice={invoice}
+          decisions={decisions}
+          events={events}
+          onDecided={() => {
+            load();
+            // Keep the tabs and the bottom nav's waiting count in step with the decision.
+            dashboard.load();
+          }}
+        />
 
         <H2>Invoice</H2>
         <Card>

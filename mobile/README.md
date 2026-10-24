@@ -9,12 +9,16 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `package.json` | Expo SDK 58, Expo Router, `react-native-svg` (trend chart). `start` / `lint` scripts. |
 | `app.json` | App name, `trustpay://` scheme, `expo-router` plugin. |
 | `.env.example` | `EXPO_PUBLIC_API_URL` — only needed when the backend is not on the laptop running Expo. |
-| `src/app/_layout.js` | Root stack navigator. |
-| `src/app/index.js` | Overview, same design as the web dashboard: **Needs your approval** queue → **Invoice volume** hero (total in whole dollars, % paid, paid / withheld) over the 14-day indigo volume chart → Received / Completed / Blocked cards with sparklines → **Risk mix** bars → **Received per day** calendar (UTC days) → **Inbox** card (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) → recent policy violations → invoice list. Pull to refresh; auto-refreshes every 15 s. |
+| `src/app/_layout.js` | Root stack: the tab group and the invoice screen, inside `DashboardProvider`. |
+| `src/app/(tabs)/_layout.js` | Overview / Inbox / Invoices tabs with `BubbleNav` as the tab bar; the round button opens the next invoice awaiting approval. |
+| `src/app/(tabs)/index.js` | Overview, same design as the web dashboard: **Needs your approval** queue → **Invoice volume** hero (total in whole dollars, % paid, paid / withheld) over the 14-day indigo volume chart → Received / Completed / Blocked cards with sparklines → **Risk mix** bars → **Received per day** calendar (UTC days) → recent policy violations. |
+| `src/app/(tabs)/inbox.js` | Inbox tab: `InboxCard` (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) and recent messages. |
+| `src/app/(tabs)/invoices.js` | Invoices tab: every invoice with status, risk, masked flag and amount; each row opens the invoice screen. |
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
+| `src/data.js` | `DashboardProvider` / `useDashboard`: summary, invoices and inbox status fetched once for all tabs, polled every 15 s, pull to refresh. |
 | `src/components/ui.js`, `Charts.js` | Sentence-case badges, grey panels, count pills, pill buttons with press feedback, alerts, the TrustPay mark; SVG volume chart and sparklines, View-based risk bars and the day calendar. |
-| `src/components/BubbleNav.js` | Floating bottom nav on the overview: a white pill of tabs (Overview / Inbox / Invoices) with a grey bubble that springs to the active tab and follows the scroll position, plus a black round button that opens the next invoice awaiting approval (with the waiting count). |
+| `src/components/BubbleNav.js`, `InboxCard.js` | Floating bottom nav: a white pill of tabs with a grey bubble that springs to the active tab, plus a black round action button with the waiting count. The Gmail inbox card. |
 | `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (indigo `accent`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
 ## Running on an iPhone with Expo Go
