@@ -26,16 +26,17 @@ governance → agents → orchestration → API → dashboard → demo polish �
 **Done:** server boots, mocks return seeded records.
 Deferred to Sprint 4: HTTP exposure of mocks under `/mock/*` (they are plain Python services until the API routers land).
 
-## Sprint 2 — Governance layer ⭐
-- [ ] `permission_checker.py`
-- [ ] `policy_engine.py` (every POLICY-NNN row)
-- [ ] `sensitive_data_scanner.py`
-- [ ] `tool_call_interceptor.py`
-- [ ] `decision_validator.py`
-- [ ] `governance_engine.py`
-- [ ] Tests: `test_policy_engine`, `test_permissions`, `test_governance`
+## Sprint 2 — Governance layer ⭐ ✅
+- [x] `permission_checker.py`
+- [x] `policy_engine.py` (every POLICY-NNN row + DEFAULT-SAFETY)
+- [x] `sensitive_data_scanner.py`
+- [x] `tool_call_interceptor.py`
+- [x] `decision_validator.py`
+- [x] `governance_engine.py` (incl. human-decision + human-payment paths for Sprint 4)
+- [x] Tests: `test_policy_engine`, `test_permissions`, `test_governance` — 81 passing total
 
 **Done:** agent payment attempt blocked + logged; unknown vendor → High; 100% tool calls audited.
+All four fixtures produce their expected risk / reason codes / target status through the policy engine.
 
 ## Sprint 3 — Agents with mocked LLM
 - [ ] `llm/granite_client.py` with `MockLLM`

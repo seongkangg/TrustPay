@@ -41,3 +41,18 @@ No LLM calls happen in this folder; all rules are hard-coded and testable.
 Default safety behavior: **if evidence is missing, policy evaluation fails, or authorization is unclear — stop and escalate.**
 
 Full matrix lives in `docs/policy-matrix.md`.
+
+## Engine API (what agents and the orchestrator call)
+
+| Method | Does | Emits |
+|--------|------|-------|
+| `ingest(upload, invoice_id, correlation_id)` | Masks sensitive fields/text before anything is stored | `sensitive_data_masked` + `SCAN-NNN` evidence |
+| `call_tool(request, payment_permitted=, risk_level=)` | Allowlist check → execute → persist `ToolCall` | `tool_call_denied` when blocked |
+| `accept_decision(decision)` | Validates evidence, masking, role; persists; sets `governance_result` | `agent_failed` when rejected |
+| `evaluate(PolicyInput, invoice_id, correlation_id)` | Runs the matrix | `risk_assigned` |
+| `finalize(...)` | Low risk + approve → governance pays; otherwise block + create approval request | `payment_authorized` **or** `payment_blocked` + `approval_requested` |
+| `record_human_decision(...)` / `execute_human_payment(...)` | Human approve/reject and the human-authorized payment | `human_decision_recorded`, `payment_authorized` |
+| `build_explanation(...)` | Fixed Decision / Reasons / Evidence format from policy hits | — |
+
+Evidence ID prefixes: `PARSE-`, `VENDOR-LOOKUP-`, `PO-LOOKUP-`, `LIMIT-LOOKUP-`, `RULES-`, `APPROVAL-REQ-`, `PAYMENT-`, `SCAN-`, plus `POLICY-NNN` rule IDs.
+`document_parser` has no handler here — the intake agent registers one (Sprint 3).

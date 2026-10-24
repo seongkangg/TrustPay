@@ -37,6 +37,7 @@ action prevents automatic completion.
 | POLICY-014 | `payment_authorize` requested by any actor other than `governance_layer` / `human_reviewer` | **High** | Block immediately, record violation | `UNAUTHORIZED_TOOL_CALL` |
 | POLICY-015 | Agent raised an exception, timed out, or returned unparseable output | Medium | Invoice → `FAILED`, escalate | `AGENT_FAILURE` |
 | POLICY-016 | Mock enterprise system unavailable | Medium | Stop, escalate (never assume vendor/PO is valid) | `MOCK_SYSTEM_UNAVAILABLE` |
+| DEFAULT-SAFETY | POLICY-001 did not fire (vendor/PO evidence incomplete) and no other rule raised risk | Medium | Escalate — missing evidence is never a pass | `INSUFFICIENT_EVIDENCE` |
 
 ### Required invoice fields (POLICY-011)
 
@@ -97,4 +98,5 @@ A human can approve amounts up to the `human_reviewer` limit. Above that → sta
 | `MALFORMED_FIELD` | A field was present but invalid |
 | `AGENT_FAILURE` | Agent error, timeout, or invalid output |
 | `MOCK_SYSTEM_UNAVAILABLE` | Vendor/PO/limit service failed |
+| `INSUFFICIENT_EVIDENCE` | Vendor/PO lookups did not happen or did not complete; default-safety escalation |
 | `POLICY_PASSED` | All checks passed |
