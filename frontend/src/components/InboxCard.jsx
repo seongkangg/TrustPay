@@ -49,7 +49,7 @@ export default function InboxCard({ status, unavailable, onSynced }) {
     <div className="card inbox">
       <div className="head">
         <span className={`badge ${authorized ? "auth-allowed" : "auth-blocked"}`}>
-          {!status.enabled ? "disabled" : status.authorized ? "authorized" : "not authorized"}
+          {!status.enabled ? "Disabled" : status.authorized ? "Authorized" : "Not authorized"}
         </span>
         <span className="small muted">
           Last sync: {fmtTime(status.last_sync_at)}
