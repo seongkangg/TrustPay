@@ -1,5 +1,6 @@
 import { fmtTime, human } from "../api/client.js";
 import { AuthBadge } from "./StatusBadge.jsx";
+import ReasonTag from "./ReasonTag.jsx";
 
 // Every tool call made for an invoice — allowed or blocked — with its evidence ID.
 export default function ToolCallTable({ calls }) {
@@ -31,7 +32,7 @@ export default function ToolCallTable({ calls }) {
               <AuthBadge value={c.authorization} />
               {c.denial_reason && (
                 <div className="small">
-                  <code>{c.denial_reason}</code>
+                  <ReasonTag code={c.denial_reason} />
                 </div>
               )}
             </td>

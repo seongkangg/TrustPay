@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { fmtMoney, fmtTime } from "../api/client.js";
 import { ChevronRightIcon } from "./Icons.jsx";
+import ReasonTag from "./ReasonTag.jsx";
 import RiskBadge from "./RiskBadge.jsx";
 import StatusBadge from "./StatusBadge.jsx";
 
@@ -27,7 +28,7 @@ export default function ApprovalQueue({ items, reasonCodes = {} }) {
               <StatusBadge status={inv.status} />
               <RiskBadge level={inv.risk_level} />
               {codes.map((c) => (
-                <code key={c}>{c}</code>
+                <ReasonTag key={c} code={c} />
               ))}
             </div>
             <span className="amount">{fmtMoney(inv.amount, inv.currency)}</span>

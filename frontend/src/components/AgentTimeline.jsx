@@ -1,5 +1,6 @@
 import { fmtPct, fmtTime, human } from "../api/client.js";
 import { AuthBadge } from "./StatusBadge.jsx";
+import ReasonTag from "./ReasonTag.jsx";
 
 const BLOCKING_EVENTS = new Set(["payment_blocked", "tool_call_denied", "agent_failed"]);
 
@@ -32,7 +33,7 @@ function EventItem({ data }) {
       {data.reason_codes?.length > 0 && (
         <div className="small">
           {data.reason_codes.map((c) => (
-            <code key={c}>{c}</code>
+            <ReasonTag key={c} code={c} />
           ))}
         </div>
       )}
@@ -54,7 +55,7 @@ function ToolCallItem({ data }) {
         {data.denial_reason && (
           <>
             {" "}
-            · <code>{data.denial_reason}</code>
+            · <ReasonTag code={data.denial_reason} />
           </>
         )}
       </div>

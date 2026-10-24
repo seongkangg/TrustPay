@@ -172,6 +172,14 @@ code { font: 12px/1.4 var(--mono); background: var(--neutral-bg); color: #3a3d46
 .badge.auth-blocked { background: var(--blocked); color: #fff; }
 .badge.auth-escalated { background: var(--pending-bg); color: var(--accent-ink); }
 
+/* readable violation pill: red violation, yellow uncertain, green passed; summary pops down on hover / focus */
+.reason { position: relative; display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: help; }
+.reason-fail { background: var(--blocked-bg); color: var(--blocked); }
+.reason-warn { background: var(--risk-medium-bg); color: var(--risk-medium); }
+.reason-pass { background: var(--ok-bg); color: var(--ok); }
+.reason .reason-tip { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 10; width: 240px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-weight: 400; font-size: 12px; line-height: 1.4; white-space: normal; box-shadow: 0 4px 12px rgb(0 0 0 / 0.12); }
+.reason:hover .reason-tip, .reason:focus .reason-tip { display: block; }
+
 /* tables */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; background: transparent; }

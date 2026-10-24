@@ -5,6 +5,7 @@ import { api, AWAITING_HUMAN, fmtMoney, fmtTime } from "../api/client.js";
 import ApprovalQueue from "../components/ApprovalQueue.jsx";
 import { ArrowUpIcon, CalendarIcon } from "../components/Icons.jsx";
 import InboxCard from "../components/InboxCard.jsx";
+import ReasonTag from "../components/ReasonTag.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { dayLabel, DayCalendar, RiskBars, Sparkline, VolumeChart } from "../components/SummaryCharts.jsx";
@@ -191,7 +192,7 @@ export default function Dashboard() {
                 <Link to={`/invoices/${v.invoice_id}`}>{v.invoice_id}</Link>
                 <span className="codes">
                   {v.reason_codes.map((c) => (
-                    <code key={c}>{c}</code>
+                    <ReasonTag key={c} code={c} />
                   ))}
                 </span>
                 <span className="muted small">{fmtTime(v.timestamp)}</span>
