@@ -7,6 +7,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert as NativeAlert,
+  Linking,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -20,7 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
-import { AWAITING_HUMAN, api, fmtMoney, fmtPct, fmtTime, human } from "../../api/client.js";
+import { AWAITING_HUMAN, BASE, api, fmtMoney, fmtPct, fmtTime, human } from "../../api/client.js";
 import {
   Alert,
   Badge,
@@ -39,7 +40,6 @@ import { colors, radius, space } from "../../theme.js";
 
 const ACTION_BAR = 76; // the floating approve / reject pill (64) plus its gap above the safe-area inset
 const TIMELINE_PREVIEW = 6;
-const DOC_PREVIEW_LINES = 12;
 
 const VERDICT = {
   approve: { fg: colors.ok, bg: colors.okBg },
@@ -198,7 +198,11 @@ export default function InvoiceScreen() {
         <Recommendation invoice={invoice} recommendation={recommendation} decisions={decisions} threshold={threshold} />
 
         <H2>Source document</H2>
-        <SourceDocument name={invoice.source_document} text={invoice.source_text} />
+        <SourceDocument
+          invoiceId={invoice.invoice_id}
+          name={invoice.source_document}
+          hasText={Boolean(invoice.source_text)}
+        />
 
         {needsDecision && (
           <>
@@ -563,63 +567,57 @@ function DecisionBubble({ kind, label, disabled, onPress }) {
   );
 }
 
-// The source invoice as a page of text, read from the emailed PDF with bank, routing and tax numbers
-// already masked by the backend (the original file is never kept or shown). Masked values get a grey
-// highlight so it is clear they were hidden on purpose.
-function SourceDocument({ name, text }) {
-  const [full, setFull] = useState(false);
-  if (!text) {
+// The source invoice as a downloadable PDF. The backend rebuilds it from the masked text of the
+// emailed document (GET /invoices/{id}/document.pdf), so bank, routing and tax numbers stay masked;
+// the original file is never kept. The phone opens the PDF in its own viewer to save or share it.
+function SourceDocument({ invoiceId, name, hasText }) {
+  const [error, setError] = useState(null);
+  if (!hasText) {
     return (
       <Card>
         <Muted>{name ? `${name}: no readable text.` : "Entered as structured data; there is no source document."}</Muted>
       </Card>
     );
   }
-  const lines = text.replace(/\r/g, "").split("\n");
-  const long = lines.length > DOC_PREVIEW_LINES;
-  const shownLines = full || !long ? lines : lines.slice(0, DOC_PREVIEW_LINES);
+  async function download() {
+    setError(null);
+    try {
+      await Linking.openURL(`${BASE}/invoices/${invoiceId}/document.pdf`);
+    } catch {
+      setError("Couldn't open the PDF on this phone.");
+    }
+  }
   return (
     <Card>
-      <View style={styles.docHead}>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={colors.muted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-          <Path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
-          <Path d="M14 3v5h5M9 13h6M9 17h6" />
-        </Svg>
-        <Text style={styles.docName} numberOfLines={2}>
-          {name || "Source document"}
-        </Text>
-      </View>
-      <View style={styles.paper}>
-        {shownLines.map((line, i) => (
-          <Text key={i} style={[styles.paperLine, i === 0 && styles.paperFirst]}>
-            {line.split(/(\*{4}\d{4})/).map((part, k) =>
-              /^\*{4}\d{4}$/.test(part) ? (
-                <Text key={k} style={styles.masked}>
-                  {part}
-                </Text>
-              ) : (
-                part || (k === 0 ? " " : "")
-              ),
-            )}
+      <View style={styles.docRow}>
+        <View style={styles.docIcon}>
+          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.accentInk} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+            <Path d="M14 3v5h5M9 13h6M9 17h6" />
+          </Svg>
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={styles.docName} numberOfLines={2}>
+            {`${invoiceId}-masked.pdf`}
           </Text>
-        ))}
-        {!full && long && <View style={styles.paperFade} pointerEvents="none" />}
+          <Muted small>{name || "Source document"}</Muted>
+        </View>
       </View>
-      <View style={styles.docFoot}>
-        <Muted small style={{ flex: 1 }}>
-          Bank, routing and tax numbers are masked.
-        </Muted>
-        {long && (
-          <Pressable
-            onPress={() => setFull((v) => !v)}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.docToggle, pressed && { opacity: 0.6 }]}
-          >
-            <Text style={styles.toggleText}>{full ? "Show less" : "Show full text"}</Text>
-            <Chevron open={full} />
-          </Pressable>
-        )}
-      </View>
+      <Muted small style={{ marginTop: 10 }}>
+        Masked copy rebuilt from the original: bank, routing and tax numbers are hidden.
+      </Muted>
+      <Pressable
+        onPress={download}
+        accessibilityRole="button"
+        accessibilityLabel="Download source document PDF"
+        style={({ pressed }) => [styles.docButton, pressed && styles.docButtonPressed]}
+      >
+        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <Path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+        </Svg>
+        <Text style={styles.docButtonText}>Download PDF</Text>
+      </Pressable>
+      {error && <Alert kind="danger">{error}</Alert>}
     </Card>
   );
 }
@@ -647,24 +645,28 @@ const styles = StyleSheet.create({
   verdictPill: { borderRadius: radius.field, paddingHorizontal: 14, paddingVertical: 8 },
   verdict: { fontSize: 20, fontWeight: "700", letterSpacing: -0.3 },
   divider: { height: 1, backgroundColor: colors.panel2, marginVertical: 16 },
-  docHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  docName: { flex: 1, fontSize: 13, fontWeight: "600", color: colors.text },
-  // The page: white on the grey panel, a hairline edge and a soft lift so it reads as paper.
-  paper: {
-    backgroundColor: colors.surface,
+  docRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  docIcon: {
+    width: 44,
+    height: 44,
     borderRadius: radius.field,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: "hidden",
+    backgroundColor: colors.accentBg,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  paperLine: { fontSize: 13, lineHeight: 20, color: colors.text, fontVariant: ["tabular-nums"] },
-  paperFirst: { fontSize: 15, fontWeight: "700", letterSpacing: 0.4, marginBottom: 4 },
-  paperFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 28, backgroundColor: colors.surface, opacity: 0.7 },
-  masked: { backgroundColor: colors.neutralBg, color: colors.neutralInk, fontWeight: "600" },
-  docFoot: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
-  docToggle: { flexDirection: "row", alignItems: "center", gap: 2 },
+  docName: { fontSize: 14, fontWeight: "700", color: colors.text },
+  docButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 44,
+    marginTop: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brandNavy,
+  },
+  docButtonPressed: { transform: [{ scale: 0.97 }] },
+  docButtonText: { fontSize: 15, fontWeight: "700", color: "#fff" },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   reason: { flexDirection: "row", gap: 8 },
   reasonDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.muted, marginTop: 8 },

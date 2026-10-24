@@ -1,8 +1,9 @@
-"""POST /invoices · GET /invoices · GET /invoices/{id} · POST /invoices/{id}/process · GET /invoices/{id}/timeline"""
+"""POST /invoices · GET /invoices · GET /invoices/{id} · GET /invoices/{id}/document.pdf ·
+POST /invoices/{id}/process · GET /invoices/{id}/timeline"""
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel
 
 from backend.api.deps import get_invoice_service
@@ -15,7 +16,9 @@ from backend.models import (
     InvoiceUpload,
     ToolCall,
 )
+from backend.services.errors import NotFoundError
 from backend.services.invoice_service import InvoiceService, row_to_invoice
+from backend.services.source_pdf import render_masked_pdf
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -56,6 +59,24 @@ def list_invoices(
 @router.get("/{invoice_id}", response_model=Invoice)
 def get_invoice(invoice_id: str, svc: InvoiceService = Depends(get_invoice_service)) -> Invoice:
     return svc.get(invoice_id)
+
+
+@router.get("/{invoice_id}/document.pdf", response_class=Response)
+def get_source_document_pdf(
+    invoice_id: str, svc: InvoiceService = Depends(get_invoice_service)
+) -> Response:
+    """Masked copy of the source document as a PDF download (the original is never kept)."""
+    invoice = svc.get(invoice_id)
+    if not invoice.source_text:
+        raise NotFoundError(f"invoice {invoice_id} has no source document", invoice_id=invoice_id)
+    return Response(
+        content=render_masked_pdf(invoice),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{invoice_id}-masked.pdf"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @router.post("/{invoice_id}/process", response_model=ProcessResponse)
