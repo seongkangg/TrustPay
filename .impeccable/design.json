@@ -1,0 +1,606 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-24T05:59:45Z",
+  "title": "Design System: TrustPay",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Grey Desk",
+        "canonical": "#e9eaee",
+        "oklch": "oklch(93.7% 0.005 275.0)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252526",
+          "#414244",
+          "#606164",
+          "#818286",
+          "#a4a5a8",
+          "#c8c9cb",
+          "#eeeeef"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Grey",
+        "canonical": "#f5f5f7",
+        "oklch": "oklch(97.1% 0.003 286.4)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424243",
+          "#616162",
+          "#828284",
+          "#a5a5a6",
+          "#c9c9ca",
+          "#eeeeef"
+        ]
+      },
+      "panel-2": {
+        "role": "neutral",
+        "displayName": "Deeper Panel Grey",
+        "canonical": "#ebebef",
+        "oklch": "oklch(94.1% 0.005 286.3)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252526",
+          "#424243",
+          "#616163",
+          "#828285",
+          "#a5a5a7",
+          "#c9c9cb",
+          "#eeeeef"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#15161a",
+        "oklch": "oklch(20.1% 0.008 274.5)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#252526",
+          "#414244",
+          "#606165",
+          "#818287",
+          "#a4a5a9",
+          "#c8c9cc",
+          "#eeeef0"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Slate",
+        "canonical": "#6b6f7b",
+        "oklch": "oklch(54.2% 0.019 271.0)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242528",
+          "#404248",
+          "#5e616a",
+          "#7e828e",
+          "#a1a5af",
+          "#c6c9d0",
+          "#edeef2"
+        ]
+      },
+      "neutral-ink": {
+        "role": "neutral",
+        "displayName": "Badge Slate",
+        "canonical": "#565a65",
+        "oklch": "oklch(46.8% 0.018 269.8)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242528",
+          "#404248",
+          "#5e616a",
+          "#7e828e",
+          "#a1a5ae",
+          "#c6c9d0",
+          "#edeef2"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#ececf0",
+        "oklch": "oklch(94.4% 0.005 286.3)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252526",
+          "#424243",
+          "#616163",
+          "#828285",
+          "#a5a5a7",
+          "#c9c9cb",
+          "#eeeeef"
+        ]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Fog",
+        "canonical": "#f0f0f3",
+        "oklch": "oklch(95.6% 0.004 286.3)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252526",
+          "#424243",
+          "#616163",
+          "#828285",
+          "#a5a5a7",
+          "#c9c9ca",
+          "#eeeeef"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Signal Indigo",
+        "canonical": "#5b5bf0",
+        "oklch": "oklch(56.1% 0.218 276.8)",
+        "tonalRamp": [
+          "#080919",
+          "#1d2047",
+          "#343781",
+          "#4c50bf",
+          "#676bff",
+          "#8c98ff",
+          "#b6c2ff",
+          "#e3ebff"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Deep Indigo Ink",
+        "canonical": "#4040d6",
+        "oklch": "oklch(47.8% 0.222 274.1)",
+        "tonalRamp": [
+          "#070a19",
+          "#1b2148",
+          "#303882",
+          "#4751c2",
+          "#5f6dff",
+          "#869aff",
+          "#b1c3ff",
+          "#e0ecff"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Pale Indigo Line",
+        "canonical": "#c9c9fb",
+        "oklch": "oklch(85.3% 0.069 284.8)",
+        "tonalRamp": [
+          "#0b0b0f",
+          "#242430",
+          "#403f56",
+          "#5e5d7f",
+          "#7e7daa",
+          "#a1a1c5",
+          "#c6c6e1",
+          "#ecedfc"
+        ]
+      },
+      "accent-bg": {
+        "role": "primary",
+        "displayName": "Indigo Wash",
+        "canonical": "#ececfe",
+        "oklch": "oklch(94.8% 0.024 285.9)",
+        "tonalRamp": [
+          "#0b0b0d",
+          "#252529",
+          "#414149",
+          "#60606c",
+          "#818190",
+          "#a4a4b0",
+          "#c8c8d1",
+          "#eeeef3"
+        ]
+      },
+      "ok": {
+        "role": "semantic",
+        "displayName": "Settled Green",
+        "canonical": "#18794e",
+        "oklch": "oklch(51.1% 0.110 158.4)",
+        "tonalRamp": [
+          "#060d09",
+          "#152a1e",
+          "#224c36",
+          "#2f704e",
+          "#3f966a",
+          "#77b592",
+          "#aad5bb",
+          "#ddf6e6"
+        ]
+      },
+      "ok-bg": {
+        "role": "semantic",
+        "displayName": "Mint Wash",
+        "canonical": "#e3f5ea",
+        "oklch": "oklch(95.4% 0.024 159.1)",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#222624",
+          "#3c443f",
+          "#59655d",
+          "#77877d",
+          "#9ca9a1",
+          "#c3ccc6",
+          "#ebf0ed"
+        ]
+      },
+      "blocked": {
+        "role": "semantic",
+        "displayName": "Withheld Red",
+        "canonical": "#d92d3a",
+        "oklch": "oklch(57.9% 0.206 23.2)",
+        "tonalRamp": [
+          "#160606",
+          "#401515",
+          "#732123",
+          "#aa2c32",
+          "#e23b44",
+          "#f77976",
+          "#ffada8",
+          "#ffdfdb"
+        ]
+      },
+      "blocked-bg": {
+        "role": "semantic",
+        "displayName": "Blush Wash",
+        "canonical": "#fde7e8",
+        "oklch": "oklch(94.6% 0.024 14.4)",
+        "tonalRamp": [
+          "#0d0b0b",
+          "#292424",
+          "#493f40",
+          "#6c5d5e",
+          "#907d7e",
+          "#b0a1a1",
+          "#d1c6c6",
+          "#f3eded"
+        ]
+      },
+      "risk-low": {
+        "role": "semantic",
+        "displayName": "Settled Green (low risk)",
+        "canonical": "#18794e",
+        "oklch": "oklch(51.1% 0.110 158.4)",
+        "tonalRamp": [
+          "#060d09",
+          "#152a1e",
+          "#224c36",
+          "#2f704e",
+          "#3f966a",
+          "#77b592",
+          "#aad5bb",
+          "#ddf6e6"
+        ]
+      },
+      "risk-low-bg": {
+        "role": "semantic",
+        "displayName": "Mint Wash (low risk)",
+        "canonical": "#e3f5ea",
+        "oklch": "oklch(95.4% 0.024 159.1)",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#222624",
+          "#3c443f",
+          "#59655d",
+          "#77877d",
+          "#9ca9a1",
+          "#c3ccc6",
+          "#ebf0ed"
+        ]
+      },
+      "risk-medium": {
+        "role": "semantic",
+        "displayName": "Ochre",
+        "canonical": "#8f6100",
+        "oklch": "oklch(52.8% 0.111 76.5)",
+        "tonalRamp": [
+          "#0f0a04",
+          "#2f2310",
+          "#553d18",
+          "#7d5a1f",
+          "#a7782a",
+          "#c39e68",
+          "#dfc59f",
+          "#fcecd6"
+        ]
+      },
+      "risk-medium-bg": {
+        "role": "semantic",
+        "displayName": "Cream Wash",
+        "canonical": "#fdf1d6",
+        "oklch": "oklch(96.1% 0.038 86.9)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#28251e",
+          "#474135",
+          "#68604e",
+          "#8c8169",
+          "#ada491",
+          "#cfc9bb",
+          "#f2eee6"
+        ]
+      },
+      "risk-high": {
+        "role": "semantic",
+        "displayName": "Risk Red",
+        "canonical": "#c4202d",
+        "oklch": "oklch(53.0% 0.197 24.0)",
+        "tonalRamp": [
+          "#160606",
+          "#3f1615",
+          "#712424",
+          "#a73133",
+          "#df4245",
+          "#f47c76",
+          "#ffaea8",
+          "#ffe0db"
+        ]
+      },
+      "risk-high-bg": {
+        "role": "semantic",
+        "displayName": "Risk Red Wash",
+        "canonical": "#fde7e8",
+        "oklch": "oklch(94.6% 0.024 14.4)",
+        "tonalRamp": [
+          "#0d0b0b",
+          "#292424",
+          "#493f40",
+          "#6c5d5e",
+          "#907d7e",
+          "#b0a1a1",
+          "#d1c6c6",
+          "#f3eded"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero total in whole dollars; one per page. 34px under 760px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "KPI card values."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings (panel heads 14px, visible h1 22px)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text and table cells, tabular figures."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Muted KPI/hero labels and nav items; sentence case."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Badges, deltas, count pills, table headers, timestamps."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Reason codes and IDs only, in a Fog chip."
+      }
+    },
+    "shadows": [
+      {
+        "name": "window-float",
+        "value": "0 1px 2px rgba(20, 22, 30, 0.04), 0 18px 48px -18px rgba(20, 22, 30, 0.12)",
+        "purpose": "The white app window on the grey canvas; removed full-bleed under 760px."
+      },
+      {
+        "name": "raised-pill",
+        "value": "0 1px 2px rgba(20, 22, 30, 0.08), 0 2px 6px -2px rgba(20, 22, 30, 0.08)",
+        "purpose": "Active nav pill lifting out of its track."
+      },
+      {
+        "name": "tooltip-float",
+        "value": "0 2px 4px rgba(20, 22, 30, 0.06), 0 10px 24px -6px rgba(20, 22, 30, 0.18)",
+        "purpose": "Chart tooltips."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px var(--accent-bg)",
+        "purpose": "Text fields on focus, with an indigo border."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "House curve for presses and the risk-bar rise."
+      },
+      {
+        "name": "press",
+        "value": "transform: scale(0.97) 160ms cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Button and link-button press feedback."
+      },
+      {
+        "name": "state-color",
+        "value": "150ms ease",
+        "purpose": "Background and colour changes on hover (nav, buttons, table rows, fields)."
+      },
+      {
+        "name": "bar-rise",
+        "value": "600ms cubic-bezier(0.23, 1, 0.32, 1), from scaleY(0.6) opacity 0",
+        "purpose": "Risk bars rise once on load; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "chart-draw",
+        "value": "700ms ease-out",
+        "purpose": "Volume chart draws in once; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "900px"
+      },
+      {
+        "name": "full-bleed",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink pill for the one forward action in a row, e.g. Review.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Review <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9.5 6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font: 600 14px/1.5 var(--font); height: 36px; padding: 0 16px; border-radius: var(--radius-control); border: 0; cursor: pointer; white-space: nowrap; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-btn:active:not(:disabled) { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-btn-primary { background: var(--text); color: #fff; } .ds-btn-primary:hover { background: #2c2e36; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default grey pill for ordinary actions.",
+      "html": "<button class=\"ds-btn2\">Sync now</button>",
+      "css": ".ds-btn2 { display: inline-flex; align-items: center; font: 600 14px/1.5 var(--font); height: 36px; padding: 0 16px; border-radius: var(--radius-control); border: 0; background: var(--panel-2); color: var(--text); cursor: pointer; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-btn2:hover { background: #e2e2e8; } .ds-btn2:active { transform: scale(0.97); } .ds-btn2:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-btn2:disabled { color: #565a65; cursor: not-allowed; }"
+    },
+    {
+      "name": "Approve / Reject Buttons",
+      "kind": "button",
+      "refersTo": "button-approve",
+      "description": "Green and red pills, only on the human-decision panel.",
+      "html": "<div class=\"ds-actions\"><button class=\"ds-dec ds-approve\">Approve</button><button class=\"ds-dec ds-reject\">Reject</button></div>",
+      "css": ".ds-actions { display: flex; gap: 8px; } .ds-dec { font: 600 14px/1.5 var(--font); height: 36px; padding: 0 16px; border-radius: var(--radius-control); border: 0; color: #fff; cursor: pointer; transition: transform 160ms var(--ease-out); } .ds-dec:active { transform: scale(0.97); } .ds-dec:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-approve { background: var(--ok); } .ds-reject { background: var(--blocked); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "White field with an indigo border and wash halo on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Reviewer name\" />",
+      "css": ".ds-input { width: 100%; padding: 9px 12px; border: 1px solid #dcdde3; border-radius: 12px; background: var(--surface); color: var(--text); font: 14px/1.5 var(--font); transition: border-color 150ms ease; } .ds-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-bg); }"
+    },
+    {
+      "name": "Pill Nav",
+      "kind": "nav",
+      "refersTo": "nav-pill-active",
+      "description": "Centred icon pills on a grey track; the active one is a raised white pill with its label.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-a ds-active\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z\"/></svg><span>Overview</span></a><a class=\"ds-nav-a\" href=\"#\" aria-label=\"Approvals\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m8.5 12.2 2.4 2.3 4.6-4.8\"/></svg></a><a class=\"ds-nav-a\" href=\"#\" aria-label=\"Invoices\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 7h11M9 12h11M9 17h11\"/><path d=\"M4.5 7h.01M4.5 12h.01M4.5 17h.01\" stroke-width=\"2.5\"/></svg></a></nav>",
+      "css": ".ds-nav { display: inline-flex; gap: 2px; padding: 4px; background: var(--panel); border-radius: var(--radius-control); } .ds-nav-a { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px; border-radius: var(--radius-control); color: var(--muted); font: 550 13px/1 var(--font); text-decoration: none; transition: background-color 150ms ease, color 150ms ease; } .ds-nav-a:hover { color: var(--text); } .ds-nav-a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(20,22,30,0.08), 0 2px 6px -2px rgba(20,22,30,0.08); }"
+    },
+    {
+      "name": "Badges",
+      "kind": "chip",
+      "refersTo": "badge-neutral",
+      "description": "Sentence-case pills: tints for risk and status, solid red for blocked, neutral for non-risk states.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-low\">Low risk</span><span class=\"ds-badge ds-med\">Medium risk</span><span class=\"ds-badge ds-high\">High risk</span><span class=\"ds-badge ds-pend\">Pending approval</span><span class=\"ds-badge ds-ok\">Completed</span><span class=\"ds-badge ds-blk\">Blocked</span><span class=\"ds-badge\">Masked</span></div>",
+      "css": ".ds-badges { display: flex; flex-wrap: wrap; gap: 6px; } .ds-badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font: 600 12px/1 var(--font); white-space: nowrap; background: var(--neutral-bg); color: #565a65; } .ds-low { background: var(--risk-low-bg); color: var(--risk-low); } .ds-med { background: var(--risk-medium-bg); color: var(--risk-medium); } .ds-high { background: var(--risk-high-bg); color: var(--risk-high); } .ds-pend { background: var(--accent-bg); color: var(--accent-ink); } .ds-ok { background: var(--ok-bg); color: var(--ok); } .ds-blk { background: var(--blocked); color: #fff; }"
+    },
+    {
+      "name": "KPI Card",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Borderless grey panel with label, headline value and an indigo sparkline.",
+      "html": "<div class=\"ds-kpi\"><span class=\"ds-kpi-label\">Received</span><span class=\"ds-kpi-value\">0</span><svg class=\"ds-spark\" viewBox=\"0 0 120 32\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><path d=\"M3,26 C14,24 20,14 31,16 C42,18 48,8 59,10 C70,12 76,22 87,18 C98,14 106,6 117,5\" vector-effect=\"non-scaling-stroke\"/></svg></div>",
+      "css": ".ds-kpi { display: flex; flex-direction: column; gap: 4px; background: var(--panel); border-radius: var(--radius-panel); padding: 18px 20px; max-width: 280px; font-family: var(--font); font-variant-numeric: tabular-nums; } .ds-kpi-label { color: var(--muted); font-size: 13px; font-weight: 550; } .ds-kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text); } .ds-spark { width: 100%; height: 32px; margin-top: 6px; overflow: visible; } .ds-spark path { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }"
+    },
+    {
+      "name": "Hero Figure",
+      "kind": "custom",
+      "refersTo": "window",
+      "description": "Muted label, 44px whole-dollar total with a paid-share delta pill, paid/withheld split beneath.",
+      "html": "<div class=\"ds-hero\"><div class=\"ds-hero-label\">Invoice volume</div><div class=\"ds-hero-row\"><span class=\"ds-figure\">$0</span><span class=\"ds-delta\">0% paid</span></div><div class=\"ds-split\"><span><i class=\"ds-key ds-paid\"></i>Paid <strong>$0.00</strong></span><span><i class=\"ds-key ds-withheld\"></i>Withheld <strong>$0.00</strong></span></div></div>",
+      "css": ".ds-hero { font-family: var(--font); font-variant-numeric: tabular-nums; color: var(--text); } .ds-hero-label { font-size: 13px; font-weight: 550; color: var(--muted); } .ds-hero-row { display: flex; align-items: center; gap: 12px; margin-top: 2px; } .ds-figure { font-size: 44px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; } .ds-delta { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 650; background: var(--ok-bg); color: var(--ok); } .ds-split { display: flex; gap: 20px; margin-top: 6px; color: var(--muted); font-size: 13px; } .ds-split strong { color: var(--text); font-weight: 600; margin-left: 2px; } .ds-key { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; } .ds-paid { background: var(--ok); } .ds-withheld { background: var(--blocked); }"
+    },
+    {
+      "name": "Approval Queue Row",
+      "kind": "custom",
+      "refersTo": "queue-row",
+      "description": "Indigo-wash row (blush when blocked) routing the approver to an invoice that needs a human.",
+      "html": "<div class=\"ds-queue\"><div class=\"ds-who\"><span class=\"ds-vendor\">Vendor name</span><span class=\"ds-sub\">INV-0000 · timestamp</span></div><div class=\"ds-why\"><span class=\"ds-qbadge\">Pending approval</span><code class=\"ds-code\">REASON_CODE</code></div><span class=\"ds-amt\">$0.00</span><a class=\"ds-review\" href=\"#\">Review</a></div>",
+      "css": ".ds-queue { display: grid; grid-template-columns: minmax(160px,1.1fr) 2fr auto auto; align-items: center; gap: 16px; padding: 12px 12px 12px 18px; background: var(--accent-bg); border-radius: 16px; font: 14px/1.5 var(--font); color: var(--text); } .ds-who { display: flex; flex-direction: column; } .ds-vendor { font-weight: 650; } .ds-sub { font-size: 12px; color: var(--muted); } .ds-why { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .ds-qbadge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--pending-bg); color: var(--accent-ink); } .ds-code { font: 12px/1.4 var(--mono); background: var(--neutral-bg); color: #3a3d46; padding: 2px 6px; border-radius: 6px; } .ds-amt { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; } .ds-review { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--text); color: #fff; font-weight: 600; text-decoration: none; transition: transform 160ms var(--ease-out), background-color 150ms ease; } .ds-review:hover { background: #2c2e36; } .ds-review:active { transform: scale(0.97); } .ds-review:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Window on the Desk",
+    "overview": "TrustPay is one calm white window resting on a grey desk. Inside it, money comes first, then its shape over time, then whatever needs a human. The page refuses the stacked-tiles-and-tables admin look it replaced: there are no bordered cards and no header bars, only a floating white window and one-step grey panels set into it, separated by space rather than lines.\n\nThe direction is pinned by a reference image the user supplied, and its distinctive devices are kept on purpose: a single indigo on data and on the active nav pill, sparklines on the KPI cards, a raised white active pill in a centred icon nav, the soft-shadowed window on the grey canvas, and a large hero figure in whole dollars. Density is moderate. An approver who visits a few times a day should be able to read the totals at a glance and reach the next decision in one click.\n\nColour carries meaning, not decoration. Indigo means \"data\" or \"here\". Green and red mean money polarity, risk or status, nothing else. Amber means medium risk only. Healthy states stay quiet; blocked and withheld money is loud.",
+    "keyCharacteristics": [
+      "Floating white window (28px corners) on a cool grey canvas; borderless grey panels (18px) inside.",
+      "One indigo accent on data, the chart, sparklines, the highlighted risk bar, today's calendar cell and the active nav state.",
+      "Pill-shaped controls everywhere: nav, buttons, badges, count pills, deltas.",
+      "Tabular numerals throughout; the hero figure is 44px whole dollars.",
+      "Sentence-case badges; missing values print as an em dash (—).",
+      "Motion is brief and physical: a 0.97 press, bars that rise once, a chart that draws in once."
+    ],
+    "rules": [
+      {
+        "name": "The One Indigo Rule",
+        "body": "Indigo is the only accent. It marks data and \"you are here\"; it never decorates a heading, a border or an empty area.",
+        "section": "colors"
+      },
+      {
+        "name": "The Polarity Rule",
+        "body": "Green and red appear only for money polarity (paid / withheld), risk and status. Amber appears only for medium risk. A state that is neither risky nor a status (Disabled, Masked, \"No risk yet\", a missing value) takes the neutral badge.",
+        "section": "colors"
+      },
+      {
+        "name": "The Loud Block Rule",
+        "body": "Blocked, failed and rejected are the only solid-filled badges (white on red). Every other badge is a tint with coloured text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every number uses tabular figures. Amounts align right in tables.",
+        "section": "typography"
+      },
+      {
+        "name": "The Em Dash Rule",
+        "body": "A missing value prints as an em dash (—), never \"N/A\", \"null\", \"0\" or an empty cell.",
+        "section": "typography"
+      },
+      {
+        "name": "The UTC Day Rule",
+        "body": "Days in the 14-day history are UTC calendar days and any range that names them carries \"(UTC)\".",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal-First Rule",
+        "body": "Panels never carry a shadow or a border. A panel is distinguished from the window by one step of grey alone.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep indigo (#5b5bf0) to data, the active nav pill, today's cell, the high-risk bar and waiting-count pills.",
+      "**Do** use green and red only for paid/withheld money, risk and status, and amber only for medium risk.",
+      "**Do** give non-risk states (Disabled, Masked, \"No risk yet\") the neutral badge, in sentence case.",
+      "**Do** print missing values as an em dash (—) and label UTC day ranges \"(UTC)\".",
+      "**Do** set every number in tabular figures and show the hero total in whole dollars.",
+      "**Do** separate sections with space (36px) and panels with one step of grey, not lines.",
+      "**Do** use `scale(0.97)` at 160ms on `cubic-bezier(0.23, 1, 0.32, 1)` for button presses, and disable the risk-bar rise and the chart draw-in under `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "**Don't** add borders or shadows to inner panels; only the window, the active nav pill and tooltips float.",
+      "**Don't** introduce a second accent hue, or use indigo for decoration.",
+      "**Don't** use green, red or amber for anything that is not money polarity, risk or status.",
+      "**Don't** fill a badge solid unless it is blocked, failed or rejected.",
+      "**Don't** uppercase or track out labels and badges.",
+      "**Don't** show a raw `bank_account`, `routing_number` or `tax_id` anywhere in the UI."
+    ]
+  }
+}

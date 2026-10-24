@@ -11,9 +11,9 @@ pending approvals, and the audit trail.
 | `public/` | Static brand assets served at the site root: `trustpay-logo.{svg,png}` (shield + wordmark) and `trustpay-icon.{svg,png}` (shield only). Not yet referenced by any page. |
 | `index.html`, `src/main.jsx` | Entry point; mounts `App` inside a `BrowserRouter`. |
 | `eslint.config.js` | ESLint flat config: recommended + react + react-hooks. |
-| `src/App.jsx` | Top bar with backend health, routes: `/` → Dashboard, `/invoices/:id` → InvoiceDetails, `/invoices/:id/audit` → AuditDetails. |
+| `src/App.jsx` | App window and top bar (mark, centred pill nav, backend health), routes: `/` → Dashboard, `/invoices/:id` → InvoiceDetails, `/invoices/:id/audit` → AuditDetails. |
 | `src/api/client.js` | Thin fetch wrapper for every backend endpoint (including `inboxStatus` / `inboxSync`), `ApiError` carrying the contract's error body and HTTP status, and formatting helpers (`fmtMoney`, `fmtTime`, `fmtPct`, `human`). |
-| `src/styles/dashboard.css` | Plain CSS. Risk colors are tokens (`--risk-low/medium/high`), blocked states share `--blocked`; badges, tiles, tables, timeline, approval panel, approval queue, chart panels, inbox card. The chart series reuse the same hex values as the tokens. |
+| `src/styles/dashboard.css` | Plain CSS. A white window on a grey canvas with soft grey panels; one indigo `--accent` on data and the active nav pill. Risk colors are tokens (`--risk-low/medium/high`), blocked states share `--blocked`; badges, KPI cards, risk bars, day calendar, tables, timeline, approval panel, approval queue, inbox card. The chart series reuse the same hex values as the tokens. |
 
 ## Running
 
@@ -41,14 +41,15 @@ and `POST /invoices/{id}/process` with curl or the API docs at `http://localhost
 | `AuditLog.jsx` | Immutable event list: actor, action, timestamp, policy result, integrity (hash chain) status. |
 | `ApprovalPanel.jsx` | Explicit human approve/reject controls, clearly separated from the AI recommendation. Shows the "why" (reasons + evidence) next to the recommendation. |
 | `ApprovalQueue.jsx` | Overview list of invoices in `PENDING_APPROVAL` / `BLOCKED`: vendor, amount, status and risk badges, reason codes when known, link to the invoice page where the decision is made. |
-| `SummaryCharts.jsx` | Recharts panels fed by `GET /dashboard/summary`: bar chart of `by_risk`, bar chart of `by_status`, line chart of `by_day` (received / completed / blocked per day, last 14 days). |
+| `SummaryCharts.jsx` | Overview charts fed by `GET /dashboard/summary` and the invoice list: `VolumeChart` (smooth recharts area of `by_day` received, completed as the quiet line), `Sparkline` (SVG line for a KPI card), `RiskBars` (low / medium / high counts and amounts, high risk highlighted), `DayCalendar` (the 14 `by_day` days as a calendar grid, today highlighted). |
+| `Icons.jsx` | Small outline SVG icon set for the pill nav and labels, plus the TrustPay mark. |
 | `InboxCard.jsx` | `GET /inbox/status`: authorized or not, last sync, "Check inbox now" (`POST /inbox/sync`, shows the backend's message on 503 `INBOX_NOT_AUTHORIZED`), recent messages with links to their invoices. Renders "Inbox not available" when the backend answers 404. |
 
 ## Pages (`src/pages/`)
 
 | File | Screen |
 |------|--------|
-| `Dashboard.jsx` | Overview, top to bottom: **Needs your approval** queue → count tiles plus amount tiles (total / paid / withheld from `summary.amounts`) → **Graphs** → **Inbox** card → recent policy violations → invoices table. Auto-refreshes every 15 s. |
+| `Dashboard.jsx` | Overview inside the app window, top to bottom: **Needs your approval** queue → **Invoice volume** hero (total from `summary.amounts`, % paid, paid / withheld) over the 14-day volume chart → Received / Completed / Blocked cards with sparklines → **Risk mix** bars (with blocked tool calls and sensitive-data count) beside the **Received per day** calendar → **Inbox** card → recent policy violations → invoices table. The pill nav links to these sections by hash. Auto-refreshes every 15 s. |
 | `InvoiceDetails.jsx` | Invoice fields (sensitive data masked), current status, risk level, final recommendation, sensitive-data warnings, approval controls (the only write action in the UI), agent timeline, tool calls. |
 | `AuditDetails.jsx` | Full audit view for one invoice. |
 

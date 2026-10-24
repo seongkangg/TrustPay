@@ -48,15 +48,15 @@ export default function InboxCard({ status, unavailable, onSynced }) {
   return (
     <div className="card inbox">
       <div className="head">
-        <span className={`badge ${authorized ? "auth-allowed" : "auth-blocked"}`}>
-          {!status.enabled ? "disabled" : status.authorized ? "authorized" : "not authorized"}
+        <span className={`badge ${authorized ? "auth-allowed" : status.enabled ? "auth-blocked" : ""}`}>
+          {!status.enabled ? "Disabled" : status.authorized ? "Authorized" : "Not authorized"}
         </span>
         <span className="small muted">
           Last sync: {fmtTime(status.last_sync_at)}
           {status.poll_seconds ? ` · polls every ${status.poll_seconds}s` : ""}
         </span>
         <span className="spacer" />
-        <button className="primary" disabled={busy} onClick={sync}>
+        <button className="primary" disabled={busy || !status.enabled} onClick={sync}>
           {busy ? "Checking…" : "Check inbox now"}
         </button>
       </div>
