@@ -26,6 +26,7 @@ from backend.models import (
 )
 from backend.orchestration.workflow_context import WorkflowContext
 from backend.utils.timestamps import now_utc
+from backend.utils.validation import normalize_vendor_name
 
 DUPLICATE_WINDOW_DAYS = 30
 
@@ -213,7 +214,13 @@ class VerificationAgent(BaseAgent):
         return "vendor_verified" if po_matches else "verified_with_findings"
 
     def _find_duplicate(self, ctx: WorkflowContext) -> str | None:
-        if not ctx.vendor_id:
+        """Same vendor + (same vendor invoice number, or same amount within the window).
+
+        The vendor is matched by ID when the invoice has one; otherwise by the normalized vendor
+        name — a vendor not on the vendor list has no ID, and a new vendor sending the same
+        invoice twice is exactly the case this check must catch."""
+        vendor_name = normalize_vendor_name(ctx.vendor_name)
+        if not ctx.vendor_id and not vendor_name:
             return None
         since = now_utc() - timedelta(days=DUPLICATE_WINDOW_DAYS)
         conditions = []
@@ -224,13 +231,16 @@ class VerificationAgent(BaseAgent):
         if not conditions:
             return None
         stmt = (
-            select(InvoiceRow.invoice_id)
-            .where(
-                InvoiceRow.invoice_id != ctx.invoice_id,
-                InvoiceRow.vendor_id == ctx.vendor_id,
-                or_(*conditions),
-            )
+            select(InvoiceRow.invoice_id, InvoiceRow.vendor_id, InvoiceRow.vendor_name)
+            .where(InvoiceRow.invoice_id != ctx.invoice_id, or_(*conditions))
             .order_by(InvoiceRow.created_at)
-            .limit(1)
         )
-        return self.gov.session.scalar(stmt)
+        for invoice_id, other_id, other_name in self.gov.session.execute(stmt):
+            same_vendor = (
+                other_id == ctx.vendor_id
+                if ctx.vendor_id and other_id
+                else bool(vendor_name) and normalize_vendor_name(other_name) == vendor_name
+            )
+            if same_vendor:
+                return invoice_id
+        return None

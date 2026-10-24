@@ -30,11 +30,13 @@ VENDORS = [
     ("V-102", "Northwind Logistics"),
     ("V-103", "Contoso IT Services"),
 ]
-# (status, risk, recommendation, weight)
+# (status, risk, recommendation, weight). Past invoices are already resolved — no BLOCKED or
+# PENDING_APPROVAL: those would sit in the reviewer's approval queue with no approval request
+# behind them, and approving one would fail.
 OUTCOMES = [
     (InvoiceStatus.COMPLETED, RiskLevel.LOW, Recommendation.APPROVE, 6),
     (InvoiceStatus.COMPLETED, RiskLevel.MEDIUM, Recommendation.ESCALATE, 2),
-    (InvoiceStatus.BLOCKED, RiskLevel.HIGH, Recommendation.REJECT, 2),
+    (InvoiceStatus.REJECTED, RiskLevel.HIGH, Recommendation.REJECT, 2),
     (InvoiceStatus.REJECTED, RiskLevel.MEDIUM, Recommendation.ESCALATE, 1),
 ]
 

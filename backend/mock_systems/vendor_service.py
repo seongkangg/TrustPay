@@ -1,10 +1,10 @@
 """Mock vendor master — GET /vendors/{vendor_id}. Read-only."""
 
-import re
 from typing import Any
 
 from backend.database.seed_data import ReferenceData, get_reference_data
 from backend.mock_systems import MockSystemUnavailable, NotFound, is_available
+from backend.utils.validation import normalize_vendor_name  # noqa: F401 — also re-exported
 
 NAME = "vendor"
 
@@ -35,17 +35,3 @@ class VendorService:
             v for v in self.ref.vendors.values() if normalize_vendor_name(v["name"]) == wanted
         ]
         return dict(matches[0]) if len(matches) == 1 else None
-
-
-_COMPANY_SUFFIXES = {
-    "inc", "incorporated", "llc", "ltd", "limited", "corp", "corporation",
-    "co", "company", "plc", "gmbh", "sa", "ag", "bv",
-}  # fmt: skip
-
-
-def normalize_vendor_name(name: str | None) -> str:
-    """Lowercase, drop punctuation and trailing legal suffixes: 'Acme, Inc.' → 'acme'."""
-    words = re.sub(r"[^a-z0-9 ]", " ", (name or "").lower()).split()
-    while words and words[-1] in _COMPANY_SUFFIXES:
-        words.pop()
-    return " ".join(words)

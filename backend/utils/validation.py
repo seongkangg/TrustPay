@@ -10,6 +10,23 @@ from typing import Any
 
 from backend.models.enums import Currency
 
+_COMPANY_SUFFIXES = {
+    "inc", "incorporated", "llc", "ltd", "limited", "corp", "corporation",
+    "co", "company", "plc", "gmbh", "sa", "ag", "bv",
+}  # fmt: skip
+
+
+def normalize_vendor_name(name: str | None) -> str:
+    """Lowercase, drop punctuation and trailing legal suffixes: 'Acme, Inc.' → 'acme'.
+
+    Used for vendor-master lookups by name and for duplicate detection when an invoice's
+    vendor has no ID. Exact after normalization — never fuzzy."""
+    words = re.sub(r"[^a-z0-9 ]", " ", (name or "").lower()).split()
+    while words and words[-1] in _COMPANY_SUFFIXES:
+        words.pop()
+    return " ".join(words)
+
+
 REQUIRED_INVOICE_FIELDS = (
     "vendor_invoice_number",
     "vendor",  # satisfied by vendor_id OR vendor_name

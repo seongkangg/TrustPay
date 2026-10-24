@@ -21,14 +21,16 @@ from backend.models import ReasonCode
 from backend.services.invoice_service import InvoiceService
 from backend.services.masking_service import mask_text
 
+VENDOR = "Northwind Racket Supply North America"
 
-def supplier_invoice() -> bytes:
+
+def supplier_invoice(vendor: str = VENDOR) -> bytes:
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", size=10)
     for line in (
         "Page 1 of 1",
-        "Northwind Racket Supply North America",
+        vendor,
         "#140-1000 Example Place",
         "Richmond BC  V6V 0A0",
         "+16045550100",
@@ -139,3 +141,88 @@ def test_real_layout_is_a_review_not_a_block(session, ref):
     }
     assert inv.risk_level.value == "medium" and inv.status.value == "PENDING_APPROVAL"
     assert gov.payments.get_payment(inv.invoice_id) is None  # still a human's call
+
+
+# --- duplicates from a vendor that isn't on the vendor list -----------------------------------
+
+
+class Inbox:
+    def __init__(self, pdfs: dict[str, bytes]):
+        self.pdfs = pdfs
+
+    def list_candidates(self, days):
+        return list(self.pdfs)
+
+    def fetch(self, message_id):
+        return InboxMessage(
+            message_id, "t", "a@b.test", "Invoice", None, "invoice.pdf", self.pdfs[message_id]
+        )
+
+
+def _policy_codes(svc, invoice_id):
+    return next(
+        d for d in svc.decisions(invoice_id) if d.agent.value == "policy_risk_agent"
+    ).reason_codes
+
+
+def test_same_invoice_emailed_twice_by_a_new_vendor_is_a_duplicate(session, ref):
+    """No vendor ID (not on the list) used to skip the duplicate check entirely."""
+    gov = GovernanceEngine(session, ref)
+    pdf = supplier_invoice()
+    res = InboxService(session, gov, Inbox({"m-1": pdf, "m-2": pdf}), llm=GraniteLike()).sync()
+    first, second = res.created
+    svc = InvoiceService(session, gov)
+
+    assert ReasonCode.DUPLICATE_INVOICE not in _policy_codes(svc, first)
+    codes = _policy_codes(svc, second)
+    assert ReasonCode.DUPLICATE_INVOICE in codes and ReasonCode.UNKNOWN_VENDOR in codes
+    dup = svc.get(second)
+    assert dup.status.value == "BLOCKED" and dup.recommendation.value == "reject"
+    events = [e.event_type.value for e in gov.audit.list_for_invoice(second)]
+    assert "duplicate_detected" in events
+    assert gov.payments.get_payment(second) is None
+
+
+class NamedLike(GraniteLike):
+    """Same invoice number, but the model reads a different vendor name."""
+
+    def __init__(self, vendor_name):
+        self.vendor_name = vendor_name
+
+    def complete(self, prompt):
+        out = super().complete(prompt)
+        if "<schema>invoice_fields</schema>" in prompt:
+            data = json.loads(out)
+            data["vendor_name"] = self.vendor_name
+            return json.dumps(data)
+        return out
+
+
+def test_name_variants_of_the_same_vendor_still_match(session, ref):
+    gov = GovernanceEngine(session, ref)
+    pdf = supplier_invoice()
+    svc = InvoiceService(session, gov)
+    first = InboxService(session, gov, Inbox({"m-1": pdf}), llm=GraniteLike()).sync().created[0]
+    # same company, written with different case, punctuation and a legal suffix
+    variant = "NORTHWIND RACKET SUPPLY NORTH AMERICA, INC."
+    pdf2 = supplier_invoice(vendor=variant)
+    second = (
+        InboxService(session, gov, Inbox({"m-2": pdf2}), llm=NamedLike(variant)).sync().created[0]
+    )
+    assert first != second and svc.get(second).vendor_name == variant
+    assert ReasonCode.DUPLICATE_INVOICE in _policy_codes(svc, second)
+
+
+def test_different_new_vendor_with_the_same_number_is_not_a_duplicate(session, ref):
+    """Invoice numbers are only unique per vendor — never flag across vendors."""
+    gov = GovernanceEngine(session, ref)
+    pdf = supplier_invoice()
+    svc = InvoiceService(session, gov)
+    InboxService(session, gov, Inbox({"m-1": pdf}), llm=GraniteLike()).sync()
+    other = "Example Sports Distribution"
+    pdf2 = supplier_invoice(vendor=other)
+    second = (
+        InboxService(session, gov, Inbox({"m-2": pdf2}), llm=NamedLike(other)).sync().created[0]
+    )
+    assert svc.get(second).vendor_name == other  # the name was really read from the PDF
+    assert ReasonCode.DUPLICATE_INVOICE not in _policy_codes(svc, second)

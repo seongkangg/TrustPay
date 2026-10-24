@@ -14,9 +14,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.database.ids import next_id
 from backend.database.seed_data import ReferenceData, get_reference_data
 from backend.database.tables import AgentDecisionRow, ApprovalRow
 from backend.governance.decision_validator import ValidationResult, validate_decision
@@ -425,9 +426,8 @@ class GovernanceEngine:
 
     def _create_approval_request(self, p: dict[str, Any]) -> dict[str, Any]:
         timeout_h = int(self.ref.thresholds.get("approval_timeout_hours", 48))
-        count = self.session.scalar(select(func.count()).select_from(ApprovalRow)) or 0
         row = ApprovalRow(
-            approval_id=f"APR-{count + 1:03d}",
+            approval_id=next_id(self.session, ApprovalRow.approval_id, "APR"),
             invoice_id=p["invoice_id"],
             correlation_id=p["correlation_id"],
             requested_by=p["requested_by"],

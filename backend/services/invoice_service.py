@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from backend.database.ids import next_id
 from backend.database.tables import AgentDecisionRow, ApprovalRow, AuditEventRow, InvoiceRow
 from backend.governance import GovernanceEngine
 from backend.llm.granite_client import LLMClient
@@ -292,5 +293,7 @@ class InvoiceService:
     # ------------------------------------------------------------ internals
 
     def _next_invoice_id(self) -> str:
-        count = self.session.scalar(select(func.count()).select_from(InvoiceRow)) or 0
-        return f"INV-{FIRST_INVOICE_NUMBER + count}"
+        # Live invoices start at INV-1001; seeded history uses the INV-0xxx range below it.
+        return next_id(
+            self.session, InvoiceRow.invoice_id, "INV", width=4, start=FIRST_INVOICE_NUMBER
+        )
