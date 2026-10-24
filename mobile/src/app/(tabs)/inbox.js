@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   summary: { gap: 2, marginBottom: 14, padding: space.card },
   summaryLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
   summaryRow: { flexDirection: "row", alignItems: "baseline", gap: 8 },
-  summaryCount: { fontSize: 34, fontWeight: "700", letterSpacing: -1, color: colors.text, fontVariant: ["tabular-nums"] },
-  summaryUnit: { fontSize: 15, fontWeight: "600", color: colors.text },
+  summaryCount: { fontSize: 44, fontWeight: "700", letterSpacing: -1.3, color: colors.text, fontVariant: ["tabular-nums"] },
+  summaryUnit: { fontSize: 20, fontWeight: "700", letterSpacing: -0.3, color: colors.text },
   summaryMoney: { fontSize: 13, color: colors.muted, fontVariant: ["tabular-nums"] },
 });
