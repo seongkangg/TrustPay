@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { fmtMoney } from "../api/client.js";
 
@@ -53,7 +53,7 @@ export function VolumeChart({ days, onHover }) {
   return (
     <div className="volume-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
+        <ComposedChart
           data={data}
           margin={{ top: 12, right: 4, left: 4, bottom: 0 }}
           onMouseMove={(state) => onHover?.(state?.isTooltipActive ? state.activeTooltipIndex ?? null : null)}
@@ -88,7 +88,7 @@ export function VolumeChart({ days, onHover }) {
             stroke={COLOR.accentSoft}
             strokeWidth={2}
             dot={false}
-            activeDot={false}
+            activeDot={{ r: 4, fill: COLOR.accentSoft, stroke: "#fff", strokeWidth: 2 }}
             isAnimationActive={!REDUCED_MOTION}
             animationDuration={700}
           />
@@ -104,7 +104,7 @@ export function VolumeChart({ days, onHover }) {
             animationDuration={700}
             animationEasing="ease-out"
           />
-        </AreaChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
