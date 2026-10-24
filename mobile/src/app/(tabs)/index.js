@@ -1,14 +1,15 @@
 // Overview tab: invoice volume → counts → risk mix and days → policy violations. Read-only; the
 // waiting count lives on the Inbox tab in the bottom nav, and approve / reject on the invoice screen.
-import { Link, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
-import { fmtMoney, fmtTime } from "../../api/client.js";
+import { fmtMoney } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { DayCalendar, RiskBars, Sparkline, VolumeChart, dayLabel } from "../../components/Charts.js";
 import RollingText, { useRolling } from "../../components/RollingText.js";
-import { Alert, Badge, Card, H2, Muted, ReasonTag } from "../../components/ui.js";
+import { Alert, Badge, Card, H2, Muted } from "../../components/ui.js";
+import ViolationList from "../../components/ViolationList.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
@@ -132,21 +133,7 @@ export default function Overview() {
       {summary?.recent_violations?.length > 0 && (
         <>
           <H2>Recent policy violations</H2>
-          <Card style={{ paddingVertical: 4 }}>
-            {summary.recent_violations.map((v, i) => (
-              <View key={i} style={[styles.violation, i > 0 && styles.rule]}>
-                <Link href={`/invoices/${v.invoice_id}`} style={styles.link}>
-                  {v.invoice_id}
-                </Link>
-                <View style={styles.codes}>
-                  {v.reason_codes.map((c) => (
-                    <ReasonTag key={c} code={c} />
-                  ))}
-                </View>
-                <Muted small>{fmtTime(v.timestamp)}</Muted>
-              </View>
-            ))}
-          </Card>
+          <ViolationList violations={summary.recent_violations} invoices={invoices} />
         </>
       )}
     </ScrollView>
@@ -219,8 +206,4 @@ const styles = StyleSheet.create({
   kpiNote: { fontSize: 11, fontWeight: "600", color: colors.ok, marginBottom: 4 },
   panelHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 14 },
   panelTitle: { fontSize: 14, fontWeight: "700", color: colors.text },
-  codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 2 },
-  link: { color: colors.accentInk, fontSize: 13, fontWeight: "600" },
-  rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
-  violation: { paddingVertical: 10, gap: 4 },
 });
