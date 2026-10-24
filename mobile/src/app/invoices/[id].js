@@ -541,8 +541,8 @@ function AuthBadge({ authorization }) {
   return <Badge label={authorization ? sentence(authorization) : "—"} fg={c.fg} bg={c.bg} />;
 }
 
-// A decision button in the bottom nav's bubble style: soft red Reject, navy Approve (the primary
-// button colour, as on "Check inbox now").
+// A decision button in the bottom nav's bubble style: soft red Reject, deep teal Approve (the same
+// colour as "Check inbox now" and today's cell in "Received per day").
 function DecisionBubble({ kind, label, disabled, onPress }) {
   const approve = kind === "approve";
   const fg = disabled ? colors.neutralInk : approve ? "#fff" : colors.riskHigh;
@@ -554,7 +554,7 @@ function DecisionBubble({ kind, label, disabled, onPress }) {
       accessibilityLabel={label}
       style={({ pressed }) => [
         styles.bubble,
-        { flex: approve ? 1.6 : 1, backgroundColor: disabled ? colors.panel2 : approve ? colors.brandNavy : colors.blockedBg },
+        { flex: approve ? 1.6 : 1, backgroundColor: disabled ? colors.panel2 : approve ? colors.accentStrong : colors.blockedBg },
         pressed && !disabled && styles.bubblePressed,
       ]}
     >
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     height: 44,
     marginTop: 14,
     borderRadius: radius.pill,
-    backgroundColor: colors.brandNavy,
+    backgroundColor: colors.accentStrong, // deep teal, like "Check inbox now"
   },
   docButtonPressed: { transform: [{ scale: 0.97 }] },
   docButtonText: { fontSize: 15, fontWeight: "700", color: "#fff" },
