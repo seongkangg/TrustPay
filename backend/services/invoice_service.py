@@ -27,6 +27,7 @@ from backend.models import (
 )
 from backend.orchestration.invoice_workflow import InvoiceWorkflow, WorkflowResult
 from backend.services.errors import InvalidStateError, NotFoundError
+from backend.services.masking_service import mask_text
 from backend.utils.timestamps import now_utc
 
 FIRST_INVOICE_NUMBER = 1001
@@ -53,6 +54,8 @@ def row_to_invoice(row: InvoiceRow) -> Invoice:
         routing_number=row.routing_number,
         tax_id=row.tax_id,
         source_document=row.source_document,
+        # Stored masked at ingestion; masked again here so no response can carry a raw value.
+        source_text=mask_text(row.raw_text)[0] if row.raw_text else None,
         status=row.status,
         risk_level=row.risk_level,
         recommendation=row.recommendation,

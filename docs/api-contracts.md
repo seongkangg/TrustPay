@@ -63,6 +63,11 @@ Create an invoice from an upload. Runs the sensitive-data scanner **before** sto
 ### `GET /invoices/{invoice_id}`
 **Response 200** — `Invoice` · **404** if unknown
 
+`source_text` is the text read from the source document (e.g. an emailed PDF), with bank
+account, routing number, tax ID and other sensitive values masked exactly as in the fields
+(`****6789`). It is masked at ingestion and again when served; the original file is not kept or
+served. `null` for structured uploads without text.
+
 ### `POST /invoices/{invoice_id}/process`
 Run the full agent workflow. Synchronous for the demo (< 10 s).
 

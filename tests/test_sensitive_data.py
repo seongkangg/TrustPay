@@ -75,6 +75,29 @@ def test_mask_upload_masks_suspicious_fixture(demo_invoices):
     assert suspicious["upload"]["bank_account"] == "987654326789"
 
 
+def test_served_source_text_is_masked(session, ref, demo_invoices):
+    # The review screen shows the source document's text; it must never carry a raw identifier,
+    # including from a row whose raw_text was somehow stored unmasked.
+    from backend.governance import GovernanceEngine
+    from backend.models import InvoiceUpload
+    from backend.services.invoice_service import InvoiceService
+
+    invoices = InvoiceService(session, GovernanceEngine(session, ref))
+    suspicious = next(d for d in demo_invoices if d["expected"]["invoice_id"] == "INV-1003")
+    created = invoices.create(InvoiceUpload(**suspicious["upload"]))
+
+    text = invoices.get(created.invoice_id).source_text
+    assert text and "****6789" in text
+    assert not contains_unmasked(text)
+
+    row = invoices.get_row(created.invoice_id)
+    row.raw_text = "Bank Account: 987654326789 Routing Number: 021000021 Tax ID: 12-3454321"
+    session.commit()
+    served = invoices.get(created.invoice_id).source_text
+    assert not contains_unmasked(served)
+    assert "987654326789" not in served and "021000021" not in served
+
+
 def test_mask_upload_clean_fixture_has_no_detections(demo_invoices):
     low = next(d for d in demo_invoices if d["expected"]["invoice_id"] == "INV-1001")
     _, detections = mask_upload(low["upload"])
