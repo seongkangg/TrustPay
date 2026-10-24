@@ -30,7 +30,7 @@ No LLM calls happen in this folder; all rules are hard-coded and testable.
 | Verified vendor + matching PO | Low | Permit recommendation |
 | Amount below threshold | Low | Allow automatic processing |
 | Amount above agent limit | High | Block, request approval |
-| Unknown vendor | High | Block payment, escalate |
+| Unknown vendor | Medium (High with bank details or another High rule) | Escalate — human confirms the supplier |
 | Duplicate invoice | High | Reject or escalate |
 | Sensitive bank info exposed | Med/High | Mask data, log event |
 | Unauthorized tool call | High | Block, record violation |

@@ -84,11 +84,18 @@ def test_policy_003_amount_above_agent_limit(engine):
     assert engine.limit_for(AgentName.APPROVAL) == 10000.0
 
 
-def test_policy_004_unknown_vendor(engine):
-    r = engine.evaluate(clean(vendor_found=False, vendor_status=None))
-    assert r.risk_level == RiskLevel.HIGH
-    assert ReasonCode.UNKNOWN_VENDOR in r.reason_codes
-    assert r.target_status == InvoiceStatus.BLOCKED
+def test_policy_004_unknown_vendor_is_a_review_not_a_block(engine):
+    r = engine.evaluate(
+        clean(vendor_found=False, vendor_status=None, po_found=None, po_vendor_id=None)
+    )
+    assert r.risk_level == RiskLevel.MEDIUM
+    assert r.reason_codes == [ReasonCode.UNKNOWN_VENDOR]
+    assert r.target_status == InvoiceStatus.PENDING_APPROVAL and not r.auto_payment_allowed
+
+
+def test_unknown_vendor_with_bank_details_still_blocks(engine):
+    r = engine.evaluate(clean(vendor_found=False, vendor_status=None, sensitive_detected=True))
+    assert r.risk_level == RiskLevel.HIGH and r.target_status == InvoiceStatus.BLOCKED
 
 
 def test_policy_005_unverified_vendor(engine):

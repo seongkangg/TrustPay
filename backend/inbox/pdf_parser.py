@@ -59,7 +59,9 @@ def _number(raw: str) -> float | None:
         return None
 
 
-# US-style numeric dates only (m/d/Y); a day-first document is not guessed at.
+# Numeric dates are read US-style (m/d/Y) unless the first number can't be a month
+# (14/10/2026 → 14 Oct): only then is the date unambiguously day-first.
+_DAY_FIRST = re.compile(r"^(1[3-9]|2\d|3[01])/(\d{1,2})/(\d{4})$")
 _DATE_FORMATS = (
     "%Y-%m-%d",
     "%B %d, %Y",
@@ -80,6 +82,11 @@ def normalize_date(raw: str | None) -> str | None:
     s = re.sub(r"\s+", " ", str(raw).strip().rstrip("."))
     s = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", s)
     s = s.replace("Sept ", "Sep ")
+    if _DAY_FIRST.match(s):
+        try:
+            return datetime.strptime(s, "%d/%m/%Y").date().isoformat()
+        except ValueError:
+            return None  # e.g. 31/02/2026
     for fmt in _DATE_FORMATS:
         try:
             return datetime.strptime(s, fmt).date().isoformat()

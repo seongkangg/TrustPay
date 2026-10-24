@@ -92,7 +92,15 @@ def normalize(name: str, value: str) -> Any:
         return code if code in _KNOWN_CURRENCIES else None
     if name in ("vendor_id", "purchase_order_id"):
         return value.strip().upper()
+    if name == "vendor_invoice_number":
+        # "INVOICE SPN-2026-0169" / "Invoice No.: 1042" → the number; "INV-1042" is left alone.
+        return _INVOICE_LABEL.sub("", value.strip()) or None
     return value.strip()
+
+
+_INVOICE_LABEL = re.compile(
+    r"^(?:invoice|inv\.?)(?:\s*(?:no\.?|number|#))?\s*[:#]?\s+(?=\S)", re.IGNORECASE
+)
 
 
 def extract_missing_fields(llm: LLMClient, text: str, upload: dict[str, Any]) -> ModelExtraction:

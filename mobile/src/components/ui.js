@@ -30,7 +30,7 @@ export function StatusBadge({ status }) {
 // Plain-English wording for ReasonCode (backend/models/enums.py); same text as the web ReasonTag.
 const REASONS = {
   AMOUNT_ABOVE_LIMIT: "Over approval limit",
-  UNKNOWN_VENDOR: "Unknown vendor",
+  UNKNOWN_VENDOR: "New vendor",
   VENDOR_UNVERIFIED: "Vendor not verified",
   DUPLICATE_INVOICE: "Possible duplicate",
   PO_AMOUNT_MISMATCH: "Doesn't match PO",
@@ -47,7 +47,7 @@ const REASONS = {
 };
 // Same colour split as the web: green = passed, yellow = needs a check, red = violation.
 const UNCERTAIN = new Set([
-  "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",
+  "UNKNOWN_VENDOR", "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",
   "MALFORMED_FIELD", "AGENT_FAILURE", "MOCK_SYSTEM_UNAVAILABLE", "INSUFFICIENT_EVIDENCE",
 ]);
 

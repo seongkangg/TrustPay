@@ -372,7 +372,11 @@ def test_risk_levels_map_to_authorization(gov):
             ),
             Authorization.ESCALATED,
         ),
-        (PolicyInput(amount=100.0, vendor_found=False), Authorization.BLOCKED),
+        (PolicyInput(amount=100.0, vendor_found=False), Authorization.ESCALATED),
+        (
+            PolicyInput(amount=100.0, vendor_found=False, sensitive_detected=True),
+            Authorization.BLOCKED,
+        ),
     ]:
         gov.evaluate(inp, invoice_id=INV, correlation_id=CORR)
         assert gov.audit.list_for_invoice(INV)[-1].policy_result == expected

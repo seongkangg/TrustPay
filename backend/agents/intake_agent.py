@@ -34,8 +34,9 @@ PARSED_FIELDS = (
     "routing_number",
     "tax_id",
 )
-# Fields whose confidence counts toward the overall score (vendor_name is a fallback for vendor_id).
-_CONFIDENCE_FIELDS = (set(REQUIRED_INVOICE_FIELDS) - {"vendor"}) | {"vendor_id"}
+# Fields whose confidence counts toward the overall score. vendor_id is left out: it is our internal
+# ID, never printed on a real invoice, and is resolved later by the vendor lookup.
+_CONFIDENCE_FIELDS = (set(REQUIRED_INVOICE_FIELDS) - {"vendor"}) | {"vendor_name"}
 
 
 def parse_document(params: dict[str, Any]) -> dict[str, Any]:
@@ -88,7 +89,14 @@ class IntakeAgent(BaseAgent):
         ctx.missing_fields = missing
         ctx.malformed_fields = malformed
 
-        required_conf = [f.confidence for f in fields if f.field in _CONFIDENCE_FIELDS]
+        # "How sure are we of what we read" — over the fields actually found. Missing fields are
+        # already reported as MISSING_REQUIRED_FIELD; scoring them 0 here double-counted the gap
+        # and flagged every real invoice as unclear. A malformed field is genuinely unclear → 0.
+        required_conf = [
+            0.0 if f.malformed else f.confidence
+            for f in fields
+            if f.field in _CONFIDENCE_FIELDS and parsed.get(f.field) not in (None, "")
+        ]
         confidence = min(required_conf) if required_conf else 0.0
 
         codes: list[ReasonCode] = []
