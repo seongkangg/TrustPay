@@ -186,7 +186,7 @@ class _Builder:
         fields = [f for f in ctx.missing_fields if not (f == "vendor_id" and ctx.vendor_name)]
         if not fields:
             return
-        parts = [f"the {label(f)} — {FIELD_WHY.get(f, 'it is required')}" for f in fields]
+        parts = [f"{label(f)} — {FIELD_WHY.get(f, 'it is required')}" for f in fields]
         self.add(
             "Missing information: the invoice has no " + "; no ".join(parts) + ".",
             "Get the missing " + _join([label(f) for f in fields]) + " from the vendor or the "

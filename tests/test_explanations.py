@@ -51,6 +51,8 @@ def test_new_vendor_without_po_explains_why_a_po_matters(session, ref):
     why = next(d for d in svc.decisions(created) if d.agent == AgentName.APPROVAL).explanation
     text = " ".join(why.reasons)
     assert "'Northwind Racket Supply North America' is not on the approved vendor list" in text
-    assert "purchase order (PO) number" in text and "approved this purchase" in text
+    assert (
+        "the invoice has no purchase order (PO) number" in text and "approved this purchase" in text
+    )
     assert why.missing_information == ["purchase order (PO) number"]
     assert "Get the missing purchase order (PO) number" in why.recommended_next_step

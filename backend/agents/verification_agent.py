@@ -238,6 +238,12 @@ class VerificationAgent(BaseAgent):
             conditions.append(and_(InvoiceRow.amount == ctx.amount, InvoiceRow.created_at >= since))
         if not conditions:
             return None
+        # Only earlier invoices count: the original is never a duplicate of its own later copies
+        # (matters when an invoice is re-run after a resend has arrived).
+        this_created = self.gov.session.scalar(
+            select(InvoiceRow.created_at).where(InvoiceRow.invoice_id == ctx.invoice_id)
+        )
+        earlier = [InvoiceRow.created_at < this_created] if this_created is not None else []
         stmt = (
             select(
                 InvoiceRow.invoice_id,
@@ -245,7 +251,7 @@ class VerificationAgent(BaseAgent):
                 InvoiceRow.vendor_name,
                 InvoiceRow.vendor_invoice_number,
             )
-            .where(InvoiceRow.invoice_id != ctx.invoice_id, or_(*conditions))
+            .where(InvoiceRow.invoice_id != ctx.invoice_id, or_(*conditions), *earlier)
             .order_by(InvoiceRow.created_at)
         )
         for invoice_id, other_id, other_name, other_number in self.gov.session.execute(stmt):

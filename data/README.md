@@ -7,6 +7,9 @@ Keeping this fixed means the demo does not depend on unpredictable model behavio
 |------|------------------|
 | `vendors.json` | Mock vendor database: vendor ID, name, verification status, on-file bank account (masked). Scenario 3's vendor is intentionally **absent**. |
 | `purchase_orders.json` | Mock PO records: PO ID, vendor ID, approved amount, currency, status. |
+
+`V-104` Victor Racquets North America (verified) and `PO-5004` ($618.00 USD) are the real-invoice test
+path: a genuine supplier invoice that passes every check once its PO number is on the invoice.
 | `approval_limits.json` | Spending authority per agent (e.g. `approval_agent: 10000 USD`). Scenario 2 exceeds this. |
 
 ## Demo invoices (`invoices/`)

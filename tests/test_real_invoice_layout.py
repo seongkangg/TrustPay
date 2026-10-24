@@ -308,3 +308,28 @@ def test_assumed_currency_lowers_reading_confidence(session, ref):
     fields = {f.field: f.confidence for f in inv.extraction}
     assert fields["currency"] == 0.5
     assert _confidences(svc, inv.invoice_id)["intake_agent"] == 0.5
+
+
+def test_original_is_not_a_duplicate_of_its_later_copy(session, ref):
+    """Re-running the first copy after a resend arrived must not flag the original."""
+    from backend.agents.verification_agent import VerificationAgent
+    from backend.orchestration.workflow_context import WorkflowContext
+
+    gov = GovernanceEngine(session, ref)
+    pdf = supplier_invoice()
+    first, second = (
+        InboxService(session, gov, Inbox({"m-1": pdf, "m-2": pdf}), llm=GraniteLike())
+        .sync()
+        .created
+    )
+    svc = InvoiceService(session, gov)
+    assert ReasonCode.DUPLICATE_INVOICE in _policy_codes(svc, second)
+
+    inv = svc.get(first)
+    ctx = WorkflowContext(invoice_id=first, correlation_id="c", upload={})
+    ctx.extracted = {
+        "vendor_name": inv.vendor_name,
+        "vendor_invoice_number": inv.vendor_invoice_number,
+        "amount": inv.amount,
+    }
+    assert VerificationAgent(gov, GraniteLike())._find_duplicate(ctx) is None
