@@ -12,6 +12,26 @@ and evidence IDs.
 | `policy_risk_agent.py` | Policy / Risk | Check approval thresholds, vendor verification status, data-access permissions, suspicious conditions. Assign **low / medium / high** risk with explicit reason codes. | `approval_limit_lookup`, `risk_rules` | Approve payment |
 | `approval_agent.py` | Approval | Produce **Approve / Reject / Escalate** recommendation with confidence score. Must escalate anything high-risk — cannot complete payment without a human. | `approval_request_create` | Execute high-risk actions |
 
+## How an agent runs
+
+`BaseAgent.run(ctx)` wraps `_run(ctx)`. Inside `_run` an agent may only:
+
+- `request_tool(ctx, tool, purpose, **params)` → `GovernanceEngine.call_tool` (sets `ctx.unauthorized_tool_call` / `ctx.mock_unavailable` and collects evidence IDs)
+- `ask(prompt, Schema)` → model call, schema-validated; returns `None` on any failure
+- `record(ctx, event_type, severity, …)` → `GovernanceEngine.record`
+- `decide(ctx, …)` → `GovernanceEngine.accept_decision`, which validates and persists
+
+Any exception inside `_run` becomes an `agent_failed` event plus an `agent_failed` decision citing POLICY-015, so the workflow still reaches a safe terminal state.
+
+Where the model is used — and where it is not:
+
+| Agent | Deterministic | Model (advisory) |
+|-------|---------------|------------------|
+| Intake | `document_parser`, missing/malformed checks | per-field confidence |
+| Verification | vendor / PO / duplicate lookups (confidence 1.0) | one-sentence summary |
+| Policy/Risk | the policy engine assigns risk | reviewer-facing explanation sentence |
+| Approval | duplicate → reject, auto-allowed → approve, else escalate | confidence, reasons, next step; may turn approve → escalate, never the reverse |
+
 ## Rules all agents follow
 
 - Every tool call carries agent identity + purpose and is checked against the allowlist.

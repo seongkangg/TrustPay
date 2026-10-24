@@ -5,7 +5,9 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 
 | File | Covers |
 |------|--------|
-| `conftest.py` | Fixtures: fresh in-memory SQLite `session` per test, `ref` (reference data), `demo_invoices` (the four fixtures). |
+| `conftest.py` | Fixtures: fresh in-memory SQLite `session` per test, `ref`, `demo_invoices`, `fixture_by_id`. Helpers: `run_agents(gov, fixture, llm=, upto=)` drives ingest → the four agents; `insert_invoice_row` persists a fixture as already processed (for duplicate checks). |
+| `test_llm.py` | Output parser rejects malformed/off-schema model output; `MockLLM` is deterministic and follows the prompt's context; factory defaults to mock and refuses watsonx without credentials. |
+| `test_approval_agents.py` | Policy/Risk agent assigns risk from the engine with LIMIT/RULES/POLICY evidence; Approval agent derives its recommendation from policy, a model can make it more cautious but never more permissive, invalid model output → escalate at 0.5; all four fixtures reach their expected risk / reason codes / recommendation through the agent chain. |
 | `test_mock_systems.py` | Mock vendor/PO/limit lookups return seeded records; unknown IDs raise `NotFound`; outage mode raises `MockSystemUnavailable`; payment service refuses agents and double payment; `agents/` never imports `mock_systems`. |
 | `test_audit_trail.py` | Hash chain per invoice, duplicate `event_id` ignored idempotently, out-of-order events flagged not reordered, tampering breaks `verify_chain`, summaries masked before storage. |
 | `test_intake_agent.py` | Field extraction from the demo invoices, extraction confidence, flagging missing due date / invalid amount / malformed fields. |

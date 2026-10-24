@@ -38,14 +38,16 @@ Deferred to Sprint 4: HTTP exposure of mocks under `/mock/*` (they are plain Pyt
 **Done:** agent payment attempt blocked + logged; unknown vendor → High; 100% tool calls audited.
 All four fixtures produce their expected risk / reason codes / target status through the policy engine.
 
-## Sprint 3 — Agents with mocked LLM
-- [ ] `llm/granite_client.py` with `MockLLM`
-- [ ] `llm/prompts.py`, `llm/output_parser.py`
-- [ ] `agents/base_agent.py`
-- [ ] four agents
-- [ ] Tests: `test_intake_agent`, `test_verification_agent`
+## Sprint 3 — Agents with mocked LLM ✅
+- [x] `llm/granite_client.py` with `MockLLM` (+ `WatsonxLLM` behind `LLM_MODE=watsonx`)
+- [x] `llm/prompts.py`, `llm/output_parser.py`
+- [x] `agents/base_agent.py`
+- [x] four agents
+- [x] `orchestration/workflow_context.py` (pulled forward — agents need it)
+- [x] Tests: `test_llm`, `test_intake_agent`, `test_verification_agent`, `test_approval_agents` — 114 passing total
 
-**Done:** each agent returns a valid `AgentDecision` with evidence IDs for every fixture.
+**Done:** each agent returns a valid `AgentDecision` with evidence IDs for every fixture;
+all four fixtures reach their expected risk, reason codes, and recommendation through the agent chain.
 
 ## Sprint 4 — Orchestration + API
 - [ ] `state_machine.py`, `workflow_context.py`, `invoice_workflow.py`

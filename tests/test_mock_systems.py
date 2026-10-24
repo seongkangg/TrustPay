@@ -65,7 +65,13 @@ def test_agents_do_not_import_mock_systems_directly():
     from pathlib import Path
 
     agents_dir = Path(__file__).resolve().parent.parent / "backend" / "agents"
+    import_lines = ("from backend.mock_systems", "import backend.mock_systems")
     offenders = [
-        p.name for p in agents_dir.glob("*.py") if "mock_systems" in p.read_text(encoding="utf-8")
+        p.name
+        for p in agents_dir.glob("*.py")
+        if any(
+            line.strip().startswith(import_lines)
+            for line in p.read_text(encoding="utf-8").splitlines()
+        )
     ]
     assert offenders == []

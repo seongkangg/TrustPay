@@ -53,6 +53,7 @@ Full matrix lives in `docs/policy-matrix.md`.
 | `finalize(...)` | Low risk + approve → governance pays; otherwise block + create approval request | `payment_authorized` **or** `payment_blocked` + `approval_requested` |
 | `record_human_decision(...)` / `execute_human_payment(...)` | Human approve/reject and the human-authorized payment | `human_decision_recorded`, `payment_authorized` |
 | `build_explanation(...)` | Fixed Decision / Reasons / Evidence format from policy hits | — |
+| `record(actor=, ...)` | Agents report workflow progress through the governance layer instead of touching the audit store | `invoice_extracted`, `vendor_verified`, `purchase_order_checked`, `duplicate_detected`, `recommendation_generated`, … |
 
 Evidence ID prefixes: `PARSE-`, `VENDOR-LOOKUP-`, `PO-LOOKUP-`, `LIMIT-LOOKUP-`, `RULES-`, `APPROVAL-REQ-`, `PAYMENT-`, `SCAN-`, plus `POLICY-NNN` rule IDs.
 `document_parser` has no handler here — the intake agent registers one (Sprint 3).

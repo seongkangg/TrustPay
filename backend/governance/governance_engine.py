@@ -119,6 +119,11 @@ class GovernanceEngine:
             request, payment_permitted=payment_permitted, risk_level=risk_level
         )
 
+    def record(self, *, actor: AgentName, **kw):
+        """Agents report workflow progress (vendor_verified, purchase_order_checked, …) through
+        here rather than touching the audit store directly."""
+        return self.audit.append(actor=actor, **kw)
+
     def known_evidence(self, invoice_id: str) -> set[str]:
         refs = self.interceptor.evidence_ids_for(invoice_id)
         for ev in self.audit.list_for_invoice(invoice_id):
