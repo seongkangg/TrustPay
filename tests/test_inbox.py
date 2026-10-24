@@ -258,3 +258,54 @@ def test_sync_over_http_with_fake_client(client, fixture_by_id):
     # reset clears inbox rows too, so the same email can be re-ingested for a repeat demo
     assert client.post("/demo/reset").json()["removed"]["inbox_messages"] == 1
     assert client.post("/inbox/sync").json()["created"] == ["INV-1001"]
+
+
+def test_concurrent_syncs_ingest_an_email_once(tmp_path, ref, fixture_by_id):
+    """The background poll and a 'Check inbox now' click overlapping must not both ingest the
+    same email (it duplicated the invoice and collided on IDs on Supabase)."""
+    import threading
+    import time
+
+    from sqlalchemy import create_engine, func, select
+    from sqlalchemy.orm import sessionmaker
+
+    from backend.database.database import Base
+    from backend.database.tables import InvoiceRow
+
+    engine = create_engine(
+        f"sqlite:///{tmp_path / 'race.db'}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, expire_on_commit=False)
+    pdf = render_invoice_pdf(fixture_by_id("INV-1001")["upload"])
+
+    class SlowClient(FakeGmailClient):
+        def fetch(self, message_id):
+            time.sleep(0.3)  # long enough for the second sync to start mid-way
+            return super().fetch(message_id)
+
+    client = SlowClient({"m-once": inbox_msg("m-once", pdf)})
+    payments = PaymentService()
+    results, errors = [], []
+
+    def run():
+        session = Session()
+        try:
+            gov = GovernanceEngine(session, ref, payment_service=payments)
+            results.append(InboxService(session, gov, client).sync())
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+        finally:
+            session.close()
+
+    threads = [threading.Thread(target=run) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert errors == []
+    assert sorted(len(r.created) for r in results) == [0, 1]
+    with Session() as s:
+        assert s.scalar(select(func.count()).select_from(InvoiceRow)) == 1
+        assert s.get(InboxMessageRow, "m-once").status == "processed"

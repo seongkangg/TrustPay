@@ -32,7 +32,7 @@
 └──────────┬────────────────────────────────────┬──────────────┘
            │ allowed calls only                 │ every outcome
 ┌──────────▼──────────────────┐   ┌─────────────▼──────────────┐
-│  Mock Enterprise APIs       │   │  Audit Store (SQLite)      │
+│  Mock Enterprise APIs       │   │  Store (Supabase Postgres) │
 │  backend/mock_systems       │   │  backend/database          │
 │  vendors · POs · limits ·   │   │  append-only, hash-chained │
 │  payments                   │   │  audit_events              │
@@ -51,7 +51,7 @@
 | LLM client | Agent services | `backend/llm/` | Granite via watsonx.ai, or `MockLLM` returning fixture responses. |
 | Governance | Governance middleware | `backend/governance/` | Deterministic, no LLM. The only path to mock systems and the audit store. |
 | Mock systems | Mock enterprise APIs | `backend/mock_systems/` | Backed by `data/*.json`. Failure modes switchable for tests. |
-| Database | Database / audit store | `backend/database/` | SQLite file for the prototype. `audit_events` has no update/delete path. |
+| Database | Database / audit store | `backend/database/` | Supabase Postgres as the shared team database (row-level security on, accessed directly by the backend); SQLite for local dev and tests. `audit_events` has no update/delete path. |
 | Observability | Observability | `backend/utils/logging_config.py` | Structured JSON logs with correlation IDs; masked. |
 | Secrets | Secrets manager | `.env` | Environment variables for the demo; Vault is the target. |
 

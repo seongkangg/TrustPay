@@ -11,8 +11,11 @@ Working rules for AI assistance on TrustPay. Read before touching code.
    building it.
 2. **No over-engineering.** Prefer the simplest thing that satisfies the spec and the tests.
    No abstractions for hypothetical future needs, no plugin systems, no extra config layers,
-   no new dependencies unless a sprint task requires one. SQLite, in-process orchestration,
-   and JSON-backed mocks are deliberate choices — do not "upgrade" them.
+   no new dependencies unless a sprint task requires one. In-process orchestration and
+   JSON-backed mocks are deliberate choices — do not "upgrade" them. Database: Supabase
+   Postgres is the shared team database (team decision, 2026-10-24); SQLite stays for local
+   solo dev and the test suite. Same SQLAlchemy tables for both — no Supabase client SDK,
+   no second data layer.
 3. **Stay on task.** Work the current sprint item from `docs/sprint-plan.md`. Do not refactor
    neighbouring code, rename things, or fix unrelated issues in passing. If you notice
    something, mention it; do not act on it.

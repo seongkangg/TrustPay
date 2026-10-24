@@ -108,6 +108,14 @@ Invoices now arrive from Gmail; the web app shows graphs and data and takes the 
 - [ ] an end-to-end emailed invoice through the real inbox
 - [x] free-form invoices: Granite fills fields the labels miss, each value checked against the document text; dates normalized; vendor matched by name through the governed lookup; an invalid field no longer drops the email; null model confidence read as 0 (`test_llm_extraction.py`, 201 tests). Real Granite reads the two-column example correctly in ~16 s end to end.
 
+## Sprint 9 — Shared Supabase database
+- [x] `DATABASE_URL` accepts a Supabase Postgres URI as pasted (psycopg 3, reconnect-on-stale, pooler-safe)
+- [x] row-level security enabled on every table so Supabase's public REST API exposes nothing
+- [x] tests pinned to in-memory SQLite; `test_database.py`
+- [x] CLAUDE.md records the decision (Supabase shared, SQLite for local/tests)
+- [x] shared database starts with real emailed invoices only — demo/fixture invoices are not carried over
+- [ ] connect to the team's Supabase project and verify tables, RLS, and an emailed invoice end to end
+
 ## Parallelization
 - Frontend starts after Sprint 0 against a static JSON mock of the API contract.
 - Sprints 2 and 3 can run in parallel once the interceptor interface is agreed.

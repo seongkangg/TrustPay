@@ -6,6 +6,7 @@ never fetched twice. A failure on one message never stops the batch and never ra
 """
 
 import logging
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -25,6 +26,8 @@ from backend.services.invoice_service import InvoiceService
 from backend.utils.timestamps import now_utc
 
 log = logging.getLogger(__name__)
+
+_SYNC_LOCK = threading.Lock()
 
 
 def sanitize_upload(upload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -84,6 +87,15 @@ class InboxService:
         self.lookback_days = lookback_days
 
     def sync(self) -> SyncResult:
+        # One sync at a time per process: the background poll and a "Check inbox now" click
+        # must not both pick up the same email while the first is still being processed
+        # (that duplicated the invoice and collided on IDs). The second caller waits, then
+        # sees the email already recorded and skips it.
+        with _SYNC_LOCK:
+            self.session.expire_all()  # read what the previous sync committed, not a stale cache
+            return self._sync()
+
+    def _sync(self) -> SyncResult:
         result = SyncResult()
         ids = self.client.list_candidates(self.lookback_days)  # InboxError propagates
         if not ids:
