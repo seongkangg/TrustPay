@@ -185,11 +185,24 @@ def test_unmasked_data_in_explanation_is_rejected(gov):
     assert not result.valid and ReasonCode.SENSITIVE_DATA_DETECTED in result.reason_codes
 
 
-def test_low_confidence_is_flagged_not_rejected(gov):
+def test_low_reading_confidence_is_flagged_not_rejected(gov):
     gov.call_tool(tool_req(AgentName.VERIFICATION, ToolName.VENDOR_LOOKUP, vendor_id="V-101"))
-    accepted, result = gov.accept_decision(decision(["VENDOR-LOOKUP-001"], confidence=0.5))
+    accepted, result = gov.accept_decision(
+        decision(["VENDOR-LOOKUP-001"], agent=AgentName.INTAKE, confidence=0.5)
+    )
     assert result.valid and result.low_confidence
     assert accepted.governance_result == Authorization.ESCALATED
+
+
+def test_low_verification_confidence_is_not_unclear_details(gov):
+    """A low Verification score means checks weren't confirmed — flagged by their own reason
+    codes (New vendor, PO not found…), not as LOW_CONFIDENCE."""
+    gov.call_tool(tool_req(AgentName.VERIFICATION, ToolName.VENDOR_LOOKUP, vendor_id="V-101"))
+    accepted, result = gov.accept_decision(
+        decision(["VENDOR-LOOKUP-001"], confidence=0.33, decision_id="DEC-002")
+    )
+    assert result.valid and not result.low_confidence
+    assert accepted.governance_result == Authorization.ALLOWED
 
 
 def test_role_requirements(gov):

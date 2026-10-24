@@ -33,7 +33,7 @@ action prevents automatic completion.
 | POLICY-010 | Tool call not on the agent's allowlist | **High** | Block call, record violation; invoice → escalate | `UNAUTHORIZED_TOOL_CALL` |
 | POLICY-011 | Required invoice field missing | Medium | Escalate for review | `MISSING_REQUIRED_FIELD` |
 | POLICY-012 | Field present but malformed (bad date, non-numeric amount, bad ID format) | Medium | Escalate for review | `MALFORMED_FIELD` |
-| POLICY-013 | Any agent decision confidence < `CONFIDENCE_THRESHOLD` | Medium | Require human review | `LOW_CONFIDENCE` |
+| POLICY-013 | **Reading** (intake) confidence < `CONFIDENCE_THRESHOLD` — the invoice itself was hard to read (fields model-read below threshold, assumed, placeholder, or malformed). Unconfirmed vendor / PO / duplicate checks are flagged by their own rules, not here | Medium | Require human review | `LOW_CONFIDENCE` |
 | POLICY-014 | `payment_authorize` requested by any actor other than `governance_layer` / `human_reviewer` | **High** | Block immediately, record violation | `UNAUTHORIZED_TOOL_CALL` |
 | POLICY-015 | Agent raised an exception, timed out, or returned unparseable output | Medium | Invoice → `FAILED`, escalate | `AGENT_FAILURE` |
 | POLICY-016 | Mock enterprise system unavailable | Medium | Stop, escalate (never assume vendor/PO is valid) | `MOCK_SYSTEM_UNAVAILABLE` |
@@ -93,7 +93,20 @@ A human can approve amounts up to the `human_reviewer` limit. Above that → sta
 | `INVALID_PURCHASE_ORDER` | PO missing or belongs to another vendor |
 | `SENSITIVE_DATA_DETECTED` | Scanner found and masked protected data |
 | `UNAUTHORIZED_TOOL_CALL` | Agent attempted a tool outside its allowlist |
-| `LOW_CONFIDENCE` | Agent confidence below threshold |
+| `LOW_CONFIDENCE` | Invoice fields couldn't be read reliably (Reading confidence below threshold) |
+
+## Confidence scores (evidence-based)
+
+Confidence is computed from what the system actually checked — never from the model's opinion of
+itself (a local model reports 1.0 for everything). The model's self-reported confidence can only
+make an outcome more cautious: an "approve" it is unsure about is escalated.
+
+| Step | Score |
+|------|-------|
+| Reading (Intake) | Lowest field found. Per field: exact label or structured upload **98%** · read by the model and found verbatim in the PDF **80%** · assumed default (currency) **50%** · placeholder (unreadable invoice number) / malformed / missing **0%** |
+| Verification | Share of three checks confirmed: vendor on the list and verified · PO matches vendor and amount · not a duplicate (1/3 = 33%) |
+| Policy / Risk | 100% — fixed rules |
+| Recommendation | Lower of Reading and Verification |
 | `MISSING_REQUIRED_FIELD` | A required field could not be extracted |
 | `MALFORMED_FIELD` | A field was present but invalid |
 | `AGENT_FAILURE` | Agent error, timeout, or invalid output |

@@ -34,6 +34,11 @@ PARSED_FIELDS = (
     "routing_number",
     "tax_id",
 )
+# How much a field can be trusted, by how it was obtained (see WorkflowContext.field_sources):
+# an exact labelled line or structured upload; read by the model and found verbatim in the
+# document; a default the system filled in; a placeholder for something unreadable.
+CONFIDENCE_BY_SOURCE = {"exact": 0.98, "model": 0.8, "default": 0.5, "placeholder": 0.0}
+
 # Fields whose confidence counts toward the overall score. vendor_id is left out: it is our internal
 # ID, never printed on a real invoice, and is resolved later by the vendor lookup.
 _CONFIDENCE_FIELDS = (set(REQUIRED_INVOICE_FIELDS) - {"vendor"}) | {"vendor_name"}
@@ -82,6 +87,13 @@ class IntakeAgent(BaseAgent):
         for f in extraction.fields:
             f.missing = f.missing or f.field in missing_set
             f.malformed = f.malformed or f.field in malformed
+            # Confidence comes from how the value was obtained, not from the model's opinion of
+            # itself (a local model reports 1.0 for everything).
+            present = parsed.get(f.field) not in (None, "")
+            source = ctx.field_sources.get(f.field, "exact")
+            f.confidence = (
+                0.0 if (f.malformed or not present) else CONFIDENCE_BY_SOURCE.get(source, 0.0)
+            )
             fields.append(f)
 
         ctx.extracted = parsed
@@ -89,15 +101,15 @@ class IntakeAgent(BaseAgent):
         ctx.missing_fields = missing
         ctx.malformed_fields = malformed
 
-        # "How sure are we of what we read" — over the fields actually found. Missing fields are
-        # already reported as MISSING_REQUIRED_FIELD; scoring them 0 here double-counted the gap
-        # and flagged every real invoice as unclear. A malformed field is genuinely unclear → 0.
+        # Overall Reading confidence — over the fields actually found. Missing fields are already
+        # reported as MISSING_REQUIRED_FIELD; scoring them 0 here would double-count the gap.
         required_conf = [
-            0.0 if f.malformed else f.confidence
+            f.confidence
             for f in fields
             if f.field in _CONFIDENCE_FIELDS and parsed.get(f.field) not in (None, "")
         ]
         confidence = min(required_conf) if required_conf else 0.0
+        ctx.reading_confidence = confidence
 
         codes: list[ReasonCode] = []
         if missing:

@@ -3,8 +3,9 @@
 Allowed tool: approval_request_create (the governance engine creates the request during
 finalize, so this agent normally needs no tool call). May never execute a payment.
 
-The recommendation is derived deterministically from the policy result; the model
-supplies the confidence, reasons, and next step. The model may only make the outcome
+The recommendation is derived deterministically from the policy result; the model supplies
+the reasons and next step. Confidence is evidence-based (the lower of the Reading and
+Verification scores), never the model's self-report. The model may only make the outcome
 more cautious (approve → escalate), never more permissive.
 """
 
@@ -27,7 +28,6 @@ _SEVERITY = {
     RiskLevel.MEDIUM: Severity.MEDIUM,
     RiskLevel.HIGH: Severity.HIGH,
 }
-FALLBACK_CONFIDENCE = 0.5
 
 
 def deterministic_recommendation(ctx: WorkflowContext) -> Recommendation:
@@ -65,14 +65,19 @@ class ApprovalAgent(BaseAgent):
             RecommendationOutput,
         )
 
+        # Confidence in the recommendation = how much of the invoice is backed by evidence: the
+        # lower of the Reading and Verification scores. The model's self-reported confidence is
+        # not used (a local model reports 1.0 for everything).
+        steps = [c for c in (ctx.reading_confidence, ctx.verification_confidence) if c is not None]
+        confidence = min(steps) if steps else 0.0
+
         if model is None:
-            recommendation, confidence = Recommendation.ESCALATE, FALLBACK_CONFIDENCE
+            recommendation = Recommendation.ESCALATE
             reasons = ["Model output was invalid; defaulting to escalate."]
             next_step = "route to a finance reviewer"
         else:
-            recommendation, confidence, reasons, next_step = (
+            recommendation, reasons, next_step = (
                 required,
-                model.confidence,
                 list(model.reasons),
                 model.next_step,
             )
@@ -82,6 +87,17 @@ class ApprovalAgent(BaseAgent):
                 reasons.append(
                     f"Model suggested {model.recommendation.value}; policy requires {required.value}. "
                     f"Final recommendation: {recommendation.value}."
+                )
+            elif (
+                recommendation == Recommendation.APPROVE
+                and model.confidence < self.gov.policy.confidence_threshold
+            ):
+                # The model's self-report is not shown as confidence, but its doubt may still make
+                # the outcome more cautious — an unsure "approve" never auto-pays.
+                recommendation = Recommendation.ESCALATE
+                reasons.append(
+                    f"Model was unsure ({model.confidence:.0%}) about approving; "
+                    "sent to a reviewer instead."
                 )
 
         ctx.recommendation = recommendation

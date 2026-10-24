@@ -66,8 +66,9 @@ class InvoiceWorkflow:
 
     # ------------------------------------------------------------------
 
-    def run(self, row: InvoiceRow) -> WorkflowResult:
+    def run(self, row: InvoiceRow, field_sources: dict[str, str] | None = None) -> WorkflowResult:
         ctx = self._context_from_row(row)
+        ctx.field_sources = dict(field_sources or {})
 
         # Intake
         IntakeAgent(self.gov, self.llm).run(ctx)

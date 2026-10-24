@@ -1,5 +1,7 @@
 // Confidence by agent step as a bar chart (Intake → Verify → Risk → Approval): bar height is that
-// step's confidence, value on top, step underneath. The dashed line is the policy threshold
+// step's evidence-based confidence (Intake: how fields were read; Verify: share of vendor / PO /
+// duplicate checks confirmed; Risk: fixed rules; Approval: lower of Intake and Verify), value on
+// top, step underneath. The dashed line is the policy threshold
 // (GET /mock/thresholds, from data/approval_limits.json — never hard-coded here); bars under it are
 // amber. Bars grow up from the baseline on mount (height on absolutely positioned, childless views,
 // so the rounded tops keep their shape); Reduce Motion shows them at once.
@@ -73,8 +75,8 @@ export default function ConfidenceChart({ confidence, decisions, threshold }) {
       </Text>
       <Text style={styles.note}>
         {unsure.length === 0
-          ? "Every step was confident."
-          : `${unsure.map((b) => b.label).join(", ")} ${unsure.length === 1 ? "was" : "were"} unsure.`}
+          ? "Every step is backed by evidence."
+          : `Not fully confirmed: ${unsure.map((b) => b.label).join(", ")}.`}
       </Text>
 
       <View style={{ height: CHART_H, marginTop: 12 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>

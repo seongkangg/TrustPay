@@ -181,10 +181,18 @@ class VerificationAgent(BaseAgent):
             reasons.append(summary.summary)
 
         decision = self._decision_label(codes, po_matches)
+        # Confidence = share of the three checks that came back confirmed. A lookup that could
+        # not run (system down, no vendor or PO on the invoice) is unconfirmed, not passed.
+        confirmed = [
+            ctx.vendor_found is True and status == "verified",
+            po_matches,
+            not duplicate_of,
+        ]
+        ctx.verification_confidence = round(sum(confirmed) / len(confirmed), 2)
         return self.decide(
             ctx,
             decision=decision,
-            confidence=0.5 if ctx.mock_unavailable else 1.0,
+            confidence=ctx.verification_confidence,
             evidence_ids=evidence,
             explanation=Explanation(
                 decision=decision,

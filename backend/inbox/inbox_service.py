@@ -156,12 +156,16 @@ class InboxService:
         # Fields the labels didn't give us: ask the model, keep only what is in the document.
         model = extract_missing_fields(self.llm, text, upload)
         upload.update(model.filled)
+        # How each field was obtained — the Reading confidence is scored from this.
+        sources = {name: "model" for name in model.filled}
 
         if not upload.get("vendor_invoice_number"):
-            # Required column; the Intake agent still flags the missing field.
+            # Required column; an unreadable number gets a placeholder and 0% reading confidence.
             upload["vendor_invoice_number"] = f"EMAIL-{msg.message_id[:8]}"
+            sources["vendor_invoice_number"] = "placeholder"
         if not upload.get("currency"):
             upload["currency"] = "USD"
+            sources["currency"] = "default"
         upload, dropped = sanitize_upload(upload)
         if dropped:
             log.info(
@@ -170,7 +174,7 @@ class InboxService:
                 sorted(dropped),
             )
         created = self.invoices.create(InvoiceUpload(**upload))
-        self.invoices.process(created.invoice_id)
+        self.invoices.process(created.invoice_id, field_sources=sources)
         return created.invoice_id
 
     def _record(

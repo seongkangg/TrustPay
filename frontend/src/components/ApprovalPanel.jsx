@@ -37,7 +37,7 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
           <>
             <div className="big">{human(invoice.recommendation)}</div>
             <div className="muted small">
-              Confidence {fmtPct(invoice.recommendation_confidence)} · advisory only — governance decides
+              Confidence {fmtPct(invoice.recommendation_confidence)} · how much of this invoice was read and confirmed · governance decides
             </div>
             {why.reasons?.length > 0 && (
               <>

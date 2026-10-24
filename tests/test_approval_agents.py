@@ -104,8 +104,10 @@ def test_invalid_model_output_defaults_to_escalate(gov, fixture_by_id):
     from backend.agents import ApprovalAgent
 
     d = ApprovalAgent(gov, BrokenLLM()).run(ctx)
-    assert d.recommendation == Recommendation.ESCALATE and d.confidence == 0.5
-    assert d.governance_result == Authorization.ESCALATED
+    assert d.recommendation == Recommendation.ESCALATE
+    # confidence is evidence-based (exact fields 98%, all checks confirmed), not the model's
+    assert d.confidence == 0.98
+    assert any("invalid" in r for r in d.explanation.reasons)
 
 
 # --- all four fixtures through the agent chain -----------------------------

@@ -161,7 +161,11 @@ class InvoiceService:
 
     # -------------------------------------------------------------- process
 
-    def process(self, invoice_id: str) -> WorkflowResult:
+    def process(
+        self, invoice_id: str, field_sources: dict[str, str] | None = None
+    ) -> WorkflowResult:
+        """`field_sources` (from the email intake) says how each field was obtained; fields not
+        listed — and every field of a structured API upload — count as exact."""
         row = self.get_row(invoice_id)
         if row.status != InvoiceStatus.RECEIVED.value:
             raise InvalidStateError(
@@ -169,7 +173,7 @@ class InvoiceService:
                 invoice_id=invoice_id,
                 correlation_id=row.correlation_id,
             )
-        return InvoiceWorkflow(self.session, self.gov, self.llm).run(row)
+        return InvoiceWorkflow(self.session, self.gov, self.llm).run(row, field_sources)
 
     # ---------------------------------------------------------------- views
 

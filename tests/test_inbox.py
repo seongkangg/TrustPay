@@ -191,7 +191,7 @@ def test_processing_crash_shows_clean_message_and_logs_detail(
 ):
     """The raw exception (e.g. a SQLAlchemy rollback error) goes to the dev log, not the UI."""
 
-    def boom(self, invoice_id):
+    def boom(self, invoice_id, **_kwargs):
         raise RuntimeError("This Session's transaction has been rolled back")
 
     monkeypatch.setattr(InvoiceService, "process", boom)
