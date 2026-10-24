@@ -82,6 +82,16 @@ export const fmtMoney = (amount, currency = "USD") =>
 
 export const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
 
+// "just now", "5 min ago", "3 h ago", "2 d ago"; "—" when missing.
+export const fmtAgo = (iso) => {
+  if (!iso) return "—";
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)} h ago`;
+  return `${Math.round(mins / (60 * 24))} d ago`;
+};
+
 export const fmtPct = (x) => (x == null ? "—" : `${Math.round(x * 100)}%`);
 
 // Display wording for enum values the API returns (backend/models/enums.py). Values not listed

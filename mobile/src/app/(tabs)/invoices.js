@@ -11,6 +11,7 @@ import Svg, { Path } from "react-native-svg";
 import { fmtMoney } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { FilterButton, FilterMenu } from "../../components/FilterMenu.js";
+import VendorAvatar from "../../components/VendorAvatar.js";
 import { Alert, Badge, Card, CountPill, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
@@ -44,26 +45,7 @@ const SPLIT = [
   { key: "rejected", color: colors.riskHigh },
 ];
 
-// Pale avatar tints from the teal family plus neutral, picked stably from the vendor name.
-const TINTS = [
-  { bg: colors.accentBg, fg: colors.accentInk },
-  { bg: colors.accentFaint, fg: colors.accentInk },
-  { bg: colors.panel2, fg: colors.text },
-  { bg: colors.okBg, fg: colors.okText },
-];
-
 const wholeDollars = (amount) => `$${Math.round(amount).toLocaleString("en-US")}`;
-
-function initials(name) {
-  const words = (name || "?").replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/);
-  return ((words[0]?.[0] || "?") + (words[1]?.[0] || "")).toUpperCase();
-}
-
-function tintFor(name) {
-  let h = 0;
-  for (const ch of name || "") h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return TINTS[h % TINTS.length];
-}
 
 // "Today", "Yesterday", or "Oct 22" (adds the year when it is not this year), by the phone's date.
 function dayHeading(date) {
@@ -211,7 +193,6 @@ function SummaryCard({ total, count, split }) {
 }
 
 function InvoiceRow({ inv, first }) {
-  const tint = tintFor(inv.vendor_name);
   const time = inv.updated_at
     ? new Date(inv.updated_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
     : null;
@@ -222,9 +203,7 @@ function InvoiceRow({ inv, first }) {
       onPress={() => router.push(`/invoices/${inv.invoice_id}`)}
       style={({ pressed }) => [styles.row, !first && styles.rule, pressed && { backgroundColor: colors.panel2 }]}
     >
-      <View style={[styles.avatar, { backgroundColor: tint.bg }]}>
-        <Text style={[styles.avatarText, { color: tint.fg }]}>{initials(inv.vendor_name)}</Text>
-      </View>
+      <VendorAvatar name={inv.vendor_name} />
       <View style={{ flex: 1, gap: 5 }}>
         <View style={styles.rowTop}>
           <Text style={styles.vendor} numberOfLines={1}>
@@ -291,8 +270,6 @@ const styles = StyleSheet.create({
   group: { paddingVertical: 0, paddingHorizontal: 0, overflow: "hidden" },
   rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
   row: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 14, paddingHorizontal: space.card },
-  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 14, fontWeight: "700" },
   rowTop: { flexDirection: "row", alignItems: "baseline", gap: 10 },
   vendor: { flex: 1, fontSize: 15, fontWeight: "700", color: colors.text },
   amount: { fontSize: 15, fontWeight: "700", color: colors.text, fontVariant: ["tabular-nums"] },
