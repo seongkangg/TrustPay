@@ -1,6 +1,7 @@
 // Overview tab: invoice volume → counts → risk mix and days → policy violations. Read-only; the
 // waiting count lives on the Inbox tab in the bottom nav, and approve / reject on the invoice screen.
-import { Link } from "expo-router";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
 import { fmtMoney, fmtTime } from "../../api/client.js";
@@ -17,6 +18,9 @@ const wholeDollars = (amount) => `$${Math.round(amount).toLocaleString("en-US")}
 export default function Overview() {
   const { width } = useWindowDimensions();
   const { summary, invoices, error, refreshing, refresh } = useDashboard();
+  // Bumped each time this tab gains focus, so the volume chart draws in again.
+  const [chartPlay, setChartPlay] = useState(0);
+  useFocusEffect(useCallback(() => setChartPlay((n) => n + 1), []));
 
   const amounts = summary?.amounts;
   const days = summary?.by_day || [];
@@ -65,7 +69,7 @@ export default function Overview() {
           </View>
         </View>
         {summary ? (
-          <VolumeChart days={days} width={contentWidth} />
+          <VolumeChart days={days} width={contentWidth} playKey={chartPlay} />
         ) : (
           <View style={[styles.skeleton, { height: 180 }]} />
         )}

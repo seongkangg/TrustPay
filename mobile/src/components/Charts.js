@@ -1,7 +1,8 @@
 // Overview charts, drawn with react-native-svg and plain Views. Same marks as the web dashboard:
 // a smooth teal volume line, KPI sparklines, risk bars with high risk in the accent, and the
 // 14 by_day days as a calendar. Series colours are the theme tokens.
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
 
 import { fmtMoney } from "../api/client.js";
@@ -29,7 +30,32 @@ function smoothPath(pts, floor) {
 }
 
 // The big chart under the hero figure: received per day, completed as the quiet line.
-export function VolumeChart({ days, width, height = 180 }) {
+// The grid and day labels stay put; the data draws in left to right whenever `playKey` changes
+// (each time the Overview tab gains focus). The wipe is two opposing translateX transforms on the
+// native driver: the outer view clips and slides in from the left while the inner one slides back,
+// so the drawing stays in place and is revealed. Reduce motion swaps it for a short fade.
+export function VolumeChart({ days, width, height = 180, playKey = 0 }) {
+  const [progress] = useState(() => new Animated.Value(0));
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    progress.setValue(0);
+    const run = Animated.timing(progress, {
+      toValue: 1,
+      duration: reduceMotion ? 150 : 550,
+      easing: Easing.bezier(0.23, 1, 0.32, 1),
+      useNativeDriver: true,
+    });
+    run.start();
+    return () => run.stop();
+  }, [playKey, reduceMotion, progress]);
+
   if (days.length < 2 || width <= 0) return <View style={{ height }} />;
   const padT = 10;
   const padB = 22;
@@ -43,46 +69,61 @@ export function VolumeChart({ days, width, height = 180 }) {
   const area = `${received} L${x(days.length - 1)},${floor} L${x(0)},${floor} Z`;
   const ticks = [0, Math.round((days.length - 1) / 2), days.length - 1];
 
+  const wipe = reduceMotion
+    ? { outer: { opacity: progress }, inner: null }
+    : {
+        outer: { transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [-width, 0] }) }] },
+        inner: { transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [width, 0] }) }] },
+      };
+
   return (
-    <Svg width={width} height={height}>
-      <Defs>
-        <LinearGradient id="volumeFade" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.16} />
-          <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
-        </LinearGradient>
-      </Defs>
-      {/* Faint dashed grid behind the data: one vertical line per day, quarters of the height. */}
-      {days.map((d, i) => (
-        <Line key={`v${d.date}`} x1={x(i)} x2={x(i)} y1={padT} y2={floor} stroke={colors.grid} strokeWidth={1} strokeDasharray="3 5" />
-      ))}
-      {[0, 1, 2, 3, 4].map((k) => (
-        <Line
-          key={`h${k}`}
-          x1={x(0)}
-          x2={x(days.length - 1)}
-          y1={padT + (k / 4) * innerH}
-          y2={padT + (k / 4) * innerH}
-          stroke={colors.grid}
-          strokeWidth={1}
-          strokeDasharray="3 5"
-        />
-      ))}
-      <Path d={area} fill="url(#volumeFade)" />
-      <Path d={completed} stroke={colors.accentSoft} strokeWidth={2} fill="none" strokeLinecap="round" />
-      <Path d={received} stroke={colors.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" />
-      {ticks.map((i, k) => (
-        <SvgText
-          key={days[i].date}
-          x={x(i)}
-          y={height - 4}
-          fontSize={11}
-          fill={colors.muted}
-          textAnchor={k === 0 ? "start" : k === ticks.length - 1 ? "end" : "middle"}
-        >
-          {dayLabel(days[i].date)}
-        </SvgText>
-      ))}
-    </Svg>
+    <View style={{ width, height }}>
+      <Svg width={width} height={height}>
+        {/* Faint dashed grid behind the data: one vertical line per day, quarters of the height. */}
+        {days.map((d, i) => (
+          <Line key={`v${d.date}`} x1={x(i)} x2={x(i)} y1={padT} y2={floor} stroke={colors.grid} strokeWidth={1} strokeDasharray="3 5" />
+        ))}
+        {[0, 1, 2, 3, 4].map((k) => (
+          <Line
+            key={`h${k}`}
+            x1={x(0)}
+            x2={x(days.length - 1)}
+            y1={padT + (k / 4) * innerH}
+            y2={padT + (k / 4) * innerH}
+            stroke={colors.grid}
+            strokeWidth={1}
+            strokeDasharray="3 5"
+          />
+        ))}
+        {ticks.map((i, k) => (
+          <SvgText
+            key={days[i].date}
+            x={x(i)}
+            y={height - 4}
+            fontSize={11}
+            fill={colors.muted}
+            textAnchor={k === 0 ? "start" : k === ticks.length - 1 ? "end" : "middle"}
+          >
+            {dayLabel(days[i].date)}
+          </SvgText>
+        ))}
+      </Svg>
+      <Animated.View pointerEvents="none" style={[styles.wipe, { width, height }, wipe.outer]}>
+        <Animated.View style={[{ width, height }, wipe.inner]}>
+          <Svg width={width} height={height}>
+            <Defs>
+              <LinearGradient id="volumeFade" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={colors.accent} stopOpacity={0.16} />
+                <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+            <Path d={area} fill="url(#volumeFade)" />
+            <Path d={completed} stroke={colors.accentSoft} strokeWidth={2} fill="none" strokeLinecap="round" />
+            <Path d={received} stroke={colors.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+          </Svg>
+        </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -179,6 +220,7 @@ export function DayCalendar({ days }) {
 }
 
 const styles = StyleSheet.create({
+  wipe: { position: "absolute", left: 0, top: 0, overflow: "hidden" },
   riskbars: { flexDirection: "row", gap: 8 },
   riskbar: { flex: 1, alignItems: "center" },
   track: { height: 120, width: "100%", justifyContent: "flex-end" },
