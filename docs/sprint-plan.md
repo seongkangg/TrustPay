@@ -49,13 +49,15 @@ All four fixtures produce their expected risk / reason codes / target status thr
 **Done:** each agent returns a valid `AgentDecision` with evidence IDs for every fixture;
 all four fixtures reach their expected risk, reason codes, and recommendation through the agent chain.
 
-## Sprint 4 — Orchestration + API
-- [ ] `state_machine.py`, `workflow_context.py`, `invoice_workflow.py`
-- [ ] `services/invoice_service.py`, `services/approval_service.py`
-- [ ] all `api/` routes per `docs/api-contracts.md`
-- [ ] Tests: `test_workflow`, `test_scenarios`
+## Sprint 4 — Orchestration + API ✅
+- [x] `state_machine.py`, `workflow_context.py`, `invoice_workflow.py`
+- [x] `services/invoice_service.py`, `services/approval_service.py` (+ `services/errors.py`)
+- [x] all `api/` routes per `docs/api-contracts.md` (+ read-only `/mock/*`, `api/deps.py`, JSON error handlers)
+- [x] Tests: `test_workflow`, `test_scenarios` — 139 passing total
 
-**Done:** all four fixtures produce expected status/risk/reason codes/audit sequence via HTTP. *Demoable via Swagger from here.*
+**Done:** all four fixtures produce expected status/risk/reason codes/exact audit sequence via HTTP,
+dashboard summary matches, human approve/reject round-trip, no raw secret in any response.
+*Demoable via Swagger (`/docs`) from here.*
 
 ## Sprint 5 — Dashboard
 - [ ] `api/client.js`, `App.jsx`, `dashboard.css`

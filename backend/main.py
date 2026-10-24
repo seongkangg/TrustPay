@@ -3,14 +3,18 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from backend.config import get_settings
 from backend.database.database import engine, init_db
 from backend.database.seed_data import get_reference_data
+from backend.orchestration.state_machine import InvalidTransition
+from backend.services.errors import ServiceError
 from backend.utils.logging_config import setup_logging
+from backend.utils.timestamps import now_utc, to_iso
 
 log = logging.getLogger(__name__)
 
@@ -59,8 +63,34 @@ def create_app() -> FastAPI:
             "db": db_status,
         }
 
-    # API routers are mounted here in Sprint 4 (backend/api/).
+    from backend.api import ROUTERS
+
+    for router in ROUTERS:
+        app.include_router(router)
+
+    @app.exception_handler(ServiceError)
+    def _service_error(_request: Request, exc: ServiceError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code, content=_error_body(exc.code, exc.message, exc)
+        )
+
+    @app.exception_handler(InvalidTransition)
+    def _invalid_transition(_request: Request, exc: InvalidTransition) -> JSONResponse:
+        return JSONResponse(
+            status_code=409, content=_error_body("INVALID_TRANSITION", str(exc), None)
+        )
+
     return app
+
+
+def _error_body(code: str, message: str, exc: ServiceError | None) -> dict:
+    return {
+        "error": code,
+        "message": message,
+        "invoice_id": getattr(exc, "invoice_id", None),
+        "correlation_id": getattr(exc, "correlation_id", None),
+        "timestamp": to_iso(now_utc()),
+    }
 
 
 app = create_app()

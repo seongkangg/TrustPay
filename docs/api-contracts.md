@@ -110,7 +110,8 @@ Chronological merge of decisions, tool calls, and governance events.
 Same request/response shape. **Audit events:** `human_decision_recorded`, `audit_record_created`
 
 ### `POST /governance/evaluate-tool-call`
-Dry-run the permission checker (for the demo and tests).
+Dry-run the permission checker (for the demo and tests). The body is a `ToolCallRequest` plus two
+optional context fields: `payment_permitted` (bool, default false) and `risk_level`.
 
 **Request** — `ToolCallRequest`
 ```json
@@ -157,8 +158,10 @@ Dry-run the permission checker (for the demo and tests).
 
 ## Mock enterprise APIs
 
-Internal; reachable only through `tool_call_interceptor`. Exposed under `/mock/*` for
-inspection in the demo. Every call requires an agent identity and purpose.
+Internal; reachable only through `tool_call_interceptor`. The **read-only** ones are also exposed
+under `/mock/*` for inspection in the demo (plus `GET /mock/thresholds`); the mutating ones
+(`/payments/authorize`, `/approvals/request`) are not reachable over HTTP at all.
+Every interceptor call requires an agent identity and purpose.
 
 | Endpoint | Method | R/W | Permitted agents | Governance checks before access |
 |----------|--------|-----|------------------|--------------------------------|

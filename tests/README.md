@@ -16,8 +16,8 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 | `test_governance.py` | Payment blocked above threshold; high-risk invoice can never auto-complete; every action creates an audit event; explanations reference real evidence IDs. |
 | `test_permissions.py` | Agents can only call allowlisted tools; calls without identity/purpose are denied; payment authorization from any agent is blocked and logged. |
 | `test_sensitive_data.py` | Bank account / tax ID / names detected and masked in API responses, explanations, and log output; raw values never appear. |
-| `test_workflow.py` | State-machine transitions (valid and invalid), early stop on block, continued operation when one agent fails, agent timeout, mock API failure, malformed model output. |
-| `test_scenarios.py` | End-to-end runs of the three demo invoices asserting expected risk, governance decision, dashboard state, and audit event sequence. Also duplicate and out-of-order event handling. |
+| `test_workflow.py` | State-machine transitions (valid and invalid), low-risk run to COMPLETED with the exact fixture event sequence, processing twice rejected, intake failure → FAILED + escalated, vendor system down → safe PENDING_APPROVAL, timeline merge ordering, human approve/reject, human limit enforced, decisions refused on unprocessed/terminal invoices. |
+| `test_scenarios.py` | All four fixtures through the HTTP API in demo order asserting status, risk, reason codes, recommendation, masked fields, exact audit sequence, and the dashboard summary; the spec's worked example with a raw-secret sweep over every response; human approve/reject round-trips; error body format and status codes; list filters; governance dry-run audited; mock inspection routes; `/health`. |
 
 ## Target metrics (hackathon)
 
