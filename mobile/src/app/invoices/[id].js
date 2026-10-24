@@ -382,9 +382,25 @@ function Recommendation({ invoice, recommendation, decisions, threshold }) {
           {reasons.map((r, i) => (
             <View key={i} style={styles.reason}>
               <View style={styles.reasonDot} />
-              <Text style={styles.reasonText}>{r}</Text>
+              <Text style={styles.reasonText}>
+                {/* "New vendor: …" — the short heading before the colon is bold. */}
+                {r.indexOf(": ") > 0 && r.indexOf(": ") < 40 ? (
+                  <>
+                    <Text style={styles.reasonLead}>{r.slice(0, r.indexOf(": "))}.</Text>{" "}
+                    {r.slice(r.indexOf(": ") + 2)}
+                  </>
+                ) : (
+                  r
+                )}
+              </Text>
             </View>
           ))}
+        </View>
+      )}
+      {why.recommended_next_step && (
+        <View style={{ marginTop: 12 }}>
+          <Text style={styles.reasonLead}>What to do</Text>
+          <Text style={[styles.reasonText, { marginTop: 2 }]}>{why.recommended_next_step}</Text>
         </View>
       )}
       {evidence.length > 0 && (
@@ -600,7 +616,7 @@ function SourceDocument({ invoiceId, name, hasText, hasPdf }) {
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={styles.docName} numberOfLines={2}>
-            {`${invoiceId}-${hasPdf ? "redacted" : "masked"}.pdf`}
+            {`${invoiceId}${hasPdf ? "" : "-masked"}.pdf`}
           </Text>
         </View>
       </View>
@@ -669,6 +685,7 @@ const styles = StyleSheet.create({
   reason: { flexDirection: "row", gap: 8 },
   reasonDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.muted, marginTop: 8 },
   reasonText: { flex: 1, fontSize: 14, lineHeight: 20, color: colors.text },
+  reasonLead: { fontSize: 14, lineHeight: 20, fontWeight: "700", color: colors.text },
   toggle: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 12, alignSelf: "flex-start" },
   toggleText: { fontSize: 13, fontWeight: "600", color: colors.accentInk },
   codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 8 },
