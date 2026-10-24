@@ -87,7 +87,7 @@ export default function ConfidenceChart({ confidence, decisions, threshold }) {
       <div className="conf-head">
         <strong>Confidence by step</strong>
         <span className={`small ${below(value) ? "warn-text" : "muted"}`}>
-          AI confidence {fmtPct(value)}
+          Final {fmtPct(value)}
           {threshold != null ? ` · ${below(value) ? "below" : "above"} the ${fmtPct(threshold)} policy threshold` : ""}
         </span>
         <span className="small muted">

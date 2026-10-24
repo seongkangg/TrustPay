@@ -371,8 +371,6 @@ button.linkish { height: auto; padding: 0; margin-top: 12px; background: none; c
 .conf-labels > span:last-child .conf-tip { left: auto; right: -8px; transform: none; }
 .conf-tip-detail { display: block; margin-top: 6px; font-weight: 600; }
 .conf-info:hover .conf-tip, .conf-info:focus .conf-tip { display: block; }
-.inv-conf { font-variant-numeric: tabular-nums; font-weight: 600; }
-.inv-conf.below { color: var(--risk-medium); }
 @keyframes grow { from { height: 0; } }
 
 .doc { display: flex; align-items: center; gap: 16px; }

@@ -129,7 +129,7 @@ export default function ConfidenceChart({ confidence, decisions, threshold }) {
     <View>
       <Text style={styles.title}>Confidence by step</Text>
       <Text style={[styles.note, below(value) && { color: colors.riskMedium }]}>
-        AI confidence {fmtPct(value)}
+        Final {fmtPct(value)}
         {threshold != null ? ` · ${below(value) ? "below" : "above"} the ${fmtPct(threshold)} policy threshold` : ""}
       </Text>
       <Text style={styles.note}>

@@ -188,11 +188,3 @@ def test_mock_inspection_routes(client):
 def test_health(client):
     body = client.get("/health").json()
     assert body["status"] == "ok" and body["llm_mode"] == "mock"
-
-
-def test_list_rows_carry_the_recommendation_confidence(client, demo_invoices):
-    invoice_id, _, processed = create_and_process(client, demo_invoices[0])
-    rows = client.get("/invoices").json()["items"]
-    row = next(r for r in rows if r["invoice_id"] == invoice_id)
-    assert row["recommendation_confidence"] == processed["invoice"]["recommendation_confidence"]
-    assert row["recommendation_confidence"] is not None

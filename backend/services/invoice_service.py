@@ -84,7 +84,6 @@ def row_to_summary(row: InvoiceRow) -> InvoiceSummary:
         status=row.status,
         risk_level=row.risk_level,
         recommendation=row.recommendation,
-        recommendation_confidence=row.recommendation_confidence,
         sensitive_data_detected=row.sensitive_data_detected,
         updated_at=_utc(row.updated_at),
     )
