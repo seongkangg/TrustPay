@@ -7,7 +7,9 @@ layer, which checks the allowlist, executes (or blocks) the call, and records a 
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.utils.timestamps import as_utc
 
 from .enums import AgentName, Authorization, ReasonCode, ToolName
 
@@ -38,3 +40,5 @@ class ToolCall(BaseModel):
     )
     latency_ms: int | None = Field(None, ge=0)
     timestamp: datetime
+
+    _utc = field_validator("timestamp")(classmethod(lambda cls, v: as_utc(v)))

@@ -7,7 +7,9 @@ or whose `explanation` contains unmasked sensitive values.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.utils.timestamps import as_utc
 
 from .enums import AgentName, Authorization, ReasonCode, Recommendation, RiskLevel
 
@@ -48,3 +50,5 @@ class AgentDecision(BaseModel):
         None, description="Set by the governance layer after validation"
     )
     timestamp: datetime
+
+    _utc = field_validator("timestamp")(classmethod(lambda cls, v: as_utc(v)))

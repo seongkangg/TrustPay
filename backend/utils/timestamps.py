@@ -7,6 +7,13 @@ def now_utc() -> datetime:
     return datetime.now(UTC)
 
 
+def as_utc(dt: datetime | None) -> datetime | None:
+    """SQLite returns naive datetimes; everything stored is UTC. Attach the zone, never shift."""
+    if dt is None or dt.tzinfo is not None:
+        return dt
+    return dt.replace(tzinfo=UTC)
+
+
 def to_iso(dt: datetime) -> str:
     """Render as `2026-10-24T10:00:00Z` (seconds precision, Z not +00:00)."""
     if dt.tzinfo is None:

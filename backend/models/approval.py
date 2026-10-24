@@ -6,7 +6,9 @@ dashboard can never conflate them.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.utils.timestamps import as_utc
 
 from .enums import AgentName, HumanDecision, ReasonCode, Recommendation, RiskLevel
 
@@ -30,6 +32,10 @@ class ApprovalRequest(BaseModel):
     human_decision: HumanDecision | None = None
     reviewer_note: str | None = None
     decided_at: datetime | None = None
+
+    _utc = field_validator("requested_at", "expires_at", "decided_at")(
+        classmethod(lambda cls, v: as_utc(v))
+    )
 
 
 class HumanDecisionInput(BaseModel):

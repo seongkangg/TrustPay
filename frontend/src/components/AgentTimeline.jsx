@@ -1,0 +1,112 @@
+import { fmtPct, fmtTime, human } from "../api/client.js";
+import { AuthBadge } from "./StatusBadge.jsx";
+
+const BLOCKING_EVENTS = new Set(["payment_blocked", "tool_call_denied", "agent_failed"]);
+
+function Evidence({ ids }) {
+  if (!ids || ids.length === 0) return null;
+  return (
+    <div className="evidence small muted">
+      evidence:{" "}
+      {ids.map((id) => (
+        <code key={id}>{id}</code>
+      ))}
+    </div>
+  );
+}
+
+function EventItem({ data }) {
+  const blocked = BLOCKING_EVENTS.has(data.event_type) || data.policy_result === "blocked";
+  return (
+    <li className={blocked ? "blocked" : ""}>
+      <div className="title">{human(data.event_type)}</div>
+      <div className="meta">
+        {human(data.actor)} · {fmtTime(data.timestamp)} · severity {data.severity}
+        {data.policy_result && (
+          <>
+            {" "}
+            · <AuthBadge value={data.policy_result} />
+          </>
+        )}
+      </div>
+      {data.reason_codes?.length > 0 && (
+        <div className="small">
+          {data.reason_codes.map((c) => (
+            <code key={c}>{c}</code>
+          ))}
+        </div>
+      )}
+      {data.output_summary && <div className="small">{data.output_summary}</div>}
+      <Evidence ids={data.evidence_refs} />
+    </li>
+  );
+}
+
+function ToolCallItem({ data }) {
+  const blocked = data.authorization !== "allowed";
+  return (
+    <li className={blocked ? "blocked" : ""}>
+      <div className="title">
+        {human(data.agent)} → {human(data.tool)} <AuthBadge value={data.authorization} />
+      </div>
+      <div className="meta">
+        {fmtTime(data.timestamp)} · {data.purpose}
+        {data.denial_reason && (
+          <>
+            {" "}
+            · <code>{data.denial_reason}</code>
+          </>
+        )}
+      </div>
+      {data.result_summary && <div className="small muted">{data.result_summary}</div>}
+      <Evidence ids={data.evidence_id ? [data.evidence_id] : []} />
+    </li>
+  );
+}
+
+function DecisionItem({ data }) {
+  const blocked = data.governance_result === "blocked";
+  const why = data.explanation || {};
+  return (
+    <li className={`decision ${blocked ? "blocked" : ""}`}>
+      <div className="title">
+        {human(data.agent)}: {human(data.decision)} <AuthBadge value={data.governance_result} />
+      </div>
+      <div className="meta">
+        {fmtTime(data.timestamp)} · confidence {fmtPct(data.confidence)}
+        {data.risk_level && <> · risk {data.risk_level}</>}
+        {data.recommendation && <> · recommends {data.recommendation}</>}
+      </div>
+      {why.reasons?.length > 0 && (
+        <ul className="why small">
+          {why.reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+      )}
+      {why.policy_rules_triggered?.length > 0 && (
+        <div className="small muted">
+          rules:{" "}
+          {why.policy_rules_triggered.map((r) => (
+            <code key={r}>{r}</code>
+          ))}
+        </div>
+      )}
+      <Evidence ids={data.evidence_ids} />
+    </li>
+  );
+}
+
+// Chronological merge of audit events, tool calls, and agent decisions (GET /invoices/{id}/timeline).
+export default function AgentTimeline({ entries }) {
+  if (!entries || entries.length === 0) return <p className="muted">No activity yet.</p>;
+  return (
+    <ul className="timeline">
+      {entries.map((e, i) => {
+        if (e.kind === "decision") return <DecisionItem key={i} data={e.data} />;
+        if (e.kind === "tool_call") return <ToolCallItem key={i} data={e.data} />;
+        return <EventItem key={i} data={e.data} />;
+      })}
+    </ul>
+  );
+}

@@ -7,7 +7,9 @@ rejected; out-of-order arrivals are flagged (`out_of_order=True`) rather than re
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.utils.timestamps import as_utc
 
 from .enums import AgentName, Authorization, EventType, ReasonCode, Severity
 
@@ -33,6 +35,8 @@ class AuditEvent(BaseModel):
     event_hash: str = Field(..., description="SHA-256 over this event's canonical fields")
     out_of_order: bool = False
     timestamp: datetime
+
+    _utc = field_validator("timestamp")(classmethod(lambda cls, v: as_utc(v)))
 
 
 class AuditTrail(BaseModel):

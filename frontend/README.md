@@ -6,10 +6,24 @@ pending approvals, and the audit trail.
 
 | Path | What it does |
 |------|--------------|
-| `package.json` | Frontend dependencies and `dev` / `build` scripts (Vite + React). |
-| `src/App.jsx` | Router and layout shell; navigation between Dashboard, Invoice Details, and Audit Details. |
-| `src/api/client.js` | Thin fetch wrapper for the backend API (`/invoices`, `/dashboard/summary`, `/approve`, `/reject`, `/audit`…). |
-| `src/styles/dashboard.css` | Global styles, consistent risk colors (low = green, medium = amber, high = red), blocked-action emphasis. |
+| `package.json` | Dependencies and `dev` / `build` / `lint` scripts (Vite 5 + React 18 + react-router 6, ESLint 9 flat config). |
+| `vite.config.js` | Dev server on 5173; proxies `/invoices`, `/dashboard`, `/governance`, `/mock`, `/health` to the backend (`VITE_API_BASE_URL`, default `http://localhost:8000`); allows importing the demo fixtures from `../data`. |
+| `index.html`, `src/main.jsx` | Entry point; mounts `App` inside a `BrowserRouter`. |
+| `eslint.config.js` | ESLint flat config: recommended + react + react-hooks. |
+| `src/App.jsx` | Top bar with backend health, routes: `/` → Dashboard, `/invoices/:id` → InvoiceDetails, `/invoices/:id/audit` → AuditDetails. |
+| `src/api/client.js` | Thin fetch wrapper for every backend endpoint, `ApiError` carrying the contract's error body, and formatting helpers (`fmtMoney`, `fmtTime`, `fmtPct`, `human`). |
+| `src/styles/dashboard.css` | Plain CSS. Risk colors are tokens (`--risk-low/medium/high`), blocked states share `--blocked`; badges, tiles, tables, timeline, approval panel. |
+
+## Running
+
+```bash
+npm install
+npm run dev        # http://localhost:5173, backend expected on :8000
+```
+
+The Overview page has a **Submit a demo invoice** strip that posts each fixture from
+`data/invoices/*.json` to `POST /invoices` and then `POST /invoices/{id}/process` — the same
+files the tests assert on, so the demo and the test suite can never drift apart.
 
 ## Components (`src/components/`)
 

@@ -59,13 +59,16 @@ all four fixtures reach their expected risk, reason codes, and recommendation th
 dashboard summary matches, human approve/reject round-trip, no raw secret in any response.
 *Demoable via Swagger (`/docs`) from here.*
 
-## Sprint 5 — Dashboard
-- [ ] `api/client.js`, `App.jsx`, `dashboard.css`
-- [ ] components: RiskBadge, StatusBadge, AgentTimeline, ToolCallTable, AuditLog, ApprovalPanel
-- [ ] pages: Dashboard, InvoiceDetails, AuditDetails
-- [ ] human approve/reject round-trip
+## Sprint 5 — Dashboard ✅
+- [x] `api/client.js`, `App.jsx`, `dashboard.css` (+ `vite.config.js`, `index.html`, `main.jsx`, `eslint.config.js`)
+- [x] components: RiskBadge, StatusBadge, AgentTimeline, ToolCallTable, AuditLog, ApprovalPanel
+- [x] pages: Dashboard (with demo-scenario buttons fed from `data/invoices/*.json`), InvoiceDetails, AuditDetails
+- [x] human approve/reject round-trip
+- [x] fix: API models re-attach UTC to SQLite datetimes so the browser shows one consistent clock
 
-**Done:** full scenario walk-through in the browser; no raw sensitive data anywhere.
+**Done:** scenarios 1–3 walked through in the browser (`.claude/launch.json` starts both servers);
+low-risk auto-completed, policy violation approved by a human to COMPLETED, suspicious invoice
+BLOCKED with masked identifiers; `npm run lint` and `npm run build` clean.
 
 ## Sprint 6 — Demo hardening
 - [ ] `docs/demo-script.md`
