@@ -368,7 +368,6 @@ function Recommendation({ invoice, recommendation, decisions, threshold }) {
       <ConfidenceChart
         confidence={invoice.recommendation_confidence}
         decisions={decisions}
-        extraction={invoice.extraction || []}
         threshold={threshold}
       />
       <View style={styles.divider} />
