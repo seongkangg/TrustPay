@@ -1,7 +1,9 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const API = process.env.VITE_API_BASE_URL || "http://localhost:8000";
+// Where the dev-server proxy forwards API calls. In docker-compose this is http://backend:8000.
+// (VITE_API_BASE_URL is different: it is what the *browser* calls, and stays empty when proxying.)
+const API = process.env.API_PROXY_TARGET || "http://localhost:8000";
 
 // Every backend prefix is proxied so the dashboard can call relative paths in dev.
 // Browser navigations (Accept: text/html) to e.g. /invoices/INV-1001 must still get the SPA,

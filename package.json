@@ -8,6 +8,7 @@
     "frontend": "npm --prefix frontend run dev",
     "dev": "concurrently -n api,web -c blue,green \"npm run backend\" \"npm run frontend\"",
     "test": "pytest tests/",
+    "reset": "curl -s -X POST http://localhost:8000/demo/reset",
     "lint": "ruff check backend tests && npm --prefix frontend run lint",
     "format": "ruff format backend tests"
   },

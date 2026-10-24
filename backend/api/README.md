@@ -9,6 +9,7 @@ FastAPI routers. Each file groups related endpoints; routes stay thin and delega
 | `governance_routes.py` | `POST /governance/evaluate-tool-call` · `GET /invoices/{id}/audit` | Expose the governance engine for inspection: evaluate whether a hypothetical tool call would be allowed, and return the append-only audit trail for an invoice. |
 | `dashboard_routes.py` | `GET /dashboard/summary` | Aggregates for the overview screen: total invoices, low/medium/high risk counts, blocked actions (`payment_blocked` + `tool_call_denied` events), pending approvals, sensitive-data detections, recent policy violations. |
 | `mock_routes.py` | `GET /mock/vendors/{id}` · `GET /mock/purchase-orders/{id}` · `GET /mock/approval-limits/{agent}` · `GET /mock/thresholds` | Read-only inspection of the mock enterprise systems for the demo. Mutating mocks (payments, approval requests) are **not** exposed over HTTP — only the governance interceptor reaches them. |
+| `demo_routes.py` | `POST /demo/reset` | Wipes invoices, decisions, tool calls, audit events, approvals, and the simulated payment ledger so the demo can be rerun without a restart. Reference data is untouched. Returns 403 when `APP_ENV=production`. |
 | `deps.py` | — | FastAPI dependencies: one `GovernanceEngine` per request over the request session; the simulated payment ledger is a process-wide singleton so the double-payment guard survives across requests. |
 
 Errors raised by services (`services/errors.py`) and invalid state transitions are turned into the

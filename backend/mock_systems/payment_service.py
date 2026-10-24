@@ -43,6 +43,10 @@ class PaymentService:
         self._payments[invoice_id] = payment
         return dict(payment)
 
+    def clear(self) -> None:
+        """Demo reset only."""
+        self._payments.clear()
+
     def get_payment(self, invoice_id: str) -> dict[str, Any] | None:
         payment = self._payments.get(invoice_id)
         return dict(payment) if payment else None

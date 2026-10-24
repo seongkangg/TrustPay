@@ -43,13 +43,8 @@ class ApprovalService:
                 invoice_id=invoice_id,
                 correlation_id=row.correlation_id,
             )
-        approval = self.gov.record_human_decision(
-            invoice_id=invoice_id,
-            correlation_id=row.correlation_id,
-            reviewer=body.reviewer,
-            decision=HumanDecision.APPROVED,
-            note=body.note,
-        )
+        # Payment first: if the payment system is down nothing is half-recorded and the
+        # reviewer can simply retry. The human's decision is only recorded once it took effect.
         payment = self.gov.execute_human_payment(
             invoice_id=invoice_id,
             correlation_id=row.correlation_id,
@@ -59,10 +54,17 @@ class ApprovalService:
         )
         if not payment.ok:
             raise UpstreamUnavailableError(
-                "payment service unavailable; approval recorded, invoice remains unpaid",
+                "payment service unavailable; nothing recorded, invoice remains unpaid — retry later",
                 invoice_id=invoice_id,
                 correlation_id=row.correlation_id,
             )
+        approval = self.gov.record_human_decision(
+            invoice_id=invoice_id,
+            correlation_id=row.correlation_id,
+            reviewer=body.reviewer,
+            decision=HumanDecision.APPROVED,
+            note=body.note,
+        )
         self._set_status(row, InvoiceStatus.APPROVED)
         self._set_status(row, InvoiceStatus.COMPLETED)
         self._close(row, "approved")

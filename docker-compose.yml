@@ -1,0 +1,45 @@
+# One command brings up the whole demo:   docker compose up --build
+# Backend  → http://localhost:8000  (Swagger at /docs)
+# Frontend → http://localhost:5173
+# Values in a local .env override the defaults below (compose reads .env for ${VAR:-default}).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LLM_MODE: ${LLM_MODE:-mock}
+      WATSONX_API_KEY: ${WATSONX_API_KEY:-}
+      WATSONX_PROJECT_ID: ${WATSONX_PROJECT_ID:-}
+      WATSONX_URL: ${WATSONX_URL:-https://us-south.ml.cloud.ibm.com}
+      WATSONX_MODEL_ID: ${WATSONX_MODEL_ID:-ibm/granite-3-8b-instruct}
+      MOCK_FAILURES: ${MOCK_FAILURES:-}
+      CORS_ORIGINS: http://localhost:5173
+    volumes:
+      - trustpay-db:/app/db
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      # Vite dev-server proxy target inside the compose network; the browser keeps using relative URLs.
+      API_PROXY_TARGET: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  trustpay-db:

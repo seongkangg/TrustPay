@@ -74,7 +74,7 @@ class BaseAgent(ABC):
     def ask(self, prompt: str, schema: type[T]) -> T | None:
         try:
             return parse_as(schema, self.llm.complete(prompt))
-        except (LLMError, MalformedOutput) as exc:
+        except (LLMError, MalformedOutput, TimeoutError) as exc:
             log.warning(
                 "%s: model output rejected: %s",
                 self.name.value,

@@ -153,9 +153,10 @@ def test_human_approve_pays_and_completes(invoices, approvals, gov, fixture_by_i
     assert invoice.recommendation == Recommendation.ESCALATE  # AI recommendation kept separately
     assert approval["human_decision"] == "approved" and approval["reviewer"] == "fin@example.com"
     assert gov.payments.get_payment("INV-1001")["actor"] == "human_reviewer"
+    # payment executes first; the human decision is recorded only once it took effect
     assert events(gov, "INV-1001")[-3:] == [
-        "human_decision_recorded",
         "payment_authorized",
+        "human_decision_recorded",
         "audit_record_created",
     ]
 

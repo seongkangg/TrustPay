@@ -117,7 +117,15 @@ are rejected by `backend/orchestration/state_machine.py`.
 Real payment execution, real banking/accounting integrations, production authentication,
 training a foundation model, multiple enterprise domains, regulatory certification, unlimited agents/tools.
 
-## Getting started (once implemented)
+## Getting started
+
+One command, both services (backend :8000 with Swagger at `/docs`, dashboard :5173):
+
+```bash
+docker compose up --build
+```
+
+Or locally:
 
 ```bash
 cp .env.example .env
@@ -129,6 +137,20 @@ uvicorn backend.main:app --reload
 cd frontend && npm install && npm run dev
 ```
 
+Tests and lint:
+
 ```bash
 pytest tests/
 ```
+
+```bash
+ruff check backend tests && npm --prefix frontend run lint
+```
+
+Rerun the demo from a clean slate without restarting anything:
+
+```bash
+npm run reset
+```
+
+Then follow [docs/demo-script.md](docs/demo-script.md).

@@ -19,6 +19,9 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 | `test_workflow.py` | State-machine transitions (valid and invalid), low-risk run to COMPLETED with the exact fixture event sequence, processing twice rejected, intake failure → FAILED + escalated, vendor system down → safe PENDING_APPROVAL, timeline merge ordering, human approve/reject, human limit enforced, decisions refused on unprocessed/terminal invoices. |
 | `test_scenarios.py` | All four fixtures through the HTTP API in demo order asserting status, risk, reason codes, recommendation, masked fields, exact audit sequence, and the dashboard summary; the spec's worked example with a raw-secret sweep over every response; human approve/reject round-trips; error body format and status codes; list filters; governance dry-run audited; mock inspection routes; `/health`. |
 
+| `test_reliability.py` | Model timeout and unexpected model exceptions end in `FAILED` + escalated with the chain intact; PO / approval-limit / payment service outages escalate rather than fail; a payment outage during human approval is a clean 503 that can be retried once the service is back. |
+| `test_performance.py` | Each demo invoice processes in < 10 s over HTTP; 50 audit appends each < 1 s. |
+
 ## Target metrics (hackathon)
 
 - 100% of simulated tool calls logged
