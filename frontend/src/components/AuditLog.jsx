@@ -1,5 +1,6 @@
 import { fmtTime, human } from "../api/client.js";
 import { AuthBadge } from "./StatusBadge.jsx";
+import ReasonTag from "./ReasonTag.jsx";
 
 // Immutable, hash-chained event list (GET /invoices/{id}/audit).
 export default function AuditLog({ trail }) {
@@ -43,7 +44,7 @@ export default function AuditLog({ trail }) {
               <td>
                 {e.reason_codes?.map((c) => (
                   <div key={c}>
-                    <code>{c}</code>
+                    <ReasonTag code={c} />
                   </div>
                 ))}
               </td>
