@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 140" width="400" height="140">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0F3D5E"/>
+    </linearGradient>
+  </defs>
+  <!-- shield -->
+  <path d="M70 14 L118 30 V68 C118 98 98 118 70 128 C42 118 22 98 22 68 V30 Z" fill="url(#g)"/>
+  <!-- check -->
+  <path d="M48 70 L64 86 L94 54" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- wordmark -->
+  <text x="140" y="90" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="58" font-weight="700" letter-spacing="-1">
+    <tspan fill="#0F3D5E">Trust</tspan><tspan fill="#14B8A6">Pay</tspan>
+  </text>
+</svg>

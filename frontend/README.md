@@ -8,6 +8,7 @@ pending approvals, and the audit trail.
 |------|--------------|
 | `package.json` | Dependencies and `dev` / `build` / `lint` scripts (Vite 5 + React 18 + react-router 6 + Recharts 2, ESLint 9 flat config). |
 | `vite.config.js` | Dev server on 5173; proxies `/invoices`, `/dashboard`, `/governance`, `/inbox`, `/mock`, `/health` to the backend (`API_PROXY_TARGET`, default `http://localhost:8000`). Browser navigations still get the SPA. |
+| `public/` | Static brand assets served at the site root: `trustpay-logo.{svg,png}` (shield + wordmark) and `trustpay-icon.{svg,png}` (shield only). Not yet referenced by any page. |
 | `index.html`, `src/main.jsx` | Entry point; mounts `App` inside a `BrowserRouter`. |
 | `eslint.config.js` | ESLint flat config: recommended + react + react-hooks. |
 | `src/App.jsx` | Top bar with backend health, routes: `/` → Dashboard, `/invoices/:id` → InvoiceDetails, `/invoices/:id/audit` → AuditDetails. |
