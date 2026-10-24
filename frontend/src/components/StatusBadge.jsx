@@ -1,10 +1,7 @@
 import { human } from "../api/client.js";
 
-// "PENDING_APPROVAL" -> "Pending approval"
-export const sentence = (s) => {
-  const t = human(s).toLowerCase();
-  return t.charAt(0).toUpperCase() + t.slice(1);
-};
+// "PENDING_APPROVAL" -> "Pending approval" (wording lives in human(), api/client.js)
+export const sentence = human;
 
 // Invoice state pill. BLOCKED / FAILED / REJECTED are deliberately loud.
 export default function StatusBadge({ status }) {

@@ -37,7 +37,7 @@ export default function AuditLog({ trail }) {
                 <strong>{human(e.event_type)}</strong>
                 {e.output_summary && <div className="small muted">{e.output_summary}</div>}
               </td>
-              <td>{e.severity}</td>
+              <td>{human(e.severity)}</td>
               <td>
                 <AuthBadge value={e.policy_result} />
               </td>

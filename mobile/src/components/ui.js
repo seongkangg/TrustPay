@@ -5,11 +5,8 @@ import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 import { human } from "../api/client.js";
 import { RISK, STATUS, colors, radius, space } from "../theme.js";
 
-// "PENDING_APPROVAL" -> "Pending approval"
-export const sentence = (s) => {
-  const t = human(s).toLowerCase();
-  return t.charAt(0).toUpperCase() + t.slice(1);
-};
+// "PENDING_APPROVAL" -> "Pending approval" (wording lives in human(), api/client.js)
+export const sentence = human;
 
 export function Badge({ label, fg = colors.neutralInk, bg = colors.neutralBg }) {
   return (
@@ -28,6 +25,40 @@ export function RiskBadge({ level }) {
 export function StatusBadge({ status }) {
   const c = STATUS[status] || {};
   return <Badge label={sentence(status)} fg={c.fg} bg={c.bg} />;
+}
+
+// Plain-English wording for ReasonCode (backend/models/enums.py); same text as the web ReasonTag.
+const REASONS = {
+  AMOUNT_ABOVE_LIMIT: "Over approval limit",
+  UNKNOWN_VENDOR: "Unknown vendor",
+  VENDOR_UNVERIFIED: "Vendor not verified",
+  DUPLICATE_INVOICE: "Possible duplicate",
+  PO_AMOUNT_MISMATCH: "Doesn't match PO",
+  INVALID_PURCHASE_ORDER: "PO not found",
+  SENSITIVE_DATA_DETECTED: "Sensitive info found",
+  UNAUTHORIZED_TOOL_CALL: "Action not permitted",
+  LOW_CONFIDENCE: "Unclear details",
+  MISSING_REQUIRED_FIELD: "Missing information",
+  MALFORMED_FIELD: "Invalid format",
+  AGENT_FAILURE: "Processing error",
+  MOCK_SYSTEM_UNAVAILABLE: "System unavailable",
+  INSUFFICIENT_EVIDENCE: "Not enough information",
+  POLICY_PASSED: "All checks passed",
+};
+// Same colour split as the web: green = passed, yellow = needs a check, red = violation.
+const UNCERTAIN = new Set([
+  "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",
+  "MALFORMED_FIELD", "AGENT_FAILURE", "MOCK_SYSTEM_UNAVAILABLE", "INSUFFICIENT_EVIDENCE",
+]);
+
+export function ReasonTag({ code }) {
+  const [fg, bg] =
+    code === "POLICY_PASSED"
+      ? [colors.ok, colors.okBg]
+      : UNCERTAIN.has(code)
+        ? [colors.riskMedium, colors.riskMediumBg]
+        : [colors.blocked, colors.blockedBg];
+  return <Badge label={REASONS[code] || human(code)} fg={fg} bg={bg} />;
 }
 
 // A soft grey panel: separation by one tone step, never a border or shadow.

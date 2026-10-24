@@ -129,12 +129,12 @@ export default function InvoiceScreen() {
           {invoice.extraction?.length ? (
             invoice.extraction.map((f, i) => (
               <View key={f.field} style={[styles.kv, i === invoice.extraction.length - 1 && styles.kvLast]}>
-                <Text style={styles.k}>{f.field}</Text>
+                <Text style={styles.k}>{human(f.field)}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.v}>{f.missing ? "missing" : String(f.value)}</Text>
+                  <Text style={styles.v}>{f.missing ? "Missing" : String(f.value)}</Text>
                   <Muted small>
                     {fmtPct(f.confidence)}
-                    {f.malformed ? " · malformed" : ""}
+                    {f.malformed ? " · Invalid format" : ""}
                   </Muted>
                 </View>
               </View>
@@ -162,7 +162,7 @@ export default function InvoiceScreen() {
               <View key={c.call_id || i} style={[styles.kv, i === toolCalls.length - 1 && styles.kvLast]}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.v}>
-                    {human(c.agent)} → {c.tool_name}
+                    {human(c.agent)} → {human(c.tool_name)}
                   </Text>
                   <Muted small>{c.purpose}</Muted>
                   {c.result_summary ? <Muted small>{c.result_summary}</Muted> : null}
@@ -203,11 +203,11 @@ function TimelineEntry({ entry, last }) {
   let meta;
   let blocked = false;
   if (entry.kind === "decision") {
-    title = `${human(d.agent)}: ${d.decision || d.summary || "decision"}`;
-    meta = d.confidence != null ? `confidence ${fmtPct(d.confidence)}` : null;
+    title = `${human(d.agent)}: ${human(d.decision || d.summary || "decision")}`;
+    meta = d.confidence != null ? `Confidence ${fmtPct(d.confidence)}` : null;
   } else if (entry.kind === "tool_call") {
-    title = `${human(d.agent)} called ${d.tool_name}`;
-    meta = d.authorization;
+    title = `${human(d.agent)} called ${human(d.tool_name).toLowerCase()}`;
+    meta = human(d.authorization);
     blocked = d.authorization === "blocked";
   } else {
     title = human(d.event_type);
@@ -263,9 +263,9 @@ function ApprovalPanel({ invoice, decisions, events, onDecided }) {
       <Text style={styles.h3}>AI recommendation</Text>
       {invoice.recommendation ? (
         <>
-          <Text style={styles.big}>{invoice.recommendation}</Text>
+          <Text style={styles.big}>{human(invoice.recommendation)}</Text>
           <Muted small>
-            confidence {fmtPct(invoice.recommendation_confidence)} · advisory only — governance decides
+            Confidence {fmtPct(invoice.recommendation_confidence)} · advisory only — governance decides
           </Muted>
           {why.reasons?.length > 0 && (
             <View style={{ marginTop: 8 }}>

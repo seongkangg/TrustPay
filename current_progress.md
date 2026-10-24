@@ -8,8 +8,9 @@
 5. 2026-10-24 — Alex Nguyen — Fixed governance auto-pay bugs (low-confidence and rejected approvals, expired approval requests) and sensitive-data leaks (reviewer notes, free-text upload fields, rejected decisions, card/CVV/base64 redaction) found by the governance audit.
 6. 2026-10-23 — Alex Nguyen — Added an isolated multi-agent orchestration workflow (six `wf-*` subagents, `orchestrate` skill, `run.py` audit/state script) under `.claude/`.
 7. 2026-10-23 — Alex Nguyen — Let the orchestrate `test-design` stage read `backend/` folder `README.md` files without being flagged as reading implementation.
+8. 2026-10-24 — Alex Nguyen — Made every enum value in the web dashboard and mobile app display as readable sentence-case labels and replaced raw reason codes on mobile with plain-English `ReasonTag` badges.
 
 ## What's next
 **Audit the design docs against the implementation with the `orchestrate` workflow, one area at a time, to confirm current code works and matches its intended spec.**
 
-**Why this is next:** the user chose this; remaining sprint work (dashboard branding, demo polish) builds on code whose conformance to `docs/` and `.claude/agents.md` is not yet independently verified.
+**Why this is next:** the user chose this and it is still open; remaining sprint work (dashboard branding, demo polish) builds on code whose conformance to `docs/` and `.claude/agents.md` is not yet independently verified.
