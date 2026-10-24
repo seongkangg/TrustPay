@@ -5,7 +5,7 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 
 | File | Covers |
 |------|--------|
-| `__init__.py` | Forces `LLM_MODE=mock` before anything reads settings, so the suite never calls a real model no matter what the developer's `.env` says. |
+| `__init__.py` | Before anything reads settings: forces `LLM_MODE=mock`, in-memory SQLite (`DATABASE_URL=sqlite://`), and no Gmail token / poller — so the suite never calls a real model, never touches the shared Supabase database, and never reads real mail, whatever the developer's `.env` says. |
 | `conftest.py` | Fixtures: fresh in-memory SQLite `session` per test, `ref`, `demo_invoices`, `fixture_by_id`. Helpers: `run_agents(gov, fixture, llm=, upto=)` drives ingest → the four agents; `insert_invoice_row` persists a fixture as already processed (for duplicate checks). |
 | `test_llm.py` | Output parser rejects malformed/off-schema model output; `MockLLM` is deterministic and follows the prompt's context; factory defaults to mock and refuses watsonx without credentials. |
 | `test_approval_agents.py` | Policy/Risk agent assigns risk from the engine with LIMIT/RULES/POLICY evidence; Approval agent derives its recommendation from policy, a model can make it more cautious but never more permissive, invalid model output → escalate at 0.5; all four fixtures reach their expected risk / reason codes / recommendation through the agent chain. |
@@ -23,6 +23,8 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 | `test_reliability.py` | Model timeout and unexpected model exceptions end in `FAILED` + escalated with the chain intact; PO / approval-limit / payment service outages escalate rather than fail; a payment outage during human approval is a clean 503 that can be retried once the service is back. |
 | `test_performance.py` | Each demo invoice processes in < 10 s over HTTP; 50 audit appends each < 1 s. |
 | `test_pdf_parser.py` | Every fixture round-trips render → PDF → text → upload exactly; label variants and number cleanup; corrupt bytes raise; an emailed suspicious PDF is stored masked. |
+| `test_database.py` | Supabase connection strings accepted as pasted and switched to psycopg; Postgres engine uses reconnect-on-stale; SQLite still works; row-level security is enabled on every table. No network. |
+| `test_llm_extraction.py` | The user's two-column invoice layout: date normalization, currency from symbol, the in-document check (real values kept, invented invoice number / amount / PO discarded), the model sees masked text only, bad or unavailable model fills nothing, vendor name matched exactly (not fuzzy), end to end with an unknown vendor (`UNKNOWN_VENDOR`, governed lookup with evidence) and a known one (ID resolved and saved), mock model still escalates, one invalid field doesn't drop the email. |
 | `test_inbox.py` | `GmailClient` against a fake Gmail service (pagination, nested `Invoice.PDF`, attachment decode, name must be exactly `invoice.pdf`, provider errors wrapped); `InboxService.sync` with a fake client (create + process, dedupe on re-sync, corrupt PDF / fetch failure don't stop the batch, suspicious → BLOCKED and masked, unreadable PDF → escalated never paid, Gmail down raises); `/inbox/status` and `/inbox/sync` over HTTP including 503 when unauthorized and re-ingest after `/demo/reset`. |
 
 ## Target metrics (hackathon)

@@ -27,3 +27,6 @@ Thumbs.db
 
 # Claude workflow run logs
 .claude/runs/
+
+# Dev error log
+logs/

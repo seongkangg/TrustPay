@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { api, fmtTime } from "../api/client.js";
+import { api, fmtTime, human } from "../api/client.js";
 
 // Gmail inbox that feeds invoices in automatically. `status` is GET /inbox/status (or null while
 // loading); `unavailable` means the backend answered 404 — the inbox feature is not deployed.
@@ -48,15 +48,15 @@ export default function InboxCard({ status, unavailable, onSynced }) {
   return (
     <div className="card inbox">
       <div className="head">
-        <span className={`badge ${authorized ? "auth-allowed" : "auth-blocked"}`}>
-          {!status.enabled ? "disabled" : status.authorized ? "authorized" : "not authorized"}
+        <span className={`badge ${authorized ? "auth-allowed" : status.enabled ? "auth-blocked" : ""}`}>
+          {!status.enabled ? "Disabled" : status.authorized ? "Authorized" : "Not authorized"}
         </span>
         <span className="small muted">
           Last sync: {fmtTime(status.last_sync_at)}
           {status.poll_seconds ? ` · polls every ${status.poll_seconds}s` : ""}
         </span>
         <span className="spacer" />
-        <button className="primary" disabled={busy} onClick={sync}>
+        <button className="primary" disabled={busy || !status.enabled} onClick={sync}>
           {busy ? "Checking…" : "Check inbox now"}
         </button>
       </div>
@@ -94,7 +94,7 @@ export default function InboxCard({ status, unavailable, onSynced }) {
                   {m.invoice_id ? (
                     <Link to={`/invoices/${m.invoice_id}`}>{m.invoice_id}</Link>
                   ) : (
-                    <span className="small muted">{m.error || m.status}</span>
+                    <span className="small muted">{m.error || human(m.status)}</span>
                   )}
                 </td>
               </tr>

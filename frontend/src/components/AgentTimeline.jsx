@@ -8,7 +8,7 @@ function Evidence({ ids }) {
   if (!ids || ids.length === 0) return null;
   return (
     <div className="evidence small muted">
-      evidence:{" "}
+      Evidence:{" "}
       {ids.map((id) => (
         <code key={id}>{id}</code>
       ))}
@@ -22,7 +22,7 @@ function EventItem({ data }) {
     <li className={blocked ? "blocked" : ""}>
       <div className="title">{human(data.event_type)}</div>
       <div className="meta">
-        {human(data.actor)} · {fmtTime(data.timestamp)} · severity {data.severity}
+        {human(data.actor)} · {fmtTime(data.timestamp)} · {human(data.severity)} severity
         {data.policy_result && (
           <>
             {" "}
@@ -75,8 +75,8 @@ function DecisionItem({ data }) {
       </div>
       <div className="meta">
         {fmtTime(data.timestamp)} · confidence {fmtPct(data.confidence)}
-        {data.risk_level && <> · risk {data.risk_level}</>}
-        {data.recommendation && <> · recommends {data.recommendation}</>}
+        {data.risk_level && <> · {human(data.risk_level)} risk</>}
+        {data.recommendation && <> · Recommends {human(data.recommendation).toLowerCase()}</>}
       </div>
       {why.reasons?.length > 0 && (
         <ul className="why small">
@@ -87,7 +87,7 @@ function DecisionItem({ data }) {
       )}
       {why.policy_rules_triggered?.length > 0 && (
         <div className="small muted">
-          rules:{" "}
+          Rules:{" "}
           {why.policy_rules_triggered.map((r) => (
             <code key={r}>{r}</code>
           ))}

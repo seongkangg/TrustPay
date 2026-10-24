@@ -76,7 +76,7 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "POLICY-001": "Verified vendor and matching PO → permit recommendation",
     "POLICY-002": "Amount at or below auto-approve threshold → allow automatic processing",
     "POLICY-003": "Amount above acting agent's approval limit → block, request approval",
-    "POLICY-004": "Unknown vendor → block payment, escalate",
+    "POLICY-004": "Unknown vendor → escalate for a human to confirm the supplier",
     "POLICY-005": "Vendor not verified → escalate for review",
     "POLICY-006": "Duplicate invoice → block, recommend reject, escalate",
     "POLICY-007": "Purchase order missing or belongs to another vendor → block, escalate",
@@ -156,12 +156,15 @@ class PolicyEngine:
                 f"amount {inp.amount} > {inp.acting_agent.value} limit {limit}",
             )
         if inp.vendor_found is False:
+            # A new vendor is a reason to check, not to block: legitimate first-time suppliers are
+            # common. Never auto-paid (medium escalates to a human). Combined with bank details
+            # (POLICY-009) or any other high rule it still blocks.
             hit(
                 "POLICY-004",
                 ReasonCode.UNKNOWN_VENDOR,
-                RiskLevel.HIGH,
-                "block_and_escalate",
-                "vendor not in vendor master",
+                RiskLevel.MEDIUM,
+                "escalate",
+                "vendor not in vendor master — confirm this is a real supplier",
             )
         elif inp.vendor_found is True and not vendor_verified:
             hit(

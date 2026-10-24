@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { fmtMoney, fmtTime } from "../api/client.js";
+import { ChevronRightIcon } from "./Icons.jsx";
 import ReasonTag from "./ReasonTag.jsx";
 import RiskBadge from "./RiskBadge.jsx";
 import StatusBadge from "./StatusBadge.jsx";
@@ -9,37 +10,34 @@ import StatusBadge from "./StatusBadge.jsx";
 // the invoice page (ApprovalPanel); this list only routes the reviewer there.
 export default function ApprovalQueue({ items, reasonCodes = {} }) {
   if (items.length === 0) {
-    return <p className="muted">Nothing is waiting for a decision.</p>;
+    return null; // the section heading says "Nothing waiting" with a 0 count
   }
   return (
-    <div className="queue">
+    <ul className="queue">
       {items.map((inv) => {
         const codes = reasonCodes[inv.invoice_id] || [];
         return (
-          <div key={inv.invoice_id} className={`item ${inv.status === "BLOCKED" ? "blocked" : ""}`}>
-            <div className="head">
+          <li key={inv.invoice_id} className={inv.status === "BLOCKED" ? "blocked" : ""}>
+            <div className="who">
               <span className="vendor">{inv.vendor_name || "Unknown vendor"}</span>
-              <span className="amount">{fmtMoney(inv.amount, inv.currency)}</span>
-            </div>
-            <div>
-              <StatusBadge status={inv.status} /> <RiskBadge level={inv.risk_level} />
-            </div>
-            {codes.length > 0 && (
-              <div className="codes small">
-                {codes.map((c) => (
-                  <ReasonTag key={c} code={c} />
-                ))}
-              </div>
-            )}
-            <div className="foot small">
-              <span className="muted">
+              <span className="small muted">
                 {inv.invoice_id} · {fmtTime(inv.updated_at)}
               </span>
-              <Link to={`/invoices/${inv.invoice_id}`}>Review &amp; decide →</Link>
             </div>
-          </div>
+            <div className="why">
+              <StatusBadge status={inv.status} />
+              <RiskBadge level={inv.risk_level} />
+              {codes.map((c) => (
+                <ReasonTag key={c} code={c} />
+              ))}
+            </div>
+            <span className="amount">{fmtMoney(inv.amount, inv.currency)}</span>
+            <Link to={`/invoices/${inv.invoice_id}`} className="button primary">
+              Review <ChevronRightIcon />
+            </Link>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

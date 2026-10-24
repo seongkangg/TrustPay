@@ -9,12 +9,21 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `package.json` | Expo SDK 58, Expo Router, `react-native-svg` (trend chart). `start` / `lint` scripts. |
 | `app.json` | App name, `trustpay://` scheme, `expo-router` plugin. |
 | `.env.example` | `EXPO_PUBLIC_API_URL` — only needed when the backend is not on the laptop running Expo. |
-| `src/app/_layout.js` | Root stack navigator. |
-| `src/app/index.js` | Overview: **Needs your approval** queue → count and amount tiles → risk / status bar charts and a 14-day trend → **Inbox** card (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) → recent policy violations → invoice list. Pull to refresh; auto-refreshes every 15 s. |
+| `src/app/_layout.js` | Root stack: the tab group and the invoice screen, inside `DashboardProvider`. |
+| `src/app/(tabs)/_layout.js` | Overview / Inbox / Invoices tabs with `BubbleNav` as the tab bar. The Inbox tab shows the number of invoices waiting for a human decision; the round button opens the next one. |
+| `src/app/(tabs)/index.js` | Overview, same design as the web dashboard: **Invoice volume** hero (total in whole dollars, % paid, paid / withheld) over the 14-day teal volume chart (its line and fill draw in left to right over 900ms each time the tab opens; a short fade with Reduce Motion; touch and drag to scrub day by day with a cursor and a counts card, like the desktop tooltip) → Received / Completed / Blocked cards with sparklines → **Risk mix** bars (grow up from the baseline, staggered, each time the tab opens) → **Received per day** calendar (UTC days) → recent policy violations. The approval list lives on the Inbox tab. |
+| `src/app/(tabs)/inbox.js` | Inbox tab: **Needs your approval** (the invoices behind the count on this tab's icon, each opening the invoice screen), then the email inbox: `InboxCard` (`GET /inbox/status`, "Check inbox now" → `POST /inbox/sync`) and recent messages. |
+| `src/app/(tabs)/invoices.js` | Invoices tab: every invoice with status, risk, masked flag and amount. A three-line button in the top-right of the header opens a menu to filter by All / Pending / Accepted / Rejected, with counts (Pending = not yet decided, Accepted = approved or completed, Rejected = rejected; failed invoices show under All only); a teal dot on the button means a filter is on. Each row opens the invoice screen. |
 | `src/app/invoices/[id].js` | One invoice: status and risk, masked fields, extraction, **AI recommendation vs. human decision** (approve / reject with reviewer + note), agent timeline, tool calls. |
 | `src/api/client.js` | Fetch wrapper mirroring `frontend/src/api/client.js`; picks the backend URL (see below). |
-| `src/components/ui.js`, `Charts.js` | Badges, cards, tiles, alerts; View-based bar charts and an SVG line chart. |
-| `src/theme.js` | The same hex values as `frontend/src/styles/dashboard.css` (`--risk-*`, `--blocked`, `--ok`, `--pending`). |
+| `src/data.js` | `DashboardProvider` / `useDashboard`: summary, invoices and inbox status fetched once for all tabs, polled every 15 s, pull to refresh. |
+| `src/useReduceMotion.js` | The live system Reduce Motion setting, shared by the charts and rolling numbers. |
+| `src/components/ui.js`, `Charts.js` | Sentence-case badges, grey panels, count pills, pill buttons with press feedback, alerts, the TrustPay logo (shield + wordmark, drawn in SVG); SVG volume chart and sparklines, View-based risk bars and the day calendar. |
+| `src/components/BubbleNav.js`, `InboxCard.js` | Floating bottom nav: a white pill of tabs with a grey bubble that springs to the active tab, an optional count badge on a tab icon's top-right corner, and a navy round action button. The Gmail inbox card. |
+| `src/components/FilterMenu.js` | The header filter button (three lines, teal dot when filtered) and its menu, which scales in from the top-right corner. |
+| `src/components/ApprovalQueue.js` | Rows for invoices awaiting a human decision (teal wash, blush when blocked): vendor, amount, status, risk, reason tags, a "Review" pill. |
+| `src/components/RollingText.js` | `RollingText` / `useRolling`: a figure that rolls to its new value over 300ms (interruptible) instead of jumping; used by the Overview hero while scrubbing the chart. |
+| `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (the logo's teal `accent` and navy `brandNavy`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
 ## Running on an iPhone with Expo Go
 
@@ -41,8 +50,8 @@ loaded the JavaScript bundle from (your laptop's LAN IP) and calls port **8000**
 uvicorn runs on the same laptop as `expo start`, nothing needs configuring. If the backend lives
 elsewhere, copy `.env.example` to `.env` and set the URL, then restart `expo start`.
 
-If the Overview shows a red error, it includes the backend URL it tried, so you can tell at a
-glance whether the host or the bind address is the problem.
+If the Overview shows a red error, the backend URL it tried is logged to the dev console
+(Metro / Expo logs), so you can tell whether the host or the bind address is the problem.
 
 ## Checks
 

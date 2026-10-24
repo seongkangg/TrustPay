@@ -24,7 +24,7 @@ action prevents automatic completion.
 | POLICY-001 | Vendor verified **and** PO exists **and** PO amount == invoice amount | Low | Permit recommendation | `POLICY_PASSED` |
 | POLICY-002 | Amount ≤ `AUTO_APPROVE_MAX_AMOUNT` (and no other rule raised risk) | Low | Allow automatic processing → `payment_authorize` | `POLICY_PASSED` |
 | POLICY-003 | Amount > acting agent's approval limit | **High** | Block payment, create approval request | `AMOUNT_ABOVE_LIMIT` |
-| POLICY-004 | Vendor ID not found in vendor master | **High** | Block payment, escalate | `UNKNOWN_VENDOR` |
+| POLICY-004 | Vendor not found in vendor master (by ID or name) | Medium | Escalate — a human confirms it's a real supplier; never auto-paid. Still High when combined with bank details on the invoice (POLICY-009) or any other High rule | `UNKNOWN_VENDOR` |
 | POLICY-005 | Vendor found but `verification_status != verified` | Medium | Escalate for review | `VENDOR_UNVERIFIED` |
 | POLICY-006 | Same vendor + vendor_invoice_number already processed, **or** same vendor + amount within 30 days | **High** | Block, recommend reject, escalate | `DUPLICATE_INVOICE` |
 | POLICY-007 | PO not found or PO vendor ≠ invoice vendor | **High** | Block, escalate | `INVALID_PURCHASE_ORDER` |

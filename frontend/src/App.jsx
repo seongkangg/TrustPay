@@ -1,10 +1,43 @@
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { api } from "./api/client.js";
+import { ApprovalIcon, HomeIcon, InboxIcon, ListIcon } from "./components/Icons.jsx";
 import AuditDetails from "./pages/AuditDetails.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import InvoiceDetails from "./pages/InvoiceDetails.jsx";
+
+// The overview is one page; the other nav items jump to its sections.
+const NAV = [
+  { to: "/", hash: "", label: "Overview", Icon: HomeIcon },
+  { to: "/#approvals", hash: "#approvals", label: "Approvals", Icon: ApprovalIcon },
+  { to: "/#inbox", hash: "#inbox", label: "Inbox", Icon: InboxIcon },
+  { to: "/#invoices", hash: "#invoices", label: "Invoices", Icon: ListIcon },
+];
+
+function PillNav() {
+  const { pathname, hash } = useLocation();
+  return (
+    <nav className="pillnav" aria-label="Main">
+      {NAV.map(({ to, hash: h, label, Icon }) => {
+        const active = pathname === "/" && hash === h;
+        return (
+          <Link
+            key={label}
+            to={to}
+            className={active ? "active" : undefined}
+            aria-current={active ? "page" : undefined}
+            aria-label={label}
+            title={label}
+          >
+            <Icon />
+            <span className="label">{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 export default function App() {
   const [health, setHealth] = useState(null);
@@ -13,17 +46,18 @@ export default function App() {
     api.health().then(setHealth).catch(() => setHealth({ status: "unreachable" }));
   }, []);
 
+  const ok = health?.status === "ok";
+
   return (
-    <>
+    <div className="window">
       <header className="topbar">
-        <span className="brand">TrustPay</span>
-        <nav>
-          <NavLink to="/" end>
-            Overview
-          </NavLink>
-        </nav>
-        <span className="health">
-          backend: {health ? `${health.status}${health.llm_mode ? ` · llm ${health.llm_mode}` : ""}` : "…"}
+        <Link to="/" className="brand" aria-label="TrustPay overview">
+          <img src="/trustpay-logo.svg" alt="TrustPay" width="131" height="46" />
+        </Link>
+        <PillNav />
+        <span className={`health ${health ? (ok ? "up" : "down") : ""}`}>
+          <span className="dot" aria-hidden="true" />
+          {health ? `Backend ${health.status}${health.llm_mode ? ` · LLM ${health.llm_mode}` : ""}` : "Connecting…"}
         </span>
       </header>
       <main className="page">
@@ -33,6 +67,6 @@ export default function App() {
           <Route path="/invoices/:id/audit" element={<AuditDetails />} />
         </Routes>
       </main>
-    </>
+    </div>
   );
 }

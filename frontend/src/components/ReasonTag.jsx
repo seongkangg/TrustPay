@@ -3,7 +3,7 @@ import { human } from "../api/client.js";
 // Plain-English wording for ReasonCode (backend/models/enums.py). Keys must match the enum.
 const REASONS = {
   AMOUNT_ABOVE_LIMIT: ["Over approval limit", "Amount exceeds this approver's limit."],
-  UNKNOWN_VENDOR: ["Unknown vendor", "Vendor isn't on the approved list."],
+  UNKNOWN_VENDOR: ["New vendor", "Not on the vendor list yet; confirm it's a real supplier."],
   VENDOR_UNVERIFIED: ["Vendor not verified", "Vendor hasn't been verified yet."],
   DUPLICATE_INVOICE: ["Possible duplicate", "Looks like an invoice already received."],
   PO_AMOUNT_MISMATCH: ["Doesn't match PO", "Amount differs from the purchase order."],
@@ -21,7 +21,7 @@ const REASONS = {
 
 // Pill colour: red = violation (default), yellow = uncertain / needs a check, green = passed.
 const UNCERTAIN = new Set([
-  "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",
+  "UNKNOWN_VENDOR", "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",
   "MALFORMED_FIELD", "AGENT_FAILURE", "MOCK_SYSTEM_UNAVAILABLE", "INSUFFICIENT_EVIDENCE",
 ]);
 const PASSED = new Set(["POLICY_PASSED"]);

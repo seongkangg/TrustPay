@@ -12,6 +12,7 @@ services:
       - "8000:8000"
     environment:
       APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/db/trustpay.db}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LLM_MODE: ${LLM_MODE:-mock}
       WATSONX_API_KEY: ${WATSONX_API_KEY:-}

@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from backend.database.ids import next_id
 from backend.database.tables import AgentDecisionRow, ApprovalRow, AuditEventRow, InvoiceRow
 from backend.governance import GovernanceEngine
 from backend.llm.granite_client import LLMClient
@@ -250,11 +251,22 @@ class InvoiceService:
             }
             for e in self.session.scalars(violations_stmt)
         ]
-        # Last 14 days (oldest first) of received / completed / blocked counts by created_at.
+        # Last 14 days (oldest first) of received / completed / blocked counts by created_at, with
+        # the same day's money split the way the `amounts` tiles are (paid = completed, withheld =
+        # pending approval or blocked).
+        withheld_statuses = (InvoiceStatus.PENDING_APPROVAL.value, InvoiceStatus.BLOCKED.value)
         today = now_utc().date()
         days = [today - timedelta(days=i) for i in range(DASHBOARD_DAYS - 1, -1, -1)]
         by_day = {
-            d.isoformat(): {"date": d.isoformat(), "received": 0, "completed": 0, "blocked": 0}
+            d.isoformat(): {
+                "date": d.isoformat(),
+                "received": 0,
+                "completed": 0,
+                "blocked": 0,
+                "amount": 0.0,
+                "paid": 0.0,
+                "withheld": 0.0,
+            }
             for d in days
         }
         for r in rows:
@@ -264,12 +276,18 @@ class InvoiceService:
             if bucket is None:
                 continue
             bucket["received"] += 1
+            bucket["amount"] += r.amount or 0
             if r.status == InvoiceStatus.COMPLETED.value:
                 bucket["completed"] += 1
+                bucket["paid"] += r.amount or 0
             elif r.status == InvoiceStatus.BLOCKED.value:
                 bucket["blocked"] += 1
+            if r.status in withheld_statuses:
+                bucket["withheld"] += r.amount or 0
+        for bucket in by_day.values():
+            for key in ("amount", "paid", "withheld"):
+                bucket[key] = round(bucket[key], 2)
 
-        withheld_statuses = (InvoiceStatus.PENDING_APPROVAL.value, InvoiceStatus.BLOCKED.value)
         amounts = {
             "total": round(sum(r.amount or 0 for r in rows), 2),
             "paid": round(
@@ -292,5 +310,7 @@ class InvoiceService:
     # ------------------------------------------------------------ internals
 
     def _next_invoice_id(self) -> str:
-        count = self.session.scalar(select(func.count()).select_from(InvoiceRow)) or 0
-        return f"INV-{FIRST_INVOICE_NUMBER + count}"
+        # Live invoices start at INV-1001; seeded history uses the INV-0xxx range below it.
+        return next_id(
+            self.session, InvoiceRow.invoice_id, "INV", width=4, start=FIRST_INVOICE_NUMBER
+        )

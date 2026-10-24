@@ -162,3 +162,22 @@ def test_extraction_accepts_numeric_values_from_real_models():
         parse_as(
             ExtractionOutput, '{"fields": [{"field": "amount", "value": [1], "confidence": 1}]}'
         )
+
+
+def test_extraction_treats_null_confidence_as_zero():
+    """Granite answers `"confidence": null` for absent fields; that is zero confidence, not an error."""
+    out = parse_as(
+        ExtractionOutput,
+        '{"fields": [{"field": "tax_id", "value": null, "confidence": null, "missing": true},'
+        ' {"field": "amount", "value": 432.0, "confidence": 1}], "notes": ""}',
+    )
+    by_name = {f.field: f for f in out.fields}
+    assert by_name["tax_id"].confidence == 0.0 and by_name["amount"].confidence == 1.0
+    with pytest.raises(MalformedOutput):
+        parse_as(ExtractionOutput, '{"fields": [{"field": "x", "confidence": "high"}]}')
+
+
+def test_summary_and_recommendation_treat_null_confidence_as_zero():
+    assert parse_as(SummaryOutput, '{"summary": "ok", "confidence": null}').confidence == 0.0
+    rec = parse_as(RecommendationOutput, '{"recommendation": "approve", "confidence": null}')
+    assert rec.confidence == 0.0  # below the 0.75 threshold → governance escalates

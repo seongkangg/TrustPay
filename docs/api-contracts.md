@@ -26,7 +26,7 @@ Sensitive fields are **always** masked in responses. Schemas reference `backend/
 | 404 | Invoice / resource not found |
 | 409 | Invalid state transition, duplicate event |
 | 422 | Pydantic validation error (FastAPI default) |
-| 500 | Unexpected — always also emits `agent_failed` or equivalent audit event |
+| 500 | Unexpected — always also emits `agent_failed` or equivalent audit event. Body is `INTERNAL_ERROR` with a generic message and an `ERR-…` ref; the traceback goes to the dev log (`DEV_LOG_FILE`) only |
 
 ### Authorization (prototype)
 
@@ -147,9 +147,20 @@ optional context fields: `payment_permitted` (bool, default false) and `risk_lev
   "sensitive_data_detections": 1,
   "recent_violations": [
     { "invoice_id": "INV-1003", "reason_codes": ["UNKNOWN_VENDOR", "SENSITIVE_DATA_DETECTED"], "timestamp": "..." }
-  ]
+  ],
+  "by_day": [
+    { "date": "2026-10-11", "received": 0, "completed": 0, "blocked": 0, "amount": 0.0, "paid": 0.0, "withheld": 0.0 },
+    "… 14 entries, oldest first, ending today …",
+    { "date": "2026-10-24", "received": 4, "completed": 1, "blocked": 2, "amount": 58500.0, "paid": 4250.0, "withheld": 54250.0 }
+  ],
+  "amounts": { "total": 58500.0, "paid": 4250.0, "withheld": 54250.0 }
 }
 ```
+- `by_day`: the last 14 UTC calendar days by invoice `created_at`. `received` counts every
+  invoice that day and `amount` sums their amounts; `completed` / `paid` cover `COMPLETED`;
+  `blocked` counts `BLOCKED`; `withheld` sums `PENDING_APPROVAL` + `BLOCKED`. Amounts are rounded
+  to cents. Older invoices fall outside the window but still count in `amounts`.
+- `amounts`: all invoices, any age. `paid` and `withheld` use the same statuses as `by_day`.
 
 ### `GET /inbox/status`
 Gmail intake state.
@@ -172,7 +183,7 @@ Gmail intake state.
 
 ### `POST /inbox/sync`
 Run one intake pass now. Same result shape as `last_result`.
-**503** `INBOX_NOT_AUTHORIZED` — no OAuth token yet (message says which command to run) · **503** `MOCK_SYSTEM_UNAVAILABLE` — Gmail unreachable.
+**503** `INBOX_NOT_AUTHORIZED` — no OAuth token yet (generic message; setup detail goes to the dev log) · **503** `MOCK_SYSTEM_UNAVAILABLE` — Gmail unreachable (generic message, no provider text).
 **Audit events:** per created invoice, the full workflow sequence (starting `invoice_received`).
 
 ### `GET /health`

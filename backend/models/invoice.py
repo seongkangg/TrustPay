@@ -50,6 +50,13 @@ class ExtractedField(BaseModel):
             return str(v)
         return v
 
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def null_confidence_is_zero(cls, v):
+        """Real models answer `"confidence": null` for absent fields. No stated confidence is
+        treated as zero confidence — the safe reading, since low confidence escalates."""
+        return 0.0 if v is None else v
+
 
 class Invoice(BaseModel):
     """Stored invoice. `bank_account`, `routing_number`, `tax_id` are ALWAYS masked

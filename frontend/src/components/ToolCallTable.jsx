@@ -24,7 +24,7 @@ export default function ToolCallTable({ calls }) {
             <td className="small">{fmtTime(c.timestamp)}</td>
             <td>{human(c.agent)}</td>
             <td>
-              <code>{c.tool}</code>
+              {human(c.tool)}
               {c.is_write && <span className="small muted"> (write)</span>}
             </td>
             <td className="small">{c.purpose}</td>

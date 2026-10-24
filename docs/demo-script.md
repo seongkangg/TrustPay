@@ -70,7 +70,9 @@ Email `suspicious.pdf` as `invoice.pdf` → **Check inbox now** → open it from
 
 - Badges: **BLOCKED · high risk**. Two banners: *Sensitive data detected and masked* and *Payment blocked*.
 - Invoice card: Bank account `****6789`, Routing `****0021`, Tax ID `****4321`.
-- "Why": four rules — POLICY-003 (amount), **POLICY-004 unknown vendor**, **POLICY-007 PO not found**, POLICY-009 sensitive data.
+- "Why": four rules — POLICY-003 (amount), **POLICY-004 new vendor**, **POLICY-007 PO not found**, POLICY-009 sensitive data.
+  (A new vendor alone only means "confirm the supplier"; it's the combination — new vendor, bank
+  details, no PO, over the limit — that blocks.)
 - Timeline: the very first governance event is `sensitive data masked` with evidence `SCAN-…` — before any agent ran.
 
 > "This is the spec's worked example: $25k, new vendor, banking details in the document.

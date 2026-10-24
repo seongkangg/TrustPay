@@ -14,15 +14,17 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.database.ids import next_id
 from backend.database.seed_data import ReferenceData, get_reference_data
 from backend.database.tables import AgentDecisionRow, ApprovalRow
 from backend.governance.decision_validator import ValidationResult, validate_decision
 from backend.governance.policy_engine import PolicyEngine, PolicyInput, PolicyResult
 from backend.governance.sensitive_data_scanner import ScanResult, SensitiveDataScanner
 from backend.governance.tool_call_interceptor import ToolCallInterceptor, ToolCallOutcome
+from backend.mock_systems import NotFound
 from backend.mock_systems.approval_limit_service import ApprovalLimitService
 from backend.mock_systems.payment_service import PaymentService
 from backend.mock_systems.purchase_order_service import PurchaseOrderService
@@ -70,6 +72,16 @@ _SEVERITY = {
 }
 
 
+def _vendor_lookup(vendors: VendorService, params: dict[str, Any]) -> dict[str, Any]:
+    """`vendor_lookup` by ID, or by the name printed on the invoice when there is no ID."""
+    if params.get("vendor_id"):
+        return vendors.get_vendor(params["vendor_id"])
+    found = vendors.find_by_name(params.get("vendor_name") or "")
+    if found is None:
+        raise NotFound(f"no vendor named {params.get('vendor_name')!r}")
+    return found
+
+
 @dataclass
 class GovernanceOutcome:
     status: InvoiceStatus
@@ -105,7 +117,7 @@ class GovernanceEngine:
             session,
             self.audit,
             {
-                ToolName.VENDOR_LOOKUP: lambda p: vendors.get_vendor(p["vendor_id"]),
+                ToolName.VENDOR_LOOKUP: lambda p: _vendor_lookup(vendors, p),
                 ToolName.PO_LOOKUP: lambda p: pos.get_purchase_order(p["purchase_order_id"]),
                 ToolName.APPROVAL_LIMIT_LOOKUP: lambda p: limits.get_limit(p["agent_id"]),
                 ToolName.RISK_RULES: lambda p: self.policy.describe_rules(),
@@ -414,9 +426,8 @@ class GovernanceEngine:
 
     def _create_approval_request(self, p: dict[str, Any]) -> dict[str, Any]:
         timeout_h = int(self.ref.thresholds.get("approval_timeout_hours", 48))
-        count = self.session.scalar(select(func.count()).select_from(ApprovalRow)) or 0
         row = ApprovalRow(
-            approval_id=f"APR-{count + 1:03d}",
+            approval_id=next_id(self.session, ApprovalRow.approval_id, "APR"),
             invoice_id=p["invoice_id"],
             correlation_id=p["correlation_id"],
             requested_by=p["requested_by"],

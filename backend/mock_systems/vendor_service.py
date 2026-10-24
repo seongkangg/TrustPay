@@ -4,6 +4,7 @@ from typing import Any
 
 from backend.database.seed_data import ReferenceData, get_reference_data
 from backend.mock_systems import MockSystemUnavailable, NotFound, is_available
+from backend.utils.validation import normalize_vendor_name  # noqa: F401 — also re-exported
 
 NAME = "vendor"
 
@@ -22,10 +23,15 @@ class VendorService:
         return dict(vendor)
 
     def find_by_name(self, name: str) -> dict[str, Any] | None:
+        """Exact match after normalization ("ACME Office Supplies, Inc." == "Acme Office
+        Supplies"). Deliberately not fuzzy: "ACME INC." does not match "Acme Office Supplies"
+        — an unknown vendor must surface as UNKNOWN_VENDOR, not be guessed into a known one."""
         if not is_available(NAME, self._available):
             raise MockSystemUnavailable("vendor service unavailable")
-        wanted = name.strip().lower()
-        for vendor in self.ref.vendors.values():
-            if vendor["name"].lower() == wanted:
-                return dict(vendor)
-        return None
+        wanted = normalize_vendor_name(name)
+        if not wanted:
+            return None
+        matches = [
+            v for v in self.ref.vendors.values() if normalize_vendor_name(v["name"]) == wanted
+        ]
+        return dict(matches[0]) if len(matches) == 1 else None

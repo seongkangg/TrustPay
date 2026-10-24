@@ -92,10 +92,11 @@ _TEXT_RULES: list[tuple[SensitiveFieldType, re.Pattern[str], str]] = [
         re.compile(r"\b\d{2}-\d{7}\b|\b\d{3}-\d{2}-\d{4}\b"),
         "last4",
     ),
-    # Bank account: 8–17 digit run (amounts and IDs in this system are shorter)
+    # Bank account: 8–17 digit run (amounts and IDs in this system are shorter). A run written
+    # right after "+" is an international phone number (+16048751070), not an account.
     (
         SensitiveFieldType.BANK_ACCOUNT,
-        re.compile(r"\b\d{8,17}\b"),
+        re.compile(r"(?<!\+)\b\d{8,17}\b"),
         "last4",
     ),
 ]

@@ -8,7 +8,7 @@ import json
 import re
 from typing import TypeVar
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from backend.models import ExtractedField, Recommendation
 
@@ -25,9 +25,18 @@ class ExtractionOutput(BaseModel):
     notes: str = ""
 
 
+def _null_confidence_is_zero(v):
+    """Real models sometimes send `"confidence": null`; that is zero confidence (which escalates)."""
+    return 0.0 if v is None else v
+
+
 class SummaryOutput(BaseModel):
     summary: str = Field(..., min_length=1)
     confidence: float = Field(..., ge=0.0, le=1.0)
+
+    _conf = field_validator("confidence", mode="before")(
+        classmethod(lambda cls, v: _null_confidence_is_zero(v))
+    )
 
 
 class RecommendationOutput(BaseModel):
@@ -36,11 +45,40 @@ class RecommendationOutput(BaseModel):
     reasons: list[str] = Field(default_factory=list)
     next_step: str = ""
 
+    _conf = field_validator("confidence", mode="before")(
+        classmethod(lambda cls, v: _null_confidence_is_zero(v))
+    )
+
+
+class InvoiceFieldsOutput(BaseModel):
+    """Fields read from a free-form invoice document, each copied exactly as written (or null).
+
+    Values are untrusted: backend/inbox/llm_extraction.py keeps only those that appear in the
+    document text."""
+
+    vendor_invoice_number: str | None = None
+    vendor_name: str | None = None
+    vendor_id: str | None = None
+    amount: str | None = None
+    currency: str | None = None
+    due_date: str | None = None
+    purchase_order_id: str | None = None
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def scalar_to_text(cls, v):
+        if isinstance(v, bool):
+            raise ValueError("expected text")
+        if isinstance(v, int | float):
+            return str(v)
+        return v
+
 
 SCHEMAS: dict[str, type[BaseModel]] = {
     "extraction": ExtractionOutput,
     "summary": SummaryOutput,
     "recommendation": RecommendationOutput,
+    "invoice_fields": InvoiceFieldsOutput,
 }
 
 T = TypeVar("T", bound=BaseModel)

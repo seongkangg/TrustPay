@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from backend.database.ids import next_id
 from backend.database.tables import ToolCallRow
 from backend.governance.permission_checker import check_permission, is_write
 from backend.mock_systems import MockSystemUnavailable, NotFound, UnauthorizedActor
@@ -182,10 +183,10 @@ class ToolCallInterceptor:
         return self.session.scalar(stmt) or 0
 
     def _next_call_id(self) -> str:
-        return f"TOOL-{self._count() + 1:03d}"
+        return next_id(self.session, ToolCallRow.tool_call_id, "TOOL")
 
     def _next_evidence_id(self, tool: ToolName) -> str:
-        return f"{EVIDENCE_PREFIX[tool]}-{self._count(tool) + 1:03d}"
+        return next_id(self.session, ToolCallRow.evidence_id, EVIDENCE_PREFIX[tool])
 
     def evidence_ids_for(self, invoice_id: str) -> set[str]:
         stmt = select(ToolCallRow.evidence_id).where(

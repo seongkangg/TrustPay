@@ -3,9 +3,17 @@
 
 const BASE = import.meta.env.VITE_API_BASE_URL || "";
 
+// Users only ever see these short messages; raw detail stays in the dev console / backend dev log.
+function userMessage(status, body) {
+  if (status === 0) return "Can't reach the server. Please try again.";
+  if (body?.error && body?.message) return body.message; // backend's own user-facing text
+  if (status === 422) return "Some fields are invalid.";
+  return "Something went wrong. Please try again.";
+}
+
 export class ApiError extends Error {
   constructor(status, body) {
-    super(body?.message || body?.detail?.[0]?.msg || `HTTP ${status}`);
+    super(userMessage(status, body));
     this.status = status;
     this.code = body?.error || "HTTP_ERROR";
     this.body = body;
@@ -13,10 +21,16 @@ export class ApiError extends Error {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(BASE + path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(BASE + path, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+  } catch (err) {
+    console.error(`fetch ${BASE + path} failed`, err);
+    throw new ApiError(0, null);
+  }
   const text = await res.text();
   let body = null;
   try {
@@ -24,7 +38,10 @@ async function request(path, options = {}) {
   } catch {
     body = null; // non-JSON error page (e.g. a proxy 404) — ApiError falls back to the HTTP status
   }
-  if (!res.ok) throw new ApiError(res.status, body);
+  if (!res.ok) {
+    console.error(`${options.method || "GET"} ${path} -> ${res.status}`, body ?? text);
+    throw new ApiError(res.status, body);
+  }
   return body;
 }
 
@@ -57,6 +74,29 @@ export const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
 
 export const fmtPct = (x) => (x == null ? "—" : `${Math.round(x * 100)}%`);
 
-export const human = (s) => (s ? String(s).replace(/_/g, " ") : "—");
+// Display wording for enum values the API returns (backend/models/enums.py). Values not listed
+// read fine in sentence case: "PENDING_APPROVAL" -> "Pending approval", "vendor_lookup" -> "Vendor lookup".
+const LABELS = {
+  governance_layer: "Governance",
+  human_reviewer: "Reviewer",
+  po_lookup: "Purchase order lookup",
+  approval_request_create: "Create approval request",
+  payment_authorize: "Authorize payment",
+  audit_log_write: "Write audit log",
+  risk_rules: "Risk rules check",
+  tax_id: "Tax ID",
+  purchase_order_id: "Purchase order",
+  vendor_invoice_number: "Vendor invoice #",
+};
+
+// Free text (anything that is not a bare identifier) passes through untouched.
+export const human = (s) => {
+  if (s == null || s === "") return "—";
+  const v = String(s);
+  if (LABELS[v]) return LABELS[v];
+  if (!/^[A-Za-z0-9_]+$/.test(v)) return v;
+  const t = v.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
 export const AWAITING_HUMAN = ["PENDING_APPROVAL", "BLOCKED"];

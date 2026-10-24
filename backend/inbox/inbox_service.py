@@ -6,9 +6,11 @@ never fetched twice. A failure on one message never stops the batch and never ra
 """
 
 import logging
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,13 +18,41 @@ from backend.database.tables import InboxMessageRow
 from backend.governance import GovernanceEngine
 from backend.inbox import InboxError, InboxMessage
 from backend.inbox.gmail_client import GmailClient
+from backend.inbox.llm_extraction import extract_missing_fields
 from backend.inbox.pdf_parser import PdfParseError, extract_text, upload_from_text
-from backend.llm.granite_client import LLMClient
+from backend.llm.granite_client import LLMClient, MockLLM
 from backend.models import InvoiceUpload
 from backend.services.invoice_service import InvoiceService
+from backend.utils.logging_config import log_dev_error
 from backend.utils.timestamps import now_utc
 
 log = logging.getLogger(__name__)
+
+_SYNC_LOCK = threading.Lock()
+
+
+def sanitize_upload(upload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Null out any field InvoiceUpload rejects (bad ID format, negative amount, …).
+
+    An emailed invoice with one unreadable field must still become an invoice — escalated
+    for the missing field — rather than be dropped. `vendor_invoice_number` is always set by
+    the caller, so it is never the field being dropped.
+    """
+    clean = dict(upload)
+    dropped: dict[str, Any] = {}
+    for _ in range(len(clean) + 1):
+        try:
+            InvoiceUpload(**clean)
+            return clean, dropped
+        except ValidationError as exc:
+            bad = {err["loc"][0] for err in exc.errors() if err["loc"]}
+            bad.discard("vendor_invoice_number")
+            if not bad:
+                raise
+            for name in bad:
+                dropped[name] = clean.get(name)
+                clean[name] = None
+    raise ValueError("upload could not be sanitized")
 
 
 @dataclass
@@ -53,10 +83,20 @@ class InboxService:
         self.session = session
         self.gov = gov
         self.client = client
+        self.llm = llm or MockLLM()
         self.invoices = InvoiceService(session, gov, llm)
         self.lookback_days = lookback_days
 
     def sync(self) -> SyncResult:
+        # One sync at a time per process: the background poll and a "Check inbox now" click
+        # must not both pick up the same email while the first is still being processed
+        # (that duplicated the invoice and collided on IDs). The second caller waits, then
+        # sees the email already recorded and skips it.
+        with _SYNC_LOCK:
+            self.session.expire_all()  # read what the previous sync committed, not a stale cache
+            return self._sync()
+
+    def _sync(self) -> SyncResult:
         result = SyncResult()
         ids = self.client.list_candidates(self.lookback_days)  # InboxError propagates
         if not ids:
@@ -79,9 +119,9 @@ class InboxService:
     def _handle(self, message_id: str, result: SyncResult) -> None:
         try:
             msg = self.client.fetch(message_id)
-        except InboxError as exc:
-            self._record(message_id, None, "failed", error=str(exc))
-            result.failed.append((message_id, str(exc)))
+        except InboxError:
+            log_dev_error(log, f"inbox: fetch of message {message_id} failed")
+            self._fail(message_id, None, "Couldn't download this email.", result)
             return
         if msg is None:
             self._record(message_id, None, "skipped")
@@ -90,26 +130,45 @@ class InboxService:
         try:
             invoice_id = self._ingest(msg)
         except Exception as exc:  # noqa: BLE001 — one bad email must not stop the batch
-            log.warning("inbox: message %s failed: %s", message_id, exc)
+            ref = log_dev_error(log, f"inbox: message {message_id} failed")
             self.session.rollback()
-            self._record(message_id, msg, "failed", error=f"{type(exc).__name__}: {exc}"[:300])
-            result.failed.append((message_id, str(exc)))
+            if isinstance(exc, PdfParseError):
+                error = "Couldn't read the invoice PDF."
+            else:
+                error = f"Couldn't process this invoice ({ref})."
+            self._fail(message_id, msg, error, result)
             return
         self._record(message_id, msg, "processed", invoice_id=invoice_id)
         result.created.append(invoice_id)
 
+    def _fail(
+        self, message_id: str, msg: InboxMessage | None, error: str, result: SyncResult
+    ) -> None:
+        """User-facing text only; the detail is already in the dev log."""
+        self._record(message_id, msg, "failed", error=error)
+        result.failed.append((message_id, error))
+
     def _ingest(self, msg: InboxMessage) -> str:
-        try:
-            text = extract_text(msg.pdf_bytes)
-        except PdfParseError as exc:
-            raise ValueError(str(exc)) from exc
+        text = extract_text(msg.pdf_bytes)
         source = f"{msg.attachment_name} (email from {msg.sender or 'unknown sender'})"
         upload = upload_from_text(text, source)
+
+        # Fields the labels didn't give us: ask the model, keep only what is in the document.
+        model = extract_missing_fields(self.llm, text, upload)
+        upload.update(model.filled)
+
         if not upload.get("vendor_invoice_number"):
             # Required column; the Intake agent still flags the missing field.
             upload["vendor_invoice_number"] = f"EMAIL-{msg.message_id[:8]}"
         if not upload.get("currency"):
             upload["currency"] = "USD"
+        upload, dropped = sanitize_upload(upload)
+        if dropped:
+            log.info(
+                "inbox: %s fields failed validation and were left empty: %s",
+                msg.message_id,
+                sorted(dropped),
+            )
         created = self.invoices.create(InvoiceUpload(**upload))
         self.invoices.process(created.invoice_id)
         return created.invoice_id

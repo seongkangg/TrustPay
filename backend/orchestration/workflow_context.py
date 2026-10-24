@@ -85,6 +85,17 @@ class WorkflowContext:
         return self._field("vendor_id")
 
     @property
+    def vendor_name(self) -> str | None:
+        return self._field("vendor_name")
+
+    @property
+    def vendor_ref(self) -> str:
+        """How to name the vendor in messages: its ID, else the name on the invoice."""
+        return self.vendor_id or (
+            f"'{self.vendor_name}'" if self.vendor_name else "(none on invoice)"
+        )
+
+    @property
     def vendor_invoice_number(self) -> str | None:
         return self._field("vendor_invoice_number")
 

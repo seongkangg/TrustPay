@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from backend.database.ids import next_id
 from backend.database.tables import AuditEventRow
 from backend.models import (
     AgentName,
@@ -166,7 +167,7 @@ class AuditService:
     # -- internals ---------------------------------------------------------
 
     def _next_event_id(self) -> str:
-        return f"EVT-{self.count() + 1:03d}"
+        return next_id(self.session, AuditEventRow.event_id, "EVT")
 
     def _last_for_invoice(self, invoice_id: str) -> AuditEventRow | None:
         stmt = (

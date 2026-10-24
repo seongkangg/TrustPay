@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     log_level: str = "INFO"
+    dev_log_file: str = "./logs/dev.log"  # full error detail; users only see a ref
     database_url: str = "sqlite:///./trustpay.db"
     cors_origins: str = "http://localhost:5173"
 

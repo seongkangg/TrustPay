@@ -13,8 +13,8 @@ from abc import ABC, abstractmethod
 from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel
-from sqlalchemy import func, select
 
+from backend.database.ids import next_id
 from backend.database.tables import AgentDecisionRow
 from backend.governance.governance_engine import GovernanceEngine
 from backend.governance.tool_call_interceptor import ToolCallOutcome
@@ -132,8 +132,7 @@ class BaseAgent(ABC):
         return accepted
 
     def _next_decision_id(self) -> str:
-        count = self.gov.session.scalar(select(func.count()).select_from(AgentDecisionRow)) or 0
-        return f"DEC-{count + 1:03d}"
+        return next_id(self.gov.session, AgentDecisionRow.decision_id, "DEC")
 
     # ------------------------------------------------------------------ run
 

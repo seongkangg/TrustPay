@@ -62,7 +62,9 @@ def test_flags_missing_due_date_and_malformed_amount(gov, fixture_by_id):
         ReasonCode.MISSING_REQUIRED_FIELD,
         ReasonCode.MALFORMED_FIELD,
     }
-    assert decision.confidence == 0.0  # overall = min over required fields
+    assert (
+        decision.confidence == 0.0
+    )  # the malformed amount counts as 0 (missing due date does not)
     assert decision.governance_result == Authorization.ESCALATED  # low confidence → human review
     assert "due_date" in decision.explanation.missing_information
 

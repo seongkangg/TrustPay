@@ -35,9 +35,9 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
         <h3>AI recommendation</h3>
         {invoice.recommendation ? (
           <>
-            <div className="big">{invoice.recommendation}</div>
+            <div className="big">{human(invoice.recommendation)}</div>
             <div className="muted small">
-              confidence {fmtPct(invoice.recommendation_confidence)} · advisory only — governance decides
+              Confidence {fmtPct(invoice.recommendation_confidence)} · advisory only — governance decides
             </div>
             {why.reasons?.length > 0 && (
               <>
@@ -53,7 +53,7 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
             )}
             {why.policy_rules_triggered?.length > 0 && (
               <div className="small muted">
-                rules:{" "}
+                Rules:{" "}
                 {why.policy_rules_triggered.map((r) => (
                   <code key={r}>{r}</code>
                 ))}
@@ -61,7 +61,7 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
             )}
             {why.evidence?.length > 0 && (
               <div className="small muted evidence">
-                evidence:{" "}
+                Evidence:{" "}
                 {why.evidence.map((r) => (
                   <code key={r}>{r}</code>
                 ))}
