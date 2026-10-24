@@ -19,6 +19,8 @@ const REASONS = {
   POLICY_PASSED: ["All checks passed", "Every policy check passed."],
 };
 
+export const reasonLabel = (code) => REASONS[code]?.[0] || human(code);
+
 // Pill colour: red = violation (default), yellow = uncertain / needs a check, green = passed.
 const UNCERTAIN = new Set([
   "UNKNOWN_VENDOR", "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",

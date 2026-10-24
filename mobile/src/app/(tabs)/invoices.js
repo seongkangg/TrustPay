@@ -4,11 +4,11 @@
 import { router } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { useHeaderHeight } from "expo-router/react-navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { fmtMoney } from "../../api/client.js";
+import { api, fmtMoney, fmtPct } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { FilterButton, FilterMenu } from "../../components/FilterMenu.js";
 import { ListSkeleton } from "../../components/Skeleton.js";
@@ -77,6 +77,14 @@ function groupByDay(items) {
 export default function Invoices() {
   const { invoices, summary, error, refreshing, refresh } = useDashboard();
   const [filterKey, setFilterKey] = useState("all");
+  const [threshold, setThreshold] = useState(null);
+  // Policy constant; without it the AI confidence badge is shown in the neutral colour.
+  useEffect(() => {
+    api
+      .thresholds()
+      .then((t) => setThreshold(t.confidence_threshold ?? null))
+      .catch(() => {});
+  }, []);
   const filter = FILTERS.find((f) => f.key === filterKey);
   const shown = invoices.filter((inv) => matches(filter, inv));
   const [limit, setLimit] = useState(PAGE);
@@ -140,7 +148,7 @@ export default function Invoices() {
               <Text style={styles.dayHeading}>{g.heading}</Text>
               <Card style={styles.group}>
                 {g.items.map((inv, i) => (
-                  <InvoiceRow key={inv.invoice_id} inv={inv} first={i === 0} />
+                  <InvoiceRow key={inv.invoice_id} inv={inv} first={i === 0} threshold={threshold} />
                 ))}
               </Card>
             </View>
@@ -196,14 +204,18 @@ function SummaryCard({ title, total, count, split }) {
   );
 }
 
-function InvoiceRow({ inv, first }) {
+// The "AI" badge is how sure the AI is of its recommendation (same number as the invoice screen),
+// amber under the policy threshold.
+function InvoiceRow({ inv, first, threshold }) {
+  const conf = inv.recommendation_confidence;
+  const unsure = threshold != null && conf != null && conf < threshold;
   const time = inv.updated_at
     ? new Date(inv.updated_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
     : null;
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${inv.vendor_name || "Unknown vendor"}, ${fmtMoney(inv.amount, inv.currency)}`}
+      accessibilityLabel={`${inv.vendor_name || "Unknown vendor"}, ${fmtMoney(inv.amount, inv.currency)}${conf != null ? `, AI ${fmtPct(conf)} sure` : ""}`}
       onPress={() => router.push(`/invoices/${inv.invoice_id}`)}
       style={({ pressed }) => [styles.row, !first && styles.rule, pressed && { backgroundColor: colors.panel2 }]}
     >
@@ -222,6 +234,13 @@ function InvoiceRow({ inv, first }) {
         <View style={styles.badges}>
           <StatusBadge status={inv.status} />
           <RiskBadge level={inv.risk_level} />
+          {conf != null && (
+            <Badge
+              label={`AI ${fmtPct(conf)} sure`}
+              fg={unsure ? colors.riskMedium : colors.accentInk}
+              bg={unsure ? colors.riskMediumBg : colors.accentBg}
+            />
+          )}
           {inv.sensitive_data_detected && <Badge label="Masked" />}
         </View>
       </View>

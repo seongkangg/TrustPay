@@ -361,7 +361,18 @@ button.linkish { height: auto; padding: 0; margin-top: 12px; background: none; c
 .conf-value { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 3; padding: 0 3px; border-radius: 4px; background: var(--panel); font-size: 12px; font-weight: 700; white-space: nowrap; } /* sits above the threshold line */
 .conf-bar.below .conf-value { color: var(--risk-medium); }
 .conf-labels { display: flex; margin-left: 38px; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
-.conf-labels span { flex: 1; text-align: center; }
+.conf-labels > span { flex: 1; text-align: center; white-space: nowrap; }
+.conf-bar.high { background: var(--risk-high); }
+.conf-bar.high .conf-value { color: var(--risk-high); }
+.conf-info { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 4px; border: 1px solid var(--muted); border-radius: 50%; font-size: 10px; font-weight: 700; font-style: italic; line-height: 1; vertical-align: 1px; cursor: help; }
+.conf-info:hover, .conf-info:focus { color: var(--text); border-color: var(--text); outline: none; }
+.conf-tip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 10; width: 220px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-style: normal; font-weight: 400; font-size: 12px; line-height: 1.4; text-align: left; white-space: normal; box-shadow: 0 4px 12px rgb(0 0 0 / 0.12); }
+.conf-labels > span:first-child .conf-tip { left: -8px; transform: none; }
+.conf-labels > span:last-child .conf-tip { left: auto; right: -8px; transform: none; }
+.conf-tip-detail { display: block; margin-top: 6px; font-weight: 600; }
+.conf-info:hover .conf-tip, .conf-info:focus .conf-tip { display: block; }
+.inv-conf { font-variant-numeric: tabular-nums; font-weight: 600; }
+.inv-conf.below { color: var(--risk-medium); }
 @keyframes grow { from { height: 0; } }
 
 .doc { display: flex; align-items: center; gap: 16px; }

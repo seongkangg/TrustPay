@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { fmtMoney, human } from "../api/client.js";
+import { api, fmtMoney, fmtPct, human } from "../api/client.js";
 import { ChevronRightIcon } from "../components/Icons.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
@@ -41,6 +41,14 @@ export default function Invoices() {
   const navigate = useNavigate();
   const [filterKey, setFilterKey] = useState("all");
   const [limit, setLimit] = useState(PAGE);
+  const [threshold, setThreshold] = useState(null);
+  // Policy constant; without it the confidence is shown uncoloured.
+  useEffect(() => {
+    api
+      .thresholds()
+      .then((t) => setThreshold(t.confidence_threshold ?? null))
+      .catch(() => {});
+  }, []);
   const filter = FILTERS.find((f) => f.key === filterKey);
   const options = FILTERS.map((f) => ({ ...f, count: invoices.filter((inv) => matches(f, inv)).length }));
   const shown = invoices.filter((inv) => matches(filter, inv));
@@ -117,13 +125,14 @@ export default function Invoices() {
                   <th>Status</th>
                   <th className="hide-sm">Risk</th>
                   <th className="hide-md">AI recommendation</th>
+                  <th>AI confidence</th>
                   <th className="right">Amount</th>
                   <th aria-label="Open" />
                 </tr>
               </thead>
               <tbody>
                 {visible.map((inv) => (
-                  <InvoiceRow key={inv.invoice_id} inv={inv} onOpen={() => navigate(`/invoices/${inv.invoice_id}`)} />
+                  <InvoiceRow key={inv.invoice_id} inv={inv} threshold={threshold} onOpen={() => navigate(`/invoices/${inv.invoice_id}`)} />
                 ))}
               </tbody>
             </table>
@@ -159,7 +168,11 @@ function received(iso) {
   });
 }
 
-function InvoiceRow({ inv, onOpen }) {
+// AI confidence: how sure the AI is of its recommendation (same number as the review page),
+// amber under the policy threshold.
+function InvoiceRow({ inv, threshold, onOpen }) {
+  const conf = inv.recommendation_confidence;
+  const unsure = threshold != null && conf != null && conf < threshold;
   return (
     <tr
       className="clickable"
@@ -188,6 +201,14 @@ function InvoiceRow({ inv, onOpen }) {
         <RiskBadge level={inv.risk_level} />
       </td>
       <td className="muted hide-md">{inv.recommendation ? human(inv.recommendation) : "—"}</td>
+      <td>
+        <span
+          className={`inv-conf ${unsure ? "below" : ""}`}
+          title={conf == null ? "The AI has not recommended yet" : `The AI is ${fmtPct(conf)} sure of its recommendation`}
+        >
+          {fmtPct(conf)}
+        </span>
+      </td>
       <td className="right inv-amount">{fmtMoney(inv.amount, inv.currency)}</td>
       <td className="row-go" aria-hidden="true">
         <ChevronRightIcon />

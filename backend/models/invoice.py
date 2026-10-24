@@ -113,5 +113,6 @@ class InvoiceSummary(BaseModel):
     status: InvoiceStatus
     risk_level: RiskLevel | None
     recommendation: Recommendation | None
+    recommendation_confidence: float | None = Field(None, ge=0.0, le=1.0)
     sensitive_data_detected: bool
     updated_at: datetime

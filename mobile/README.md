@@ -23,7 +23,7 @@ Runs in **Expo Go** — every dependency is one Expo Go already bundles, so no n
 | `src/components/FilterMenu.js` | The header filter button (three lines, teal dot when filtered) and its menu, which scales in from the top-right corner. |
 | `src/components/ApprovalQueue.js` | Waiting invoices as rows in one card: vendor avatar, vendor and amount, ID and how long it has waited, status / risk and up to two reason tags (+n more), and a chevron to the invoice screen. |
 | `src/components/RollingText.js` | `RollingText` / `useRolling`: a figure that rolls to its new value over 300ms (interruptible) instead of jumping; used by the Overview hero while scrubbing the chart. |
-| `src/components/ConfidenceChart.js` | Bar chart of confidence by agent step (Intake → Verify → Risk → Approval): bar height = that step's confidence, value on top, amber below the policy threshold (dashed line, from `GET /mock/thresholds`); bars grow in on open. |
+| `src/components/ConfidenceChart.js` | Bar chart by agent step (Intake → Verify → Risk → Approval), higher is better: the Risk bar is how clear the invoice is by policy (risk level, minus a step per extra issue), the others the agent's confidence. Value on top, amber below the policy threshold (dashed line, from `GET /mock/thresholds`), red for high risk; tapping a step's "i" explains what it measures for this invoice; bars grow in on open. |
 | `src/components/VendorAvatar.js` | Round vendor badge with initials in a pale tint picked stably from the name; shared by the Invoices and Inbox tabs. |
 | `src/theme.js` | The tokens from `frontend/src/styles/dashboard.css` / `DESIGN.md` (the logo's teal `accent` and navy `brandNavy`, `panel`, `--risk-*`, `--blocked`, `--ok`) plus the shared radii. |
 
