@@ -58,6 +58,15 @@ all four fixtures reach their expected risk, reason codes, and recommendation th
 **Done:** all four fixtures produce expected status/risk/reason codes/audit sequence via HTTP. *Demoable via Swagger from here.*
 
 ## Sprint 5 — Dashboard
+Design skills (project-level in `.claude/skills/`, pinned in `skills-lock.json`):
+- **impeccable** (`pbakaus/impeccable`): run `/impeccable init` once for design context
+  (audience: finance reviewers / compliance; tone: calm, trustworthy, dense but legible;
+  hard rules from `frontend/README.md`), then use it for the critique / polish pass.
+- **design-taste-frontend** (`Leonxlnx/taste-skill`): layout, type scale, palette for the app screens.
+- **emilkowalski/skill** (`emil-design-eng`, `animate`, `improve-animations`, `review-animations`):
+  small CSS-only motion (badge change after approve/reject, timeline stagger,
+  `prefers-reduced-motion`). No animation library, no UI framework.
+
 - [ ] `api/client.js`, `App.jsx`, `dashboard.css`
 - [ ] components: RiskBadge, StatusBadge, AgentTimeline, ToolCallTable, AuditLog, ApprovalPanel
 - [ ] pages: Dashboard, InvoiceDetails, AuditDetails
