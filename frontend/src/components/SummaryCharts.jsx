@@ -1,4 +1,4 @@
-import { Area, AreaChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { fmtMoney } from "../api/client.js";
 
@@ -8,6 +8,7 @@ const COLOR = {
   accentSoft: "#99ddd3", // --accent-soft
   blocked: "#d92d3a", // --blocked
   muted: "#6b6f7b", // --muted
+  grid: "#e3e5ea", // --grid
 };
 
 const REDUCED_MOTION =
@@ -40,6 +41,12 @@ function VolumeTooltip({ active, payload }) {
 }
 
 // The big chart under the hero figure: invoices received per day, completed as the quiet line.
+// Faint dashed grid: one vertical line per day (the area's points sit edge to edge) and quarters of
+// the height. Generated rather than tied to the axis ticks, which skip days to avoid crowding.
+const dayLines = (n) => ({ offset }) =>
+  Array.from({ length: n }, (_, i) => offset.left + (n > 1 ? (i / (n - 1)) * offset.width : offset.width / 2));
+const quarterLines = ({ offset }) => [0, 1, 2, 3, 4].map((k) => offset.top + (k / 4) * offset.height);
+
 export function VolumeChart({ days }) {
   const data = days.map((d) => ({ ...d, label: dayLabel(d.date) }));
   return (
@@ -62,6 +69,12 @@ export function VolumeChart({ days }) {
             dy={6}
           />
           <YAxis hide allowDecimals={false} domain={[0, (max) => Math.max(2, Math.ceil(max * 1.15))]} />
+          <CartesianGrid
+            stroke={COLOR.grid}
+            strokeDasharray="3 5"
+            verticalCoordinatesGenerator={dayLines(data.length)}
+            horizontalCoordinatesGenerator={quarterLines}
+          />
           <Tooltip content={<VolumeTooltip />} cursor={{ stroke: COLOR.accentSoft, strokeWidth: 1 }} />
           <Line
             type="monotone"

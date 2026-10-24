@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T06:55:43Z",
+  "generatedAt": "2026-10-24T08:07:43Z",
   "title": "Design System: TrustPay",
   "extensions": {
     "colorMeta": {
@@ -146,6 +146,22 @@
           "#a5a5a7",
           "#c9c9ca",
           "#eeeeef"
+        ]
+      },
+      "grid": {
+        "role": "neutral",
+        "displayName": "Grid Line",
+        "canonical": "#e3e5ea",
+        "oklch": "oklch(92.2% 0.007 268.5)",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242526",
+          "#414244",
+          "#606164",
+          "#808287",
+          "#a3a5a8",
+          "#c8c9cc",
+          "#eeeef0"
         ]
       },
       "brand-teal": {

@@ -34,6 +34,7 @@ export const colors = {
   pending: "#0d9488",
   pendingBg: "#e3f5f2",
   neutralBg: "#f0f0f3",
+  grid: "#e3e5ea", // dashed chart grid on white
   infoBg: "#e3f5f2",
   infoText: "#0f3d5e",
   warnText: "#5a3d00",

@@ -11,6 +11,7 @@ colors:
   neutral-ink: "#565a65"
   border: "#ececf0"
   neutral-bg: "#f0f0f3"
+  grid: "#e3e5ea"
   brand-teal: "#14b8a6"
   brand-navy: "#0f3d5e"
   accent: "#0d9488"
@@ -236,6 +237,7 @@ A cool, near-neutral grey world with the logo's teal and navy and a strictly sem
 - **Badge Slate** (neutral-ink): text in neutral badges and disabled buttons.
 - **Hairline** (border): table row rules on white.
 - **Fog** (neutral-bg): neutral badges, inline code chips, neutral delta pills.
+- **Grid Line** (grid): the dashed grid behind the volume chart, a step darker than Deeper Panel Grey so it reads on white.
 
 ### Named Rules
 **The One Teal Rule.** Teal is the only accent. It marks data and "you are here"; it never decorates a heading, a border or an empty area. Logo Teal stays in the logo; the UI uses Signal Teal and Deep Teal.
@@ -327,7 +329,7 @@ Soft, pill-shaped and tactile.
 A centred track of icon pills on Panel Grey (4px inset). Each item is a 34px pill with an 18px outline icon (24px grid, 1.75 stroke) in muted grey; hover darkens to Ink. The active item becomes a white raised pill and reveals its text label beside the icon; inactive items are icon-only with an accessible name. On small screens the nav sits to the right of the brand.
 
 ### Hero figure and volume chart
-The total in Display type, followed by a paid-share delta pill, then a muted split line with green and red key dots for Paid and Withheld. Below, a full-width smooth area chart: received in Signal Teal (2.5px) over a 16%-to-0 teal fade, completed as a Pale Teal line (2px), muted 11px axis ticks, no grid and no y-axis. It draws in once over 700ms ease-out.
+The total in Display type, followed by a paid-share delta pill, then a muted split line with green and red key dots for Paid and Withheld. Below, a full-width smooth area chart: received in Signal Teal (2.5px) over a 16%-to-0 teal fade, completed as a Pale Teal line (2px), muted 11px axis ticks and no y-axis. Behind the data sits a faint dashed grid (1px Grid Line, 3/5 dash): one vertical line per day and five horizontal lines at quarters of the height. It is the only chart with a grid. It draws in once over 700ms ease-out.
 
 ### KPI card with sparkline
 A panel with a muted label (and optional delta pill) on top, a Headline value, and a 32px smooth sparkline in teal (2px, round caps). The Blocked card's sparkline turns red when anything is blocked.

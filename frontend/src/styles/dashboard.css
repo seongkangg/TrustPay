@@ -35,6 +35,7 @@
   --pending: #0d9488;
   --pending-bg: #e3f5f2;
   --neutral-bg: #f0f0f3;
+  --grid: #e3e5ea;           /* dashed chart grid on white */
 
   --radius-window: 28px;
   --radius-panel: 18px;

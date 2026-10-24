@@ -2,7 +2,7 @@
 // a smooth teal volume line, KPI sparklines, risk bars with high risk in the accent, and the
 // 14 by_day days as a calendar. Series colours are the theme tokens.
 import { StyleSheet, Text, View } from "react-native";
-import Svg, { Defs, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
+import Svg, { Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from "react-native-svg";
 
 import { fmtMoney } from "../api/client.js";
 import { colors, radius } from "../theme.js";
@@ -51,6 +51,22 @@ export function VolumeChart({ days, width, height = 180 }) {
           <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
         </LinearGradient>
       </Defs>
+      {/* Faint dashed grid behind the data: one vertical line per day, quarters of the height. */}
+      {days.map((d, i) => (
+        <Line key={`v${d.date}`} x1={x(i)} x2={x(i)} y1={padT} y2={floor} stroke={colors.grid} strokeWidth={1} strokeDasharray="3 5" />
+      ))}
+      {[0, 1, 2, 3, 4].map((k) => (
+        <Line
+          key={`h${k}`}
+          x1={x(0)}
+          x2={x(days.length - 1)}
+          y1={padT + (k / 4) * innerH}
+          y2={padT + (k / 4) * innerH}
+          stroke={colors.grid}
+          strokeWidth={1}
+          strokeDasharray="3 5"
+        />
+      ))}
       <Path d={area} fill="url(#volumeFade)" />
       <Path d={completed} stroke={colors.accentSoft} strokeWidth={2} fill="none" strokeLinecap="round" />
       <Path d={received} stroke={colors.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" />
