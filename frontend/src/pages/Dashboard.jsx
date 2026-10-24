@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api, AWAITING_HUMAN, fmtMoney, fmtTime } from "../api/client.js";
 import ApprovalQueue from "../components/ApprovalQueue.jsx";
 import InboxCard from "../components/InboxCard.jsx";
+import ReasonTag from "../components/ReasonTag.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import SummaryCharts from "../components/SummaryCharts.jsx";
@@ -107,7 +108,7 @@ export default function Dashboard() {
                   {v.invoice_id}
                 </a>{" "}
                 {v.reason_codes.map((c) => (
-                  <code key={c}>{c}</code>
+                  <ReasonTag key={c} code={c} />
                 ))}{" "}
                 <span className="muted">{fmtTime(v.timestamp)}</span>
               </div>

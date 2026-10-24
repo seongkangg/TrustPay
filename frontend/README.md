@@ -34,6 +34,7 @@ and `POST /invoices/{id}/process` with curl or the API docs at `http://localhost
 
 | File | What it shows |
 |------|---------------|
+| `ReasonTag.jsx` | Plain-English pill for a policy reason code; hover/focus shows a one-line summary. |
 | `RiskBadge.jsx` | Low / Medium / High pill with the shared risk colors. |
 | `StatusBadge.jsx` | Invoice state badge (RECEIVED … COMPLETED / BLOCKED / FAILED). Blocked is visually loud. |
 | `AgentTimeline.jsx` | Chronological agent activity: decisions, confidence scores, governance results, evidence links, blocked actions. |

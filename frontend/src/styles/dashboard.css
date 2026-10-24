@@ -63,6 +63,14 @@ code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; 
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--neutral-bg); color: var(--muted); }
 .badge.risk-low { background: var(--risk-low-bg); color: var(--risk-low); }
 .badge.risk-medium { background: var(--risk-medium-bg); color: var(--risk-medium); }
+
+/* readable violation pill; summary pops down on hover / focus */
+.reason { position: relative; display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: help; }
+.reason-fail { background: var(--blocked-bg); color: var(--blocked); }
+.reason-warn { background: var(--risk-medium-bg); color: var(--risk-medium); }
+.reason-pass { background: var(--ok-bg); color: var(--ok); }
+.reason .reason-tip { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 10; width: 240px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-weight: 400; font-size: 12px; line-height: 1.4; white-space: normal; box-shadow: 0 4px 12px rgb(0 0 0 / 0.12); }
+.reason:hover .reason-tip, .reason:focus .reason-tip { display: block; }
 .badge.risk-high { background: var(--risk-high-bg); color: var(--risk-high); }
 .badge.status-COMPLETED, .badge.status-APPROVED { background: var(--ok-bg); color: var(--ok); }
 .badge.status-PENDING_APPROVAL { background: var(--pending-bg); color: var(--pending); }
@@ -122,7 +130,7 @@ button.reject { background: var(--blocked); color: #fff; border-color: var(--blo
 .queue .head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .queue .vendor { font-weight: 600; }
 .queue .amount { font-weight: 700; font-variant-numeric: tabular-nums; }
-.queue .codes code { margin-right: 4px; }
+.queue .codes .reason { margin-right: 4px; }
 .queue .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px; }
 .tile.money .value { font-size: 20px; font-variant-numeric: tabular-nums; }
 

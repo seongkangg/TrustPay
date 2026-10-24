@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { fmtMoney, fmtTime } from "../api/client.js";
+import ReasonTag from "./ReasonTag.jsx";
 import RiskBadge from "./RiskBadge.jsx";
 import StatusBadge from "./StatusBadge.jsx";
 
@@ -26,7 +27,7 @@ export default function ApprovalQueue({ items, reasonCodes = {} }) {
             {codes.length > 0 && (
               <div className="codes small">
                 {codes.map((c) => (
-                  <code key={c}>{c}</code>
+                  <ReasonTag key={c} code={c} />
                 ))}
               </div>
             )}
