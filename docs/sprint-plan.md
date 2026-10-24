@@ -90,7 +90,7 @@ BLOCKED with masked identifiers; `npm run lint` and `npm run build` clean.
 - [ ] backup video — record it by walking `docs/demo-script.md`
 
 ## Sprint 7 — IBM integration (stretch)
-- [ ] real watsonx.ai / Granite behind a flag
+- [x] real Granite behind a flag — `LLM_MODE=ollama` runs `granite3.3:8b` locally via Ollama (≈15–20 s per invoice on a laptop; the < 10 s target holds in mock mode). `LLM_MODE=watsonx` client exists but is unexercised without credentials.
 - [ ] watsonx.governance hooks
 - [ ] watsonx Orchestrate (or documented rationale for in-process)
 - [ ] HashiCorp Vault

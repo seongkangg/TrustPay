@@ -1,12 +1,15 @@
-"""LLM clients: `MockLLM` (default, deterministic) and `WatsonxLLM` (Granite via watsonx.ai).
+"""LLM clients: `MockLLM` (default, deterministic), `WatsonxLLM` (Granite via watsonx.ai),
+and `OllamaLLM` (Granite or another open model served locally by Ollama).
 
-Both return raw text; agents parse it with output_parser. The model is used only for
+All return raw text; agents parse it with output_parser. The model is used only for
 extraction confidence, summaries, and recommendation text — never for authorization.
 """
 
 import json
 import re
 from typing import Protocol
+
+import httpx
 
 from backend.config import Settings, get_settings
 
@@ -138,8 +141,44 @@ class WatsonxLLM:
             raise LLMError(str(exc)) from exc
 
 
+OLLAMA_TIMEOUT_SECONDS = 120  # the first call loads the model into memory and can be slow
+
+
+class OllamaLLM:
+    """A model served by a local Ollama instance. Only constructed when LLM_MODE=ollama."""
+
+    mode = "ollama"
+
+    def __init__(self, settings: Settings, client: httpx.Client | None = None):
+        if not settings.ollama_model:
+            raise LLMError("OLLAMA_MODEL is required for LLM_MODE=ollama")
+        self._model = settings.ollama_model
+        self._client = client or httpx.Client(
+            base_url=settings.ollama_url, timeout=OLLAMA_TIMEOUT_SECONDS
+        )
+
+    def complete(self, prompt: str) -> str:
+        try:
+            resp = self._client.post(
+                "/api/generate",
+                json={
+                    "model": self._model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json",
+                    "options": {"temperature": 0},
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()["response"]
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
+            raise LLMError(f"ollama call failed: {exc}") from exc
+
+
 def get_llm_client(settings: Settings | None = None) -> LLMClient:
     settings = settings or get_settings()
     if settings.llm_mode == "watsonx":
         return WatsonxLLM(settings)
+    if settings.llm_mode == "ollama":
+        return OllamaLLM(settings)
     return MockLLM()

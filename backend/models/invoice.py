@@ -41,6 +41,15 @@ class ExtractedField(BaseModel):
     missing: bool = False
     malformed: bool = False
 
+    @field_validator("value", mode="before")
+    @classmethod
+    def scalar_to_text(cls, v):
+        """Real models return numbers for numeric fields (`4250.0`); store them as text.
+        Anything structured (list/dict) is still rejected."""
+        if isinstance(v, bool | int | float):
+            return str(v)
+        return v
+
 
 class Invoice(BaseModel):
     """Stored invoice. `bank_account`, `routing_number`, `tax_id` are ALWAYS masked

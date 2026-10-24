@@ -20,11 +20,13 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./trustpay.db"
     cors_origins: str = "http://localhost:5173"
 
-    llm_mode: str = "mock"  # "mock" | "watsonx"
+    llm_mode: str = "mock"  # "mock" | "watsonx" | "ollama"
     watsonx_api_key: str = ""
     watsonx_project_id: str = ""
     watsonx_url: str = "https://us-south.ml.cloud.ibm.com"
     watsonx_model_id: str = "ibm/granite-3-8b-instruct"
+    ollama_url: str = "http://localhost:11434"
+    ollama_model: str = "granite3.3:8b"
 
     # Comma-separated mock names forced into failure mode: vendor, purchase_order, approval_limit, payment
     mock_failures: str = ""

@@ -1,4 +1,11 @@
-from backend.llm.granite_client import LLMClient, LLMError, MockLLM, WatsonxLLM, get_llm_client
+from backend.llm.granite_client import (
+    LLMClient,
+    LLMError,
+    MockLLM,
+    OllamaLLM,
+    WatsonxLLM,
+    get_llm_client,
+)
 from backend.llm.output_parser import (
     ExtractionOutput,
     MalformedOutput,
@@ -14,6 +21,7 @@ __all__ = [
     "LLMError",
     "MalformedOutput",
     "MockLLM",
+    "OllamaLLM",
     "RecommendationOutput",
     "SummaryOutput",
     "WatsonxLLM",

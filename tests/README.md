@@ -5,6 +5,7 @@ the LLM runs in `MockLLM` mode so tests are deterministic.
 
 | File | Covers |
 |------|--------|
+| `__init__.py` | Forces `LLM_MODE=mock` before anything reads settings, so the suite never calls a real model no matter what the developer's `.env` says. |
 | `conftest.py` | Fixtures: fresh in-memory SQLite `session` per test, `ref`, `demo_invoices`, `fixture_by_id`. Helpers: `run_agents(gov, fixture, llm=, upto=)` drives ingest → the four agents; `insert_invoice_row` persists a fixture as already processed (for duplicate checks). |
 | `test_llm.py` | Output parser rejects malformed/off-schema model output; `MockLLM` is deterministic and follows the prompt's context; factory defaults to mock and refuses watsonx without credentials. |
 | `test_approval_agents.py` | Policy/Risk agent assigns risk from the engine with LIMIT/RULES/POLICY evidence; Approval agent derives its recommendation from policy, a model can make it more cautious but never more permissive, invalid model output → escalate at 0.5; all four fixtures reach their expected risk / reason codes / recommendation through the agent chain. |

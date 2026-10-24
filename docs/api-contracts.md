@@ -152,7 +152,7 @@ optional context fields: `payment_permitted` (bool, default false) and `risk_lev
 ```
 
 ### `GET /health`
-**Response 200** — `{ "status": "ok", "llm_mode": "mock" | "watsonx", "db": "ok" }`
+**Response 200** — `{ "status": "ok", "llm_mode": "mock" | "watsonx" | "ollama", "db": "ok" }`
 
 ---
 
