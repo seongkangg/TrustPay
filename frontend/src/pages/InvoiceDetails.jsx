@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { api, fmtMoney, fmtPct, fmtTime } from "../api/client.js";
+import { api, fmtMoney, fmtPct, fmtTime, human } from "../api/client.js";
 import AgentTimeline from "../components/AgentTimeline.jsx";
 import ApprovalPanel from "../components/ApprovalPanel.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
@@ -109,11 +109,11 @@ export default function InvoiceDetails() {
               <tbody>
                 {invoice.extraction.map((f) => (
                   <tr key={f.field}>
-                    <td>{f.field}</td>
-                    <td>{f.missing ? <span className="muted">missing</span> : f.value}</td>
+                    <td>{human(f.field)}</td>
+                    <td>{f.missing ? <span className="muted">Missing</span> : f.value}</td>
                     <td>
                       {fmtPct(f.confidence)}
-                      {f.malformed && <span className="badge risk-medium"> malformed</span>}
+                      {f.malformed && <span className="badge risk-medium">Invalid format</span>}
                     </td>
                   </tr>
                 ))}

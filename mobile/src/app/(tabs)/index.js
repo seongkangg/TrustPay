@@ -6,7 +6,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindo
 import { fmtMoney, fmtTime } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { DayCalendar, RiskBars, Sparkline, VolumeChart, dayLabel } from "../../components/Charts.js";
-import { Alert, Badge, Card, Code, CountPill, H2, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
+import { Alert, Badge, Card, CountPill, H2, Muted, ReasonTag, RiskBadge, StatusBadge } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
@@ -145,7 +145,7 @@ export default function Overview() {
                 </Link>
                 <View style={styles.codes}>
                   {v.reason_codes.map((c) => (
-                    <Code key={c}>{c}</Code>
+                    <ReasonTag key={c} code={c} />
                   ))}
                 </View>
                 <Muted small>{fmtTime(v.timestamp)}</Muted>
@@ -211,7 +211,7 @@ function QueueItem({ inv, codes = [] }) {
       {codes.length > 0 && (
         <View style={styles.codes}>
           {codes.map((c) => (
-            <Code key={c}>{c}</Code>
+            <ReasonTag key={c} code={c} />
           ))}
         </View>
       )}

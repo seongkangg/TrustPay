@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { api, AWAITING_HUMAN, fmtMoney, fmtTime } from "../api/client.js";
+import { api, AWAITING_HUMAN, fmtMoney, fmtTime, human } from "../api/client.js";
 import ApprovalQueue from "../components/ApprovalQueue.jsx";
 import { ArrowUpIcon, CalendarIcon } from "../components/Icons.jsx";
 import InboxCard from "../components/InboxCard.jsx";
@@ -239,7 +239,7 @@ export default function Dashboard() {
                     <td>
                       <StatusBadge status={inv.status} />
                     </td>
-                    <td className="cap hide-sm">{inv.recommendation || "—"}</td>
+                    <td className="hide-sm">{human(inv.recommendation)}</td>
                     <td className="hide-sm">{inv.sensitive_data_detected ? <span className="badge">Masked</span> : "—"}</td>
                     <td className="small muted hide-sm">{fmtTime(inv.updated_at)}</td>
                   </tr>

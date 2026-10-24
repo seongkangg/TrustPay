@@ -57,6 +57,29 @@ export const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
 
 export const fmtPct = (x) => (x == null ? "—" : `${Math.round(x * 100)}%`);
 
-export const human = (s) => (s ? String(s).replace(/_/g, " ") : "—");
+// Display wording for enum values the API returns (backend/models/enums.py). Values not listed
+// read fine in sentence case: "PENDING_APPROVAL" -> "Pending approval", "vendor_lookup" -> "Vendor lookup".
+const LABELS = {
+  governance_layer: "Governance",
+  human_reviewer: "Reviewer",
+  po_lookup: "Purchase order lookup",
+  approval_request_create: "Create approval request",
+  payment_authorize: "Authorize payment",
+  audit_log_write: "Write audit log",
+  risk_rules: "Risk rules check",
+  tax_id: "Tax ID",
+  purchase_order_id: "Purchase order",
+  vendor_invoice_number: "Vendor invoice #",
+};
+
+// Free text (anything that is not a bare identifier) passes through untouched.
+export const human = (s) => {
+  if (s == null || s === "") return "—";
+  const v = String(s);
+  if (LABELS[v]) return LABELS[v];
+  if (!/^[A-Za-z0-9_]+$/.test(v)) return v;
+  const t = v.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
 export const AWAITING_HUMAN = ["PENDING_APPROVAL", "BLOCKED"];
