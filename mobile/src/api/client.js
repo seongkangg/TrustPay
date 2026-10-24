@@ -73,6 +73,8 @@ export const api = {
   reject: (id, reviewer, note) => request(`/invoices/${id}/reject`, json("POST", { reviewer, note })),
   inboxStatus: () => request("/inbox/status"),
   inboxSync: () => request("/inbox/sync", json("POST")),
+  // Policy constants from data/approval_limits.json (auto-approve max, confidence threshold, ...).
+  thresholds: () => request("/mock/thresholds"),
 };
 
 export const fmtMoney = (amount, currency = "USD") =>

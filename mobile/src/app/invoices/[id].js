@@ -34,6 +34,7 @@ import {
   StatusBadge,
   sentence,
 } from "../../components/ui.js";
+import ConfidenceChart from "../../components/ConfidenceChart.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
@@ -71,6 +72,15 @@ export default function InvoiceScreen() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [decideError, setDecideError] = useState(null);
+  const [threshold, setThreshold] = useState(null);
+
+  // The confidence threshold is a policy constant; without it the chart just omits the marker.
+  useEffect(() => {
+    api
+      .thresholds()
+      .then((t) => setThreshold(t.confidence_threshold ?? null))
+      .catch(() => setThreshold(null));
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -186,7 +196,7 @@ export default function InvoiceScreen() {
         )}
 
         <H2>AI recommendation</H2>
-        <Recommendation invoice={invoice} recommendation={recommendation} />
+        <Recommendation invoice={invoice} recommendation={recommendation} decisions={decisions} threshold={threshold} />
 
         {needsDecision && (
           <>
@@ -329,7 +339,7 @@ const BANNER = {
   ok: { bg: colors.okBg, fg: colors.okText },
 };
 
-function Recommendation({ invoice, recommendation }) {
+function Recommendation({ invoice, recommendation, decisions, threshold }) {
   const [showEvidence, setShowEvidence] = useState(false);
   if (!invoice.recommendation) {
     return (
@@ -344,26 +354,24 @@ function Recommendation({ invoice, recommendation }) {
   const reasons = (why.reasons || []).filter((r) => !/^[A-Z_]+$/.test(r));
   const codes = recommendation?.reason_codes || [];
   const evidence = [...(why.policy_rules_triggered || []), ...(why.evidence || [])];
-  const confidence = invoice.recommendation_confidence ?? 0;
   return (
     <Card>
       <View style={styles.verdictRow}>
         <View style={[styles.verdictPill, { backgroundColor: verdict.bg }]}>
           <Text style={[styles.verdict, { color: verdict.fg }]}>{sentence(invoice.recommendation)}</Text>
         </View>
-        <View style={{ flex: 1 }}>
-          <View style={styles.confidenceHead}>
-            <Text style={styles.confidenceLabel}>Confidence</Text>
-            <Text style={styles.confidenceValue}>{fmtPct(confidence)}</Text>
-          </View>
-          <View style={styles.meter}>
-            <View style={[styles.meterFill, { width: `${Math.round(confidence * 100)}%` }]} />
-          </View>
-        </View>
+        <Muted small style={{ flex: 1 }}>
+          Advisory only. Governance rules decide what is allowed; you make the final call.
+        </Muted>
       </View>
-      <Muted small style={{ marginTop: 8 }}>
-        Advisory only. Governance rules decide what is allowed; you make the final call.
-      </Muted>
+      <View style={styles.divider} />
+      <ConfidenceChart
+        confidence={invoice.recommendation_confidence}
+        decisions={decisions}
+        extraction={invoice.extraction || []}
+        threshold={threshold}
+      />
+      <View style={styles.divider} />
       {codes.length > 0 && (
         <View style={styles.tags}>
           {codes.map((c) => (
@@ -604,12 +612,8 @@ const styles = StyleSheet.create({
   verdictRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   verdictPill: { borderRadius: radius.field, paddingHorizontal: 14, paddingVertical: 8 },
   verdict: { fontSize: 20, fontWeight: "700", letterSpacing: -0.3 },
-  confidenceHead: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-  confidenceLabel: { fontSize: 12, color: colors.muted, fontWeight: "500" },
-  confidenceValue: { fontSize: 12, color: colors.text, fontWeight: "700", fontVariant: ["tabular-nums"] },
-  meter: { height: 6, borderRadius: 3, backgroundColor: colors.panel2, overflow: "hidden" },
-  meterFill: { height: "100%", borderRadius: 3, backgroundColor: colors.accent },
-  tags: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 12 },
+  divider: { height: 1, backgroundColor: colors.panel2, marginVertical: 16 },
+  tags: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   reason: { flexDirection: "row", gap: 8 },
   reasonDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.muted, marginTop: 8 },
   reasonText: { flex: 1, fontSize: 14, lineHeight: 20, color: colors.text },
