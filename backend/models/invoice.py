@@ -77,6 +77,9 @@ class Invoice(BaseModel):
     source_text: str | None = Field(
         None, description="Text read from the source document; sensitive values masked"
     )
+    has_source_pdf: bool = Field(
+        False, description="A redacted copy of the emailed PDF is available for download"
+    )
 
     status: InvoiceStatus = InvoiceStatus.RECEIVED
     risk_level: RiskLevel | None = None

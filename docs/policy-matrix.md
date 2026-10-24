@@ -80,6 +80,12 @@ A human can approve amounts up to the `human_reviewer` limit. Above that → sta
 4. Raw values never appear in an explanation, audit event, or log line. `decision_validator` re-scans explanations and rejects violations.
 5. Every detection produces a `SCAN-NNN` evidence ID and a `sensitive_data_masked` event.
 6. Retention: raw values are not retained at all; masked values follow the invoice record.
+7. Source documents: an emailed PDF is kept only as a **redacted copy** (`source_documents` table,
+   `backend/services/source_pdf.py`). Every value the text rules above detect is removed under a
+   black box before the copy is written, scanned / image-only pages are refused, and the finished
+   file is re-read: if any sensitive value is still readable or present in its bytes, nothing is
+   kept. The original file is discarded as before. Without a redacted copy, downloads fall back
+   to a PDF rebuilt from the masked text.
 
 ## Reason code reference
 

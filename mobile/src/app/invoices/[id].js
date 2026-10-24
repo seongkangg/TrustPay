@@ -202,6 +202,7 @@ export default function InvoiceScreen() {
           invoiceId={invoice.invoice_id}
           name={invoice.source_document}
           hasText={Boolean(invoice.source_text)}
+          hasPdf={invoice.has_source_pdf}
         />
 
         {needsDecision && (
@@ -567,12 +568,13 @@ function DecisionBubble({ kind, label, disabled, onPress }) {
   );
 }
 
-// The source invoice as a downloadable PDF. The backend rebuilds it from the masked text of the
-// emailed document (GET /invoices/{id}/document.pdf), so bank, routing and tax numbers stay masked;
-// the original file is never kept. The phone opens the PDF in its own viewer to save or share it.
-function SourceDocument({ invoiceId, name, hasText }) {
+// The source invoice as a downloadable PDF (GET /invoices/{id}/document.pdf): the emailed PDF itself
+// with bank, routing and tax numbers blacked out when a redacted copy was kept at ingestion
+// (`hasPdf`), else a masked copy rebuilt from its text. The unredacted original is never kept.
+// The phone opens the PDF in its own viewer to save or share it.
+function SourceDocument({ invoiceId, name, hasText, hasPdf }) {
   const [error, setError] = useState(null);
-  if (!hasText) {
+  if (!hasText && !hasPdf) {
     return (
       <Card>
         <Muted>{name ? `${name}: no readable text.` : "Entered as structured data; there is no source document."}</Muted>
@@ -598,13 +600,15 @@ function SourceDocument({ invoiceId, name, hasText }) {
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={styles.docName} numberOfLines={2}>
-            {`${invoiceId}-masked.pdf`}
+            {`${invoiceId}-${hasPdf ? "redacted" : "masked"}.pdf`}
           </Text>
           <Muted small>{name || "Source document"}</Muted>
         </View>
       </View>
       <Muted small style={{ marginTop: 10 }}>
-        Masked copy rebuilt from the original: bank, routing and tax numbers are hidden.
+        {hasPdf
+          ? "The original PDF, with bank, routing and tax numbers blacked out."
+          : "Masked copy rebuilt from the original's text: bank, routing and tax numbers are hidden."}
       </Muted>
       <Pressable
         onPress={download}

@@ -10,4 +10,4 @@ Keeps route handlers thin and logic unit-testable without HTTP.
 | `audit_service.py` | Append-only writer/reader for `AuditEvent`. Assigns event IDs, computes `previous_event_hash`, rejects duplicate event IDs, flags out-of-order events instead of corrupting the chain. |
 | `errors.py` | `ServiceError` hierarchy with HTTP status + code: `NotFoundError` 404, `InvalidStateError` 409, `ForbiddenError` 403, `UpstreamUnavailableError` 503. |
 | `masking_service.py` | Applies display/log masking rules: bank accounts and tax IDs → last 4 digits, names/addresses redacted in logs. Called before any response or log line leaves the backend. |
-| `source_pdf.py` | `render_masked_pdf(invoice)`: a PDF of the source document rebuilt from the masked `source_text` (fpdf2), with a "masked copy" header; served by `GET /invoices/{id}/document.pdf`. |
+| `source_pdf.py` | `redact_pdf(bytes)`: the emailed PDF with every sensitive value removed under black boxes (PyMuPDF), refusing scans and verifying the result, stored at ingestion; `render_masked_pdf(invoice)`: the fallback PDF rebuilt from masked `source_text` (fpdf2). Served by `GET /invoices/{id}/document.pdf`. |

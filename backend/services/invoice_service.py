@@ -12,7 +12,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.database.ids import next_id
-from backend.database.tables import AgentDecisionRow, ApprovalRow, AuditEventRow, InvoiceRow
+from backend.database.tables import (
+    AgentDecisionRow,
+    ApprovalRow,
+    AuditEventRow,
+    InvoiceRow,
+    SourceDocumentRow,
+)
 from backend.governance import GovernanceEngine
 from backend.llm.granite_client import LLMClient
 from backend.models import (
@@ -28,6 +34,7 @@ from backend.models import (
 from backend.orchestration.invoice_workflow import InvoiceWorkflow, WorkflowResult
 from backend.services.errors import InvalidStateError, NotFoundError
 from backend.services.masking_service import mask_text
+from backend.services.source_pdf import redact_pdf
 from backend.utils.timestamps import now_utc
 
 FIRST_INVOICE_NUMBER = 1001
@@ -141,7 +148,29 @@ class InvoiceService:
         return row
 
     def get(self, invoice_id: str) -> Invoice:
-        return row_to_invoice(self.get_row(invoice_id))
+        invoice = row_to_invoice(self.get_row(invoice_id))
+        has_pdf = self.session.get(SourceDocumentRow, invoice_id) is not None
+        return invoice.model_copy(update={"has_source_pdf": has_pdf})
+
+    # ------------------------------------------------------------ source PDF
+
+    def store_source_pdf(self, invoice_id: str, pdf_bytes: bytes, file_name: str | None) -> bool:
+        """Redact the emailed PDF and keep only the redacted copy. False when redaction refused
+        (scan, unreadable, unverifiable): nothing is stored and the invoice is unaffected."""
+        redacted = redact_pdf(pdf_bytes)
+        if redacted is None:
+            return False
+        self.session.merge(
+            SourceDocumentRow(
+                invoice_id=invoice_id, file_name=file_name, pdf=redacted, created_at=now_utc()
+            )
+        )
+        self.session.commit()
+        return True
+
+    def source_pdf(self, invoice_id: str) -> SourceDocumentRow | None:
+        """The stored redacted PDF for `invoice_id`, if one was kept at ingestion."""
+        return self.session.get(SourceDocumentRow, invoice_id)
 
     def list_invoices(
         self,

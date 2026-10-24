@@ -10,7 +10,7 @@ One set of SQLAlchemy tables, two places it can live (chosen by `DATABASE_URL`):
 | File | What it does |
 |------|--------------|
 | `database.py` | Builds the engine from `DATABASE_URL`. Supabase URLs are accepted as pasted (`postgres://…` / `postgresql://…` → psycopg 3), with reconnect-on-stale (`pool_pre_ping`) and prepared statements off so the transaction pooler works too. `init_db()` creates the tables and, on Postgres, enables row-level security on each (see below). FastAPI session dependency. |
-| `tables.py` | ORM tables mirroring `models/`: `invoices`, `agent_decisions`, `tool_calls`, `audit_events`, `approvals`, `inbox_messages`. `audit_events` is insert-only (no update/delete paths). |
+| `tables.py` | ORM tables mirroring `models/`: `invoices`, `agent_decisions`, `tool_calls`, `audit_events`, `approvals`, `inbox_messages`, `source_documents` (the redacted copy of an emailed invoice PDF, one per invoice; never the original). `audit_events` is insert-only (no update/delete paths). |
 | `seed_data.py` | Loads `data/vendors.json`, `data/purchase_orders.json`, `data/approval_limits.json` into an in-memory `ReferenceData` store that the mock systems read. Invoices are never pre-inserted — they arrive from Gmail (or `POST /invoices`). `load_demo_invoices()` returns the fixtures for tests. |
 
 ## Supabase setup

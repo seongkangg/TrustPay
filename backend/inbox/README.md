@@ -12,7 +12,7 @@ agents, policy, and audit trail as one posted to the API.
 | `authorize.py` | `python -m backend.inbox.authorize` — one-time OAuth consent in the browser; writes the token file. |
 | `pdf_parser.py` | `extract_text(bytes)` (pypdf) and `upload_from_text(text, source)` — a regex over `Label: value` lines (`LABELS`), `normalize_date()` ("November 22, 2026" → `2026-11-22`), currency from a lone `$`/`€`/`£`. Unfound fields stay `None`. No LLM. |
 | `llm_extraction.py` | `extract_missing_fields(llm, text, upload)` — asks the model only for the fields the labels missed, on masked text, then keeps a value **only if it is written in the document** (`appears_in_document`): IDs and names verbatim, the amount as a number that appears, the due date as a date that appears in any format. Anything else is discarded. Never asks for bank / routing / tax. |
-| `inbox_service.py` | `InboxService.sync()` — one pass: new messages → parse → create → process; every message gets an `inbox_messages` row (`processed` / `skipped` / `failed`) so nothing is ingested twice; one bad email never stops the batch. `recent_messages()` feeds the dashboard card. |
+| `inbox_service.py` | `InboxService.sync()` — one pass: new messages → parse → create → keep a redacted copy of the PDF (`store_source_pdf`; refused for scans) → process; every message gets an `inbox_messages` row (`processed` / `skipped` / `failed`) so nothing is ingested twice; one bad email never stops the batch. `recent_messages()` feeds the dashboard card. |
 | `poller.py` | `start_poller()` — asyncio loop started from the app lifespan when `INBOX_ENABLED`; runs `sync()` in a worker thread every `INBOX_POLL_SECONDS` and keeps the last result on `app.state.inbox`. |
 
 ## How fields are found

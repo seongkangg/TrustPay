@@ -65,15 +65,21 @@ def get_invoice(invoice_id: str, svc: InvoiceService = Depends(get_invoice_servi
 def get_source_document_pdf(
     invoice_id: str, svc: InvoiceService = Depends(get_invoice_service)
 ) -> Response:
-    """Masked copy of the source document as a PDF download (the original is never kept)."""
+    """The source document as a PDF download: the redacted original kept at ingestion, else a
+    masked copy rebuilt from its text. The unredacted original is never kept."""
     invoice = svc.get(invoice_id)
-    if not invoice.source_text:
+    stored = svc.source_pdf(invoice_id)
+    if stored is not None:
+        content, name = stored.pdf, f"{invoice_id}-redacted.pdf"
+    elif invoice.source_text:
+        content, name = render_masked_pdf(invoice), f"{invoice_id}-masked.pdf"
+    else:
         raise NotFoundError(f"invoice {invoice_id} has no source document", invoice_id=invoice_id)
     return Response(
-        content=render_masked_pdf(invoice),
+        content=content,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'attachment; filename="{invoice_id}-masked.pdf"',
+            "Content-Disposition": f'attachment; filename="{name}"',
             "Cache-Control": "no-store",
         },
     )

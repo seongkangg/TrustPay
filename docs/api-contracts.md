@@ -68,11 +68,16 @@ account, routing number, tax ID and other sensitive values masked exactly as in 
 (`****6789`). It is masked at ingestion and again when served; the original file is not kept or
 served. `null` for structured uploads without text.
 
+`has_source_pdf` is `true` when a redacted copy of the emailed PDF was kept at ingestion.
+
 ### `GET /invoices/{invoice_id}/document.pdf`
-A downloadable PDF of the source document, rebuilt from `source_text` (a masked copy, not the
-original file, which is never kept). **Response 200** `application/pdf` with
-`Content-Disposition: attachment; filename="INV-1003-masked.pdf"` · **404** if the invoice is
-unknown or has no source text.
+The source document as a PDF download:
+- the **redacted original** when `has_source_pdf` is `true`: the emailed PDF itself with every
+  bank, routing and tax number removed under a black box (`filename="INV-1003-redacted.pdf"`);
+- otherwise a **masked copy** rebuilt from `source_text` (`filename="INV-1003-masked.pdf"`).
+
+The unredacted original is never kept or served. **Response 200** `application/pdf` with
+`Content-Disposition: attachment` · **404** if the invoice is unknown or has no source document.
 
 ### `POST /invoices/{invoice_id}/process`
 Run the full agent workflow. Synchronous for the demo (< 10 s).

@@ -174,6 +174,11 @@ class InboxService:
                 sorted(dropped),
             )
         created = self.invoices.create(InvoiceUpload(**upload))
+        # Keep a redacted copy of the PDF for download; a refusal (e.g. a scan) is not an error.
+        if not self.invoices.store_source_pdf(
+            created.invoice_id, msg.pdf_bytes, msg.attachment_name
+        ):
+            log.info("inbox: %s kept without a redacted PDF", created.invoice_id)
         self.invoices.process(created.invoice_id, field_sources=sources)
         return created.invoice_id
 

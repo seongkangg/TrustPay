@@ -1,14 +1,73 @@
-"""A downloadable PDF of an invoice's source document, rebuilt from its masked text.
+"""The source document of an invoice as a downloadable PDF, in one of two forms.
 
-The original file is never kept, and it would carry raw bank / routing / tax numbers, so this is a
-masked copy: the text read from the source (`Invoice.source_text`, masked at ingestion and again
-when served) laid out on a page, with a header saying what it is.
+- **Redacted original** (`redact_pdf`): the emailed PDF itself, made at ingestion, with every bank,
+  routing and tax number (the same values `mask_text` masks) removed under a black box. Only this
+  redacted file is stored; the original is discarded as before. If the redaction cannot be
+  verified, nothing is stored.
+- **Masked copy** (`render_masked_pdf`): for invoices without a redacted original, the text read
+  from the source (`Invoice.source_text`, masked at ingestion and again when served) laid out on a
+  page, with a header saying what it is.
 """
 
+import logging
+
+import pymupdf
 from fpdf import FPDF
 
 from backend.models import Invoice
+from backend.services.masking_service import sensitive_values
 from backend.utils.timestamps import now_utc
+
+log = logging.getLogger(__name__)
+
+# A page with less extractable text than this but with images is treated as a scan: its numbers
+# could be inside the picture, where redaction cannot find or verify them.
+MIN_PAGE_TEXT = 20
+
+
+def redact_pdf(pdf_bytes: bytes) -> bytes | None:
+    """The PDF with every sensitive value removed, or None when that cannot be done safely.
+
+    Refuses (None) for: unreadable files, scanned / image-only pages, a value it cannot locate on
+    the page, and any output in which a sensitive value is still readable. Never logs values.
+    """
+    try:
+        doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+    except Exception:  # noqa: BLE001 — any parse failure just means "no redacted copy"
+        log.info("redaction: unreadable PDF; no redacted copy kept")
+        return None
+    removed: set[str] = set()
+    try:
+        for page in doc:
+            text = page.get_text()
+            if len(text.strip()) < MIN_PAGE_TEXT and page.get_images():
+                log.info("redaction: page %d looks scanned; no redacted copy kept", page.number + 1)
+                return None
+            for value in sensitive_values(text):
+                rects = page.search_for(value)
+                if not rects:
+                    log.info("redaction: a sensitive value could not be located; no copy kept")
+                    return None
+                for rect in rects:
+                    page.add_redact_annot(rect, fill=(0, 0, 0))
+                removed.add(value)
+            # Removes the text under the boxes for real, not just a drawing on top of it.
+            page.apply_redactions()
+        doc.scrub()  # metadata, attachments, scripts, hidden text
+        out = doc.tobytes(garbage=4, deflate=True)
+    finally:
+        doc.close()
+
+    # Verify on the finished file: nothing sensitive may be readable or present in its bytes.
+    check = pymupdf.open(stream=out, filetype="pdf")
+    try:
+        leftover = any(sensitive_values(page.get_text()) for page in check)
+    finally:
+        check.close()
+    if leftover or any(value.encode() in out for value in removed):
+        log.warning("redaction: verification failed; no redacted copy kept")
+        return None
+    return out
 
 
 def _latin1(text: str) -> str:
