@@ -9,6 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,13 +17,38 @@ from backend.database.tables import InboxMessageRow
 from backend.governance import GovernanceEngine
 from backend.inbox import InboxError, InboxMessage
 from backend.inbox.gmail_client import GmailClient
+from backend.inbox.llm_extraction import extract_missing_fields
 from backend.inbox.pdf_parser import PdfParseError, extract_text, upload_from_text
-from backend.llm.granite_client import LLMClient
+from backend.llm.granite_client import LLMClient, MockLLM
 from backend.models import InvoiceUpload
 from backend.services.invoice_service import InvoiceService
 from backend.utils.timestamps import now_utc
 
 log = logging.getLogger(__name__)
+
+
+def sanitize_upload(upload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Null out any field InvoiceUpload rejects (bad ID format, negative amount, …).
+
+    An emailed invoice with one unreadable field must still become an invoice — escalated
+    for the missing field — rather than be dropped. `vendor_invoice_number` is always set by
+    the caller, so it is never the field being dropped.
+    """
+    clean = dict(upload)
+    dropped: dict[str, Any] = {}
+    for _ in range(len(clean) + 1):
+        try:
+            InvoiceUpload(**clean)
+            return clean, dropped
+        except ValidationError as exc:
+            bad = {err["loc"][0] for err in exc.errors() if err["loc"]}
+            bad.discard("vendor_invoice_number")
+            if not bad:
+                raise
+            for name in bad:
+                dropped[name] = clean.get(name)
+                clean[name] = None
+    raise ValueError("upload could not be sanitized")
 
 
 @dataclass
@@ -53,6 +79,7 @@ class InboxService:
         self.session = session
         self.gov = gov
         self.client = client
+        self.llm = llm or MockLLM()
         self.invoices = InvoiceService(session, gov, llm)
         self.lookback_days = lookback_days
 
@@ -105,11 +132,23 @@ class InboxService:
             raise ValueError(str(exc)) from exc
         source = f"{msg.attachment_name} (email from {msg.sender or 'unknown sender'})"
         upload = upload_from_text(text, source)
+
+        # Fields the labels didn't give us: ask the model, keep only what is in the document.
+        model = extract_missing_fields(self.llm, text, upload)
+        upload.update(model.filled)
+
         if not upload.get("vendor_invoice_number"):
             # Required column; the Intake agent still flags the missing field.
             upload["vendor_invoice_number"] = f"EMAIL-{msg.message_id[:8]}"
         if not upload.get("currency"):
             upload["currency"] = "USD"
+        upload, dropped = sanitize_upload(upload)
+        if dropped:
+            log.info(
+                "inbox: %s fields failed validation and were left empty: %s",
+                msg.message_id,
+                sorted(dropped),
+            )
         created = self.invoices.create(InvoiceUpload(**upload))
         self.invoices.process(created.invoice_id)
         return created.invoice_id

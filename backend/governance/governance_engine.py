@@ -23,6 +23,7 @@ from backend.governance.decision_validator import ValidationResult, validate_dec
 from backend.governance.policy_engine import PolicyEngine, PolicyInput, PolicyResult
 from backend.governance.sensitive_data_scanner import ScanResult, SensitiveDataScanner
 from backend.governance.tool_call_interceptor import ToolCallInterceptor, ToolCallOutcome
+from backend.mock_systems import NotFound
 from backend.mock_systems.approval_limit_service import ApprovalLimitService
 from backend.mock_systems.payment_service import PaymentService
 from backend.mock_systems.purchase_order_service import PurchaseOrderService
@@ -50,6 +51,16 @@ _SEVERITY = {
     RiskLevel.MEDIUM: Severity.MEDIUM,
     RiskLevel.HIGH: Severity.HIGH,
 }
+
+
+def _vendor_lookup(vendors: VendorService, params: dict[str, Any]) -> dict[str, Any]:
+    """`vendor_lookup` by ID, or by the name printed on the invoice when there is no ID."""
+    if params.get("vendor_id"):
+        return vendors.get_vendor(params["vendor_id"])
+    found = vendors.find_by_name(params.get("vendor_name") or "")
+    if found is None:
+        raise NotFound(f"no vendor named {params.get('vendor_name')!r}")
+    return found
 
 
 @dataclass
@@ -87,7 +98,7 @@ class GovernanceEngine:
             session,
             self.audit,
             {
-                ToolName.VENDOR_LOOKUP: lambda p: vendors.get_vendor(p["vendor_id"]),
+                ToolName.VENDOR_LOOKUP: lambda p: _vendor_lookup(vendors, p),
                 ToolName.PO_LOOKUP: lambda p: pos.get_purchase_order(p["purchase_order_id"]),
                 ToolName.APPROVAL_LIMIT_LOOKUP: lambda p: limits.get_limit(p["agent_id"]),
                 ToolName.RISK_RULES: lambda p: self.policy.describe_rules(),

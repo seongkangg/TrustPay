@@ -43,20 +43,29 @@ class VerificationAgent(BaseAgent):
             ctx,
             EventType.VENDOR_LOOKUP_REQUESTED,
             Severity.LOW,
-            input_summary=f"vendor_id={ctx.vendor_id}",
+            input_summary=f"vendor_id={ctx.vendor_id} vendor_name={ctx.vendor_name}",
         )
-        if ctx.vendor_id:
+        if ctx.vendor_id or ctx.vendor_name:
+            by_name = not ctx.vendor_id
             v = self.request_tool(
                 ctx,
                 ToolName.VENDOR_LOOKUP,
-                "confirm the vendor exists and is verified",
-                vendor_id=ctx.vendor_id,
+                "match the vendor name on the invoice to the vendor master"
+                if by_name
+                else "confirm the vendor exists and is verified",
+                **({"vendor_name": ctx.vendor_name} if by_name else {"vendor_id": ctx.vendor_id}),
             )
             if v.call.evidence_id:
                 evidence.append(v.call.evidence_id)
             if v.ok:
                 ctx.vendor = v.result
                 ctx.vendor_found = v.result is not None
+                if by_name and v.result:
+                    # Resolved by name: from here on (PO match, duplicates) the ID is known.
+                    ctx.extracted["vendor_id"] = v.result["vendor_id"]
+                    reasons.append(
+                        f"Vendor name '{ctx.vendor_name}' matched vendor master record {v.result['vendor_id']}."
+                    )
         status = (ctx.vendor or {}).get("verification_status")
         if ctx.vendor_found is True and status == "verified":
             self.record(
@@ -64,25 +73,25 @@ class VerificationAgent(BaseAgent):
                 EventType.VENDOR_VERIFIED,
                 Severity.LOW,
                 evidence_refs=evidence[-1:],
-                output_summary=f"vendor {ctx.vendor_id} verified",
+                output_summary=f"vendor {ctx.vendor_ref} verified",
             )
-            reasons.append(f"Vendor {ctx.vendor_id} is in the vendor master and verified.")
+            reasons.append(f"Vendor {ctx.vendor_ref} is in the vendor master and verified.")
         else:
             if ctx.vendor_found is False:
                 codes.append(ReasonCode.UNKNOWN_VENDOR)
                 reasons.append(
-                    f"Vendor {ctx.vendor_id} was not found in the approved vendor database."
+                    f"Vendor {ctx.vendor_ref} was not found in the approved vendor database."
                 )
             elif ctx.vendor_found is True:
                 codes.append(ReasonCode.VENDOR_UNVERIFIED)
-                reasons.append(f"Vendor {ctx.vendor_id} exists but its status is {status}.")
+                reasons.append(f"Vendor {ctx.vendor_ref} exists but its status is {status}.")
             self.record(
                 ctx,
                 EventType.VENDOR_UNVERIFIED,
                 Severity.HIGH if ctx.vendor_found is False else Severity.MEDIUM,
                 reason_codes=codes[-1:],
                 evidence_refs=evidence[-1:],
-                output_summary=f"vendor {ctx.vendor_id}: found={ctx.vendor_found} status={status}",
+                output_summary=f"vendor {ctx.vendor_ref}: found={ctx.vendor_found} status={status}",
             )
 
         # --- purchase order --------------------------------------------------

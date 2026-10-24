@@ -47,10 +47,17 @@ class MockLLM:
             "extraction": self._extraction,
             "summary": self._summary,
             "recommendation": self._recommendation,
+            "invoice_fields": self._invoice_fields,
         }.get(schema.group(1))
         if handler is None:
             raise LLMError(f"mock has no handler for schema {schema.group(1)}")
         return json.dumps(handler(context))
+
+    @staticmethod
+    def _invoice_fields(context: dict) -> dict:
+        # The mock does not read documents: free-form invoices stay unfilled (→ escalated),
+        # and the labelled demo PDFs never need this step.
+        return {name: None for name in context.get("fields_needed", [])}
 
     @staticmethod
     def _extraction(context: dict) -> dict:

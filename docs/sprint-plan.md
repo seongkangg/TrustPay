@@ -104,7 +104,9 @@ Invoices now arrive from Gmail; the web app shows graphs and data and takes the 
 - [x] `scripts/make_invoice_pdfs.py` → `data/invoices/pdf/*.pdf` (labels shared with the parser)
 - [x] tests: `test_pdf_parser`, `test_inbox` (fake Gmail service + fake client, no network)
 - [x] dashboard refocus: demo buttons / "Run agents" removed; "Needs your approval" queue, amount tiles, three Recharts graphs, inbox card, 15 s refresh; `dashboard_summary` gains `by_day` + `amounts` (`test_dashboard_summary.py`)
-- [ ] one-time OAuth on the demo machine, then an end-to-end emailed invoice
+- [x] one-time OAuth on the demo machine (Gmail authorized, poller running)
+- [ ] an end-to-end emailed invoice through the real inbox
+- [x] free-form invoices: Granite fills fields the labels miss, each value checked against the document text; dates normalized; vendor matched by name through the governed lookup; an invalid field no longer drops the email; null model confidence read as 0 (`test_llm_extraction.py`, 201 tests). Real Granite reads the two-column example correctly in ~16 s end to end.
 
 ## Parallelization
 - Frontend starts after Sprint 0 against a static JSON mock of the API contract.

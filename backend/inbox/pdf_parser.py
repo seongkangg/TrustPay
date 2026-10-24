@@ -8,6 +8,7 @@ governance outcome for a document we could not read, so there is no LLM guessing
 
 import io
 import re
+from datetime import datetime
 from typing import Any
 
 from pypdf import PdfReader
@@ -58,6 +59,44 @@ def _number(raw: str) -> float | None:
         return None
 
 
+# US-style numeric dates only (m/d/Y); a day-first document is not guessed at.
+_DATE_FORMATS = (
+    "%Y-%m-%d",
+    "%B %d, %Y",
+    "%b %d, %Y",
+    "%B %d %Y",
+    "%b %d %Y",
+    "%d %B %Y",
+    "%d %b %Y",
+    "%m/%d/%Y",
+    "%Y/%m/%d",
+)
+
+
+def normalize_date(raw: str | None) -> str | None:
+    """'November 22, 2026' / 'Nov 22nd 2026' / '11/22/2026' → '2026-11-22'; None if unreadable."""
+    if not raw:
+        return None
+    s = re.sub(r"\s+", " ", str(raw).strip().rstrip("."))
+    s = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", s)
+    s = s.replace("Sept ", "Sep ")
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+CURRENCY_SYMBOLS = {"$": "USD", "€": "EUR", "£": "GBP"}
+
+
+def currency_from_symbols(text: str) -> str | None:
+    """The currency implied by the symbols in the document, only when exactly one kind appears."""
+    codes = {code for symbol, code in CURRENCY_SYMBOLS.items() if symbol in text}
+    return codes.pop() if len(codes) == 1 else None
+
+
 def upload_from_text(text: str, source_document: str) -> dict[str, Any]:
     """Build the dict `InvoiceUpload(**...)` accepts. Unfound fields are None."""
     found: dict[str, str] = {}
@@ -72,8 +111,12 @@ def upload_from_text(text: str, source_document: str) -> dict[str, Any]:
 
     upload: dict[str, Any] = {field: found.get(field) for field, _ in LABELS}
     upload["amount"] = _number(found["amount"]) if "amount" in found else None
+    # An unreadable date becomes None (→ MISSING_REQUIRED_FIELD, escalated), never a crash.
+    upload["due_date"] = normalize_date(found.get("due_date"))
     if upload.get("currency"):
         upload["currency"] = upload["currency"].upper()[:3]
+    else:
+        upload["currency"] = currency_from_symbols(text)
     for key in ("vendor_id", "purchase_order_id"):
         if upload.get(key):
             upload[key] = upload[key].upper()

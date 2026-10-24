@@ -82,6 +82,7 @@ class InvoiceWorkflow:
             # Verification
             self._set_status(row, InvoiceStatus.VERIFYING)
             VerificationAgent(self.gov, self.llm).run(ctx)
+            row.vendor_id = row.vendor_id or ctx.vendor_id  # resolved from the name, if it was
             self._set_status(row, InvoiceStatus.VERIFIED)
 
             # Policy / risk
