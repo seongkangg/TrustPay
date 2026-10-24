@@ -340,6 +340,7 @@ const BANNER = {
 
 function Recommendation({ invoice, recommendation, decisions, threshold }) {
   const [showEvidence, setShowEvidence] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   if (!invoice.recommendation) {
     return (
       <Card>
@@ -378,7 +379,19 @@ function Recommendation({ invoice, recommendation, decisions, threshold }) {
         </View>
       )}
       {reasons.length > 0 && (
-        <View style={{ marginTop: 12, gap: 6 }}>
+        // The detailed reasons are collapsed by default; the tags above already say what stopped it.
+        <Pressable
+          onPress={() => setShowWhy((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showWhy }}
+          style={({ pressed }) => [styles.toggle, pressed && { opacity: 0.6 }]}
+        >
+          <Text style={styles.toggleText}>{showWhy ? "Hide why" : `Show why (${reasons.length})`}</Text>
+          <Chevron open={showWhy} />
+        </Pressable>
+      )}
+      {showWhy && reasons.length > 0 && (
+        <View style={{ marginTop: 10, gap: 6 }}>
           {reasons.map((r, i) => (
             <View key={i} style={styles.reason}>
               <View style={styles.reasonDot} />
