@@ -13,9 +13,17 @@ function defaultBase() {
 
 export const BASE = (process.env.EXPO_PUBLIC_API_URL || defaultBase()).replace(/\/$/, "");
 
+// Users only ever see these short messages; raw detail stays in the dev console / backend dev log.
+function userMessage(status, body) {
+  if (status === 0) return "Can't reach the server. Please try again.";
+  if (body?.error && body?.message) return body.message; // backend's own user-facing text
+  if (status === 422) return "Some fields are invalid.";
+  return "Something went wrong. Please try again.";
+}
+
 export class ApiError extends Error {
   constructor(status, body) {
-    super(body?.message || body?.detail?.[0]?.msg || body?.detail || `HTTP ${status}`);
+    super(userMessage(status, body));
     this.status = status;
     this.code = body?.error || "HTTP_ERROR";
     this.body = body;
@@ -23,10 +31,16 @@ export class ApiError extends Error {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(BASE + path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(BASE + path, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+  } catch (err) {
+    console.error(`fetch ${BASE + path} failed`, err);
+    throw new ApiError(0, null);
+  }
   const text = await res.text();
   let body = null;
   try {
@@ -34,7 +48,10 @@ async function request(path, options = {}) {
   } catch {
     body = null;
   }
-  if (!res.ok) throw new ApiError(res.status, body);
+  if (!res.ok) {
+    console.error(`${options.method || "GET"} ${path} -> ${res.status}`, body ?? text);
+    throw new ApiError(res.status, body);
+  }
   return body;
 }
 

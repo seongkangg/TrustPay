@@ -42,7 +42,8 @@ class JsonFormatter(logging.Formatter):
             if value is not None:
                 payload[key] = value
         if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
+            # Tracebacks repeat exception messages, which can hold raw values.
+            payload["exception"] = mask_text(self.formatException(record.exc_info))[0]
         return json.dumps(payload, default=str)
 
 

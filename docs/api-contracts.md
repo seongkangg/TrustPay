@@ -172,7 +172,7 @@ Gmail intake state.
 
 ### `POST /inbox/sync`
 Run one intake pass now. Same result shape as `last_result`.
-**503** `INBOX_NOT_AUTHORIZED` — no OAuth token yet (message says which command to run) · **503** `MOCK_SYSTEM_UNAVAILABLE` — Gmail unreachable.
+**503** `INBOX_NOT_AUTHORIZED` — no OAuth token yet (generic message; setup detail goes to the dev log) · **503** `MOCK_SYSTEM_UNAVAILABLE` — Gmail unreachable (generic message, no provider text).
 **Audit events:** per created invoice, the full workflow sequence (starting `invoice_received`).
 
 ### `GET /health`

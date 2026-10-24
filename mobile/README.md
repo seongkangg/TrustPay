@@ -47,8 +47,8 @@ loaded the JavaScript bundle from (your laptop's LAN IP) and calls port **8000**
 uvicorn runs on the same laptop as `expo start`, nothing needs configuring. If the backend lives
 elsewhere, copy `.env.example` to `.env` and set the URL, then restart `expo start`.
 
-If the Overview shows a red error, it includes the backend URL it tried, so you can tell at a
-glance whether the host or the bind address is the problem.
+If the Overview shows a red error, the backend URL it tried is logged to the dev console
+(Metro / Expo logs), so you can tell whether the host or the bind address is the problem.
 
 ## Checks
 
