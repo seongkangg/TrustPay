@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     height: 44,
     marginTop: 14,
     borderRadius: radius.pill,
-    backgroundColor: colors.ok, // dark green
+    backgroundColor: colors.accentStrong, // the deep teal of today's cell in "Received per day"
   },
   buttonDisabled: { backgroundColor: colors.panel2 },
   buttonPressed: { transform: [{ scale: 0.97 }] },
