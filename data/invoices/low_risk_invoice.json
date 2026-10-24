@@ -1,0 +1,45 @@
+{
+  "scenario": "1 - Low-risk invoice",
+  "description": "Verified vendor, PO matches exactly, amount below the auto-approve threshold. No sensitive data on the invoice. The system allows automatic processing.",
+  "upload": {
+    "vendor_invoice_number": "ACME-2026-0917",
+    "vendor_name": "Acme Office Supplies",
+    "vendor_id": "V-101",
+    "amount": 4250.0,
+    "currency": "USD",
+    "due_date": "2026-11-15",
+    "purchase_order_id": "PO-5001",
+    "source_document": "acme_2026_0917.pdf"
+  },
+  "expected": {
+    "invoice_id": "INV-1001",
+    "extraction_confidence_min": 0.9,
+    "vendor_verification": "verified",
+    "po_match": true,
+    "duplicate": false,
+    "sensitive_data_detected": false,
+    "risk_level": "low",
+    "reason_codes": ["POLICY_PASSED"],
+    "recommendation": "approve",
+    "governance_action": "permit",
+    "final_status": "COMPLETED",
+    "human_approval_required": false,
+    "dashboard": {
+      "risk_badge": "low",
+      "status_badge": "COMPLETED",
+      "blocked_actions": 0,
+      "pending_approvals": 0
+    },
+    "audit_event_sequence": [
+      "invoice_received",
+      "invoice_extracted",
+      "vendor_lookup_requested",
+      "vendor_verified",
+      "purchase_order_checked",
+      "risk_assigned",
+      "recommendation_generated",
+      "payment_authorized",
+      "audit_record_created"
+    ]
+  }
+}

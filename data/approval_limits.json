@@ -1,0 +1,17 @@
+{
+  "_comment": "Spending authority per actor and the global deterministic thresholds. These are policy constants: the model never changes them.",
+  "thresholds": {
+    "auto_approve_max_amount": 10000.0,
+    "currency": "USD",
+    "confidence_threshold": 0.75,
+    "approval_timeout_hours": 48
+  },
+  "approval_limits": [
+    { "agent_id": "intake_agent", "max_amount": 0.0, "may_recommend": false, "may_execute_payment": false },
+    { "agent_id": "verification_agent", "max_amount": 0.0, "may_recommend": false, "may_execute_payment": false },
+    { "agent_id": "policy_risk_agent", "max_amount": 0.0, "may_recommend": false, "may_execute_payment": false },
+    { "agent_id": "approval_agent", "max_amount": 10000.0, "may_recommend": true, "may_execute_payment": false },
+    { "agent_id": "governance_layer", "max_amount": 10000.0, "may_recommend": false, "may_execute_payment": true },
+    { "agent_id": "human_reviewer", "max_amount": 100000.0, "may_recommend": false, "may_execute_payment": true }
+  ]
+}

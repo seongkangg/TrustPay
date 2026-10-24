@@ -1,0 +1,17 @@
+{
+  "name": "trustpay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Governed multi-agent invoice approval platform — root scripts",
+  "scripts": {
+    "backend": "uvicorn backend.main:app --reload --port 8000",
+    "frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently -n api,web -c blue,green \"npm run backend\" \"npm run frontend\"",
+    "test": "pytest tests/",
+    "lint": "ruff check backend tests && npm --prefix frontend run lint",
+    "format": "ruff format backend tests"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

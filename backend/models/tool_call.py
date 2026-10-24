@@ -1,0 +1,40 @@
+"""Tool call contract.
+
+Agents never call tools directly. They submit a `ToolCallRequest` to the governance
+layer, which checks the allowlist, executes (or blocks) the call, and records a `ToolCall`.
+"""
+
+from datetime import datetime
+from typing import Any, Optional
+
+from pydantic import BaseModel, Field
+
+from .enums import AgentName, Authorization, ReasonCode, ToolName
+
+
+class ToolCallRequest(BaseModel):
+    agent: AgentName
+    tool: ToolName
+    purpose: str = Field(..., min_length=5, description="Why the agent needs this call")
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    invoice_id: str
+    correlation_id: str
+
+
+class ToolCall(BaseModel):
+    tool_call_id: str = Field(..., pattern=r"^TOOL-\d{3,}$", examples=["TOOL-001"])
+    invoice_id: str
+    correlation_id: str
+    agent: AgentName
+    tool: ToolName
+    purpose: str
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    is_write: bool = Field(False, description="Mutating operations require stricter authorization")
+    authorization: Authorization
+    denial_reason: Optional[ReasonCode] = None
+    result_summary: Optional[str] = Field(None, description="Human-readable, masked summary")
+    evidence_id: Optional[str] = Field(
+        None, description="ID agents cite as evidence, e.g. VENDOR-LOOKUP-14"
+    )
+    latency_ms: Optional[int] = Field(None, ge=0)
+    timestamp: datetime

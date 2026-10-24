@@ -1,0 +1,35 @@
+{
+  "_comment": "Mock vendor master. Bank accounts are stored masked. V-204 'Example Supplies' is intentionally ABSENT (scenario 3).",
+  "vendors": [
+    {
+      "vendor_id": "V-101",
+      "name": "Acme Office Supplies",
+      "verification_status": "verified",
+      "country": "US",
+      "bank_account_masked": "****1234",
+      "tax_id_masked": "****7788",
+      "onboarded_at": "2024-03-12",
+      "payment_terms_days": 30
+    },
+    {
+      "vendor_id": "V-102",
+      "name": "Northwind Logistics",
+      "verification_status": "verified",
+      "country": "US",
+      "bank_account_masked": "****5566",
+      "tax_id_masked": "****2210",
+      "onboarded_at": "2023-09-01",
+      "payment_terms_days": 45
+    },
+    {
+      "vendor_id": "V-103",
+      "name": "Contoso IT Services",
+      "verification_status": "pending",
+      "country": "US",
+      "bank_account_masked": "****9012",
+      "tax_id_masked": "****3344",
+      "onboarded_at": "2026-10-01",
+      "payment_terms_days": 30
+    }
+  ]
+}

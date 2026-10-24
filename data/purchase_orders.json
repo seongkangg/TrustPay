@@ -1,0 +1,32 @@
+{
+  "_comment": "Mock purchase orders. PO-7781 is intentionally ABSENT (scenario 3).",
+  "purchase_orders": [
+    {
+      "purchase_order_id": "PO-5001",
+      "vendor_id": "V-101",
+      "approved_amount": 4250.0,
+      "currency": "USD",
+      "status": "open",
+      "description": "Q4 office supplies",
+      "created_at": "2026-10-01"
+    },
+    {
+      "purchase_order_id": "PO-5002",
+      "vendor_id": "V-102",
+      "approved_amount": 25000.0,
+      "currency": "USD",
+      "status": "open",
+      "description": "Freight contract, October",
+      "created_at": "2026-09-20"
+    },
+    {
+      "purchase_order_id": "PO-5003",
+      "vendor_id": "V-103",
+      "approved_amount": 8000.0,
+      "currency": "USD",
+      "status": "open",
+      "description": "Managed IT onboarding",
+      "created_at": "2026-10-05"
+    }
+  ]
+}

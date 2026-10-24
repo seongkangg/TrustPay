@@ -1,0 +1,49 @@
+{
+  "scenario": "3b - Duplicate invoice",
+  "description": "A resubmission of scenario 1: same vendor, same vendor invoice number, same amount. Must be processed AFTER low_risk_invoice.json so the duplicate check has something to match. The system rejects/escalates and never pays twice.",
+  "upload": {
+    "vendor_invoice_number": "ACME-2026-0917",
+    "vendor_name": "Acme Office Supplies",
+    "vendor_id": "V-101",
+    "amount": 4250.0,
+    "currency": "USD",
+    "due_date": "2026-11-15",
+    "purchase_order_id": "PO-5001",
+    "source_document": "acme_2026_0917_resend.pdf"
+  },
+  "expected": {
+    "invoice_id": "INV-1004",
+    "depends_on": "INV-1001",
+    "extraction_confidence_min": 0.9,
+    "vendor_verification": "verified",
+    "po_match": true,
+    "duplicate": true,
+    "duplicate_of": "INV-1001",
+    "sensitive_data_detected": false,
+    "risk_level": "high",
+    "reason_codes": ["DUPLICATE_INVOICE"],
+    "recommendation": "reject",
+    "governance_action": "block_and_escalate",
+    "final_status": "BLOCKED",
+    "human_approval_required": true,
+    "dashboard": {
+      "risk_badge": "high",
+      "status_badge": "BLOCKED",
+      "blocked_actions": 1,
+      "pending_approvals": 1
+    },
+    "audit_event_sequence": [
+      "invoice_received",
+      "invoice_extracted",
+      "vendor_lookup_requested",
+      "vendor_verified",
+      "purchase_order_checked",
+      "duplicate_detected",
+      "risk_assigned",
+      "recommendation_generated",
+      "payment_blocked",
+      "approval_requested",
+      "audit_record_created"
+    ]
+  }
+}

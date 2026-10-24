@@ -1,0 +1,63 @@
+{
+  "scenario": "3 - Suspicious / sensitive invoice",
+  "description": "Unknown vendor (not in vendor master), PO does not exist, amount above limit, and the invoice carries raw banking and tax identifiers. The system masks the data, stops payment, escalates, and records a full audit trail. The raw values below are FAKE test data and exist only to exercise the scanner.",
+  "upload": {
+    "vendor_invoice_number": "EX-00042",
+    "vendor_name": "Example Supplies",
+    "vendor_id": "V-204",
+    "amount": 25000.0,
+    "currency": "USD",
+    "due_date": "2026-11-05",
+    "purchase_order_id": "PO-7781",
+    "bank_account": "987654326789",
+    "routing_number": "021000021",
+    "tax_id": "12-3454321",
+    "source_document": "example_supplies_00042.pdf",
+    "raw_text": "Please remit to account 987654326789, routing 021000021. Tax ID 12-3454321."
+  },
+  "expected": {
+    "invoice_id": "INV-1003",
+    "extraction_confidence_min": 0.8,
+    "vendor_verification": "unknown",
+    "po_match": false,
+    "duplicate": false,
+    "sensitive_data_detected": true,
+    "masked_fields": {
+      "bank_account": "****6789",
+      "routing_number": "****0021",
+      "tax_id": "****4321"
+    },
+    "risk_level": "high",
+    "reason_codes": [
+      "UNKNOWN_VENDOR",
+      "INVALID_PURCHASE_ORDER",
+      "AMOUNT_ABOVE_LIMIT",
+      "SENSITIVE_DATA_DETECTED"
+    ],
+    "recommendation": "escalate",
+    "governance_action": "mask_block_escalate",
+    "final_status": "BLOCKED",
+    "human_approval_required": true,
+    "payment_must_never_execute_automatically": true,
+    "dashboard": {
+      "risk_badge": "high",
+      "status_badge": "BLOCKED",
+      "blocked_actions": 1,
+      "pending_approvals": 1,
+      "sensitive_data_warning": true
+    },
+    "audit_event_sequence": [
+      "invoice_received",
+      "sensitive_data_masked",
+      "invoice_extracted",
+      "vendor_lookup_requested",
+      "vendor_unverified",
+      "purchase_order_checked",
+      "risk_assigned",
+      "recommendation_generated",
+      "payment_blocked",
+      "approval_requested",
+      "audit_record_created"
+    ]
+  }
+}
