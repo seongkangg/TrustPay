@@ -39,6 +39,9 @@ export const colors = {
 
 export const radius = { panel: 18, row: 16, alert: 14, field: 12, cell: 12, pill: 999 };
 
+// Screen margin on both sides, and the inset inside a rounded panel so content clears its corners.
+export const space = { gutter: 22, card: 20 };
+
 export const RISK = {
   low: { fg: colors.riskLow, bg: colors.riskLowBg },
   medium: { fg: colors.riskMedium, bg: colors.riskMediumBg },

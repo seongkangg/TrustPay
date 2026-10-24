@@ -8,9 +8,9 @@ import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { DayCalendar, RiskBars, Sparkline, VolumeChart, dayLabel } from "../../components/Charts.js";
 import { Alert, Badge, Card, Code, CountPill, H2, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
-import { colors, radius } from "../../theme.js";
+import { colors, radius, space } from "../../theme.js";
 
-const GUTTER = 16;
+const GUTTER = space.gutter;
 
 const wholeDollars = (amount) => `$${Math.round(amount).toLocaleString("en-US")}`;
 
@@ -181,7 +181,7 @@ function Kpi({ label, value, values, width, note, color }) {
       ) : (
         <Text style={styles.kpiNote}> </Text>
       )}
-      <Sparkline values={values} width={width - 24} color={color} />
+      <Sparkline values={values} width={width - 28} color={color} />
     </View>
   );
 }
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   keyText: { fontSize: 12, color: colors.muted },
   skeleton: { backgroundColor: colors.panel, borderRadius: radius.panel, marginTop: 8 },
   kpis: { flexDirection: "row", gap: 8, marginTop: 16 },
-  kpi: { backgroundColor: colors.panel, borderRadius: radius.panel, paddingHorizontal: 12, paddingVertical: 12 },
+  kpi: { backgroundColor: colors.panel, borderRadius: radius.panel, paddingHorizontal: 14, paddingVertical: 14 },
   kpiLabel: { fontSize: 12, fontWeight: "500", color: colors.muted },
   kpiValue: { fontSize: 26, fontWeight: "700", letterSpacing: -0.8, color: colors.text, fontVariant: ["tabular-nums"] },
   kpiNote: { fontSize: 11, fontWeight: "600", color: colors.ok, marginBottom: 4 },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 2 },
   link: { color: colors.accentInk, fontSize: 13, fontWeight: "600" },
   rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
-  queueItem: { borderRadius: radius.row, padding: 14, gap: 6 },
+  queueItem: { borderRadius: radius.row, paddingVertical: 16, paddingHorizontal: 18, gap: 6 },
   queueHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 },
   queueVendor: { fontWeight: "700", fontSize: 15, color: colors.text, flex: 1 },
   queueAmount: { fontWeight: "700", fontSize: 16, color: colors.text, fontVariant: ["tabular-nums"] },

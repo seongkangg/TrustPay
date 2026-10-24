@@ -6,7 +6,7 @@ import { fmtMoney, fmtTime } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { Alert, Badge, Card, CountPill, Muted, RiskBadge, StatusBadge, sentence } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
-import { colors } from "../../theme.js";
+import { colors, space } from "../../theme.js";
 
 export default function Invoices() {
   const { invoices, summary, error, refreshing, refresh } = useDashboard();
@@ -61,12 +61,12 @@ export default function Invoices() {
 
 const styles = StyleSheet.create({
   // Bottom padding clears the floating nav (bar + its gap from the screen edge).
-  page: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
+  page: { paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   title: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   rule: { borderTopWidth: 1, borderTopColor: colors.panel2 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, gap: 10 },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 14, paddingHorizontal: space.card, gap: 10 },
   rowTitle: { fontSize: 14, fontWeight: "600", color: colors.text },
   rowId: { fontWeight: "400", color: colors.muted, fontSize: 12 },
   rowAmount: { fontWeight: "700", fontSize: 14, color: colors.text, fontVariant: ["tabular-nums"] },

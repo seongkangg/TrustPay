@@ -5,7 +5,7 @@ import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import InboxCard from "../../components/InboxCard.js";
 import { Alert } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
-import { colors } from "../../theme.js";
+import { colors, space } from "../../theme.js";
 
 export default function Inbox() {
   const { inbox, error, refreshing, refresh, load } = useDashboard();
@@ -23,5 +23,5 @@ export default function Inbox() {
 
 const styles = StyleSheet.create({
   // Bottom padding clears the floating nav (bar + its gap from the screen edge).
-  page: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
+  page: { paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
 });

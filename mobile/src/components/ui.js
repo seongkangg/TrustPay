@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 
 import { human } from "../api/client.js";
-import { RISK, STATUS, colors, radius } from "../theme.js";
+import { RISK, STATUS, colors, radius, space } from "../theme.js";
 
 // "PENDING_APPROVAL" -> "Pending approval"
 export const sentence = (s) => {
@@ -112,7 +112,7 @@ export function Mark({ size = 26 }) {
 export const styles = StyleSheet.create({
   badge: { alignSelf: "flex-start", height: 22, justifyContent: "center", paddingHorizontal: 9, borderRadius: radius.pill },
   badgeText: { fontSize: 12, fontWeight: "600" },
-  card: { backgroundColor: colors.panel, borderRadius: radius.panel, padding: 16 },
+  card: { backgroundColor: colors.panel, borderRadius: radius.panel, padding: space.card },
   h2: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16, marginTop: 28, marginBottom: 12 },
   countPill: {
     minWidth: 22,
@@ -126,7 +126,7 @@ export const styles = StyleSheet.create({
   countText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   muted: { color: colors.muted, fontSize: 14 },
   small: { fontSize: 12 },
-  alert: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.alert, marginVertical: 6 },
+  alert: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.alert, marginVertical: 6 },
   button: { height: 44, paddingHorizontal: 18, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   pressed: { transform: [{ scale: 0.97 }] },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 14 },

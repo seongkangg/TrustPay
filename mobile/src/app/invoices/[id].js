@@ -16,7 +16,7 @@ import {
 import { AWAITING_HUMAN, api, fmtMoney, fmtPct, fmtTime, human } from "../../api/client.js";
 import { Alert, Badge, Card, Code, H2, Muted, PillButton, RiskBadge, StatusBadge, sentence } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
-import { colors, radius } from "../../theme.js";
+import { colors, radius, space } from "../../theme.js";
 
 export default function InvoiceScreen() {
   const { id } = useLocalSearchParams();
@@ -357,7 +357,7 @@ function ApprovalPanel({ invoice, decisions, events, onDecided }) {
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 16, paddingBottom: 48 },
+  page: { paddingHorizontal: space.gutter, paddingTop: 16, paddingBottom: 48 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 6 },
   codes: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
   kv: { flexDirection: "row", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.panel2 },

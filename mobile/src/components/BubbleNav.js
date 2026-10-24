@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 
-import { colors, radius } from "../theme.js";
+import { colors, radius, space } from "../theme.js";
 
 export const BAR_HEIGHT = 64;
 
@@ -165,8 +165,8 @@ const float = {
 const styles = StyleSheet.create({
   wrap: {
     position: "absolute",
-    left: 16,
-    right: 16,
+    left: space.gutter,
+    right: space.gutter,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
