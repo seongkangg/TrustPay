@@ -22,7 +22,8 @@ export function DashboardProvider({ children }) {
       setInvoices(list.items);
       setError(null);
     } catch (err) {
-      setError(`${err.message} (backend: ${BASE})`);
+      console.warn(`load failed (backend: ${BASE})`, err);
+      setError(err.message);
     }
     try {
       setInbox({ status: await api.inboxStatus(), unavailable: false });
