@@ -11,6 +11,9 @@ import { dayLabel, DayCalendar, RiskBars, Sparkline, VolumeChart } from "../comp
 
 const REFRESH_MS = 15_000;
 
+const wholeDollars = (amount) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+
 function Kpi({ label, value, values, tone, note }) {
   return (
     <div className="panel kpi">
@@ -73,7 +76,8 @@ export default function Dashboard() {
   const days = summary?.by_day || [];
   const today = days[days.length - 1];
   const paidShare = amounts?.total ? Math.round((amounts.paid / amounts.total) * 100) : null;
-  const range = days.length ? `${dayLabel(days[0].date)} – ${dayLabel(days[days.length - 1].date)}` : "";
+  // by_day is bucketed by UTC calendar day on the backend; say so wherever a day is named.
+  const range = days.length ? `${dayLabel(days[0].date)} – ${dayLabel(days[days.length - 1].date)} (UTC)` : "";
 
   return (
     <>
@@ -84,6 +88,7 @@ export default function Dashboard() {
         <h2 id="approvals-h">
           Needs your approval
           <span className={`count-pill ${awaiting.length ? "" : "quiet"}`}>{awaiting.length}</span>
+          {awaiting.length === 0 && <span className="h-note">Nothing waiting. New invoices are checked automatically.</span>}
         </h2>
         <ApprovalQueue items={awaiting} reasonCodes={reasonCodes} />
       </section>
@@ -95,7 +100,7 @@ export default function Dashboard() {
               Invoice volume
             </h2>
             <div className="figure-row">
-              <span className="figure">{amounts ? fmtMoney(amounts.total) : "—"}</span>
+              <span className="figure">{amounts ? wholeDollars(amounts.total) : "—"}</span>
               {paidShare !== null && <span className="delta up">{paidShare}% paid</span>}
             </div>
             {amounts && (
@@ -134,7 +139,7 @@ export default function Dashboard() {
           note={
             today?.received > 0 && (
               <span className="delta up">
-                <ArrowUpIcon /> {today.received} today
+                <ArrowUpIcon /> {today.received} on {dayLabel(today.date)}
               </span>
             )
           }
@@ -210,11 +215,11 @@ export default function Dashboard() {
                   <th>Invoice</th>
                   <th>Vendor</th>
                   <th className="right">Amount</th>
-                  <th>Risk</th>
+                  <th className="hide-sm">Risk</th>
                   <th>Status</th>
-                  <th>Recommendation</th>
-                  <th>Sensitive data</th>
-                  <th>Updated</th>
+                  <th className="hide-sm">Recommendation</th>
+                  <th className="hide-sm">Sensitive data</th>
+                  <th className="hide-sm">Updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -227,15 +232,15 @@ export default function Dashboard() {
                     </td>
                     <td>{inv.vendor_name || "—"}</td>
                     <td className="right num">{fmtMoney(inv.amount, inv.currency)}</td>
-                    <td>
+                    <td className="hide-sm">
                       <RiskBadge level={inv.risk_level} />
                     </td>
                     <td>
                       <StatusBadge status={inv.status} />
                     </td>
-                    <td className="cap">{inv.recommendation || "—"}</td>
-                    <td>{inv.sensitive_data_detected ? <span className="badge risk-medium">Masked</span> : "—"}</td>
-                    <td className="small muted">{fmtTime(inv.updated_at)}</td>
+                    <td className="cap hide-sm">{inv.recommendation || "—"}</td>
+                    <td className="hide-sm">{inv.sensitive_data_detected ? <span className="badge">Masked</span> : "—"}</td>
+                    <td className="small muted hide-sm">{fmtTime(inv.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>

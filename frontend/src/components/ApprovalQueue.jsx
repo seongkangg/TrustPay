@@ -9,7 +9,7 @@ import StatusBadge from "./StatusBadge.jsx";
 // the invoice page (ApprovalPanel); this list only routes the reviewer there.
 export default function ApprovalQueue({ items, reasonCodes = {} }) {
   if (items.length === 0) {
-    return <p className="queue-empty muted">Nothing is waiting for a decision. New invoices are checked automatically.</p>;
+    return null; // the section heading says "Nothing waiting" with a 0 count
   }
   return (
     <ul className="queue">
