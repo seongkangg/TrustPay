@@ -12,7 +12,7 @@ import { fmtMoney } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { FilterButton, FilterMenu } from "../../components/FilterMenu.js";
 import VendorAvatar from "../../components/VendorAvatar.js";
-import { Alert, Badge, Card, CountPill, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
+import { Alert, Badge, Card, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
@@ -113,13 +113,13 @@ export default function Invoices() {
       />
       {error && <Alert kind="danger">{error}</Alert>}
 
-      <View style={styles.head}>
-        <Text style={styles.title}>{filter.key === "all" ? "All invoices" : `${filter.label} invoices`}</Text>
-        {shown.length > 0 && <CountPill n={shown.length} quiet />}
-      </View>
-
       {shown.length > 0 && (
-        <SummaryCard total={total} count={shown.length} split={filter.key === "all" ? options : null} />
+        <SummaryCard
+          title={filter.key === "all" ? "All invoices" : `${filter.label} invoices`}
+          total={total}
+          count={shown.length}
+          split={filter.key === "all" ? options : null}
+        />
       )}
 
       {invoices.length === 0 ? (
@@ -157,17 +157,18 @@ export default function Invoices() {
   );
 }
 
-// Total for the current filter, its count, and (on All) how it splits across the three outcomes.
-function SummaryCard({ total, count, split }) {
+// Which list this is (the filter), its total and count, and (on All) how it splits across the
+// three outcomes.
+function SummaryCard({ title, total, count, split }) {
   const parts = split
     ? SPLIT.map((s) => ({ ...s, ...split.find((o) => o.key === s.key) })).filter((p) => p.count > 0)
     : [];
   return (
     <View style={styles.summary}>
-      <Text style={styles.summaryLabel}>Total amount</Text>
+      <Text style={styles.summaryLabel}>{title}</Text>
       <Text style={styles.summaryTotal}>{wholeDollars(total)}</Text>
       <Muted small>
-        {count} invoice{count === 1 ? "" : "s"}
+        {count} invoice{count === 1 ? "" : "s"} · total amount
       </Muted>
       {parts.length > 0 && (
         <>
@@ -255,11 +256,10 @@ function MoreButton({ label, note, up, onPress }) {
 const styles = StyleSheet.create({
   // Bottom padding clears the floating nav (bar + its gap from the screen edge).
   page: { paddingHorizontal: space.gutter, paddingTop: 12, paddingBottom: BAR_HEIGHT + 64 },
-  head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  title: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
   // The same spacing as a panel (space.card on every side) but no grey box behind it.
   summary: { gap: 2, padding: space.card },
-  summaryLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
+  // Names the list being shown (the filter), so it reads as the page heading.
+  summaryLabel: { fontSize: 15, fontWeight: "700", color: colors.text, letterSpacing: -0.15 },
   summaryTotal: { fontSize: 30, fontWeight: "700", letterSpacing: -0.9, color: colors.text, fontVariant: ["tabular-nums"] },
   splitBar: { flexDirection: "row", height: 8, gap: 3, borderRadius: radius.pill, overflow: "hidden", marginTop: 14 },
   splitLegend: { flexDirection: "row", flexWrap: "wrap", columnGap: 16, rowGap: 4, marginTop: 10 },
