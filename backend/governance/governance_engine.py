@@ -44,7 +44,25 @@ from backend.models import (
     ToolName,
 )
 from backend.services.audit_service import AuditService
+from backend.services.masking_service import mask_text
 from backend.utils.timestamps import now_utc
+
+
+def _mask_decision(d: AgentDecision) -> AgentDecision:
+    def m(text):
+        return mask_text(text)[0]
+
+    e = d.explanation
+    explanation = e.model_copy(
+        update={
+            "decision": m(e.decision),
+            "recommended_next_step": m(e.recommended_next_step),
+            "reasons": [m(r) for r in e.reasons],
+            "missing_information": [m(x) for x in e.missing_information],
+        }
+    )
+    return d.model_copy(update={"decision": m(d.decision), "explanation": explanation})
+
 
 _SEVERITY = {
     RiskLevel.LOW: Severity.LOW,
@@ -154,7 +172,10 @@ class GovernanceEngine:
         else:
             governance_result = Authorization.ALLOWED
 
-        accepted = decision.model_copy(update={"governance_result": governance_result})
+        # Masked before storage: a decision rejected for leaking raw values must not persist them.
+        accepted = _mask_decision(decision).model_copy(
+            update={"governance_result": governance_result}
+        )
         row = AgentDecisionRow(**accepted.model_dump(mode="json"))
         row.timestamp = accepted.timestamp
         self.session.add(row)
@@ -213,7 +234,13 @@ class GovernanceEngine:
         evidence_ids: list[str],
     ) -> GovernanceOutcome:
         """Deterministic outcome. AI recommended; this decides."""
-        if policy.auto_payment_allowed and recommendation == Recommendation.APPROVE:
+        # POLICY-013 backstop: policy was evaluated before the approval agent's confidence existed.
+        low_confidence = confidence < self.policy.confidence_threshold
+        if (
+            policy.auto_payment_allowed
+            and recommendation == Recommendation.APPROVE
+            and not low_confidence
+        ):
             outcome = self.call_tool(
                 ToolCallRequest(
                     agent=AgentName.GOVERNANCE,
@@ -252,8 +279,8 @@ class GovernanceEngine:
             reason_codes = [ReasonCode.MOCK_SYSTEM_UNAVAILABLE]
             target, risk = InvoiceStatus.PENDING_APPROVAL, RiskLevel.MEDIUM
         elif policy.auto_payment_allowed:
-            # Policy would permit, but the agent itself asked for review → honour the caution.
-            reason_codes = policy.reason_codes
+            # Policy would permit, but the agent asked for review or is unsure → honour the caution.
+            reason_codes = [ReasonCode.LOW_CONFIDENCE] if low_confidence else policy.reason_codes
             target, risk = InvoiceStatus.PENDING_APPROVAL, RiskLevel.MEDIUM
         else:
             reason_codes = policy.reason_codes
@@ -320,6 +347,7 @@ class GovernanceEngine:
         row = self._open_approval(invoice_id)
         if row is None:
             raise LookupError(f"no open approval request for {invoice_id}")
+        note = mask_text(note)[0]
         row.reviewer = reviewer
         row.human_decision = decision.value
         row.reviewer_note = note

@@ -94,7 +94,12 @@ class InvoiceWorkflow:
         policy = ctx.policy or self.gov.evaluate(
             ctx.to_policy_input(), invoice_id=ctx.invoice_id, correlation_id=ctx.correlation_id
         )
-        recommendation = ctx.recommendation or Recommendation.ESCALATE
+        # A failed or rejected agent decision never stands as an approve recommendation.
+        recommendation = (
+            Recommendation.ESCALATE
+            if ctx.agent_failure
+            else ctx.recommendation or Recommendation.ESCALATE
+        )
         confidence = (
             ctx.recommendation_confidence if ctx.recommendation_confidence is not None else 0.0
         )

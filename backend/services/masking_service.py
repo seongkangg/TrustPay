@@ -59,10 +59,25 @@ _TEXT_RULES: list[tuple[SensitiveFieldType, re.Pattern[str], str]] = [
         re.compile(r"(?i)\b(?:bearer\s+|sk-|api[_-]?key[=:\s]+|token[=:\s]+)[A-Za-z0-9._-]{16,}"),
         "redact",
     ),
-    # Card number: 4 groups of 4 digits → fully redacted
+    # Long base64 secret: 32+ chars mixing upper, lower and digits (lowercase hex hashes don't match)
+    (
+        SensitiveFieldType.API_KEY,
+        re.compile(
+            r"(?<![A-Za-z0-9+/])(?=[A-Za-z0-9+/]{0,200}[A-Z])(?=[A-Za-z0-9+/]{0,200}[a-z])"
+            r"(?=[A-Za-z0-9+/]{0,200}\d)[A-Za-z0-9+/]{32,}={0,2}"
+        ),
+        "redact",
+    ),
+    # Card number: 4 groups of 4 digits, or 15–16 contiguous digits → fully redacted
     (
         SensitiveFieldType.PAYMENT_CREDENTIAL,
-        re.compile(r"\b(?:\d{4}[ -]){3}\d{4}\b"),
+        re.compile(r"\b(?:\d{4}[ -]){3}\d{4}\b|\b\d{15,16}\b"),
+        "redact",
+    ),
+    # Card security code after "CVV" / "CVC" / "security code" → fully redacted
+    (
+        SensitiveFieldType.PAYMENT_CREDENTIAL,
+        re.compile(r"(?i)\b(?:cvv2?|cvc2?|security code)\D{0,5}(\d{3,4})\b"),
         "redact",
     ),
     # Routing number: 9 digits preceded by the word "routing" (or ABA)
@@ -108,7 +123,7 @@ def mask_text(text: str | None) -> tuple[str | None, list[Detection]]:
 
 
 def mask_upload(data: dict) -> tuple[dict, list[Detection]]:
-    """Mask every sensitive field and the raw text of an InvoiceUpload-shaped dict.
+    """Mask every sensitive field and the free-text fields of an InvoiceUpload-shaped dict.
 
     Returns a new dict; the input is not modified and should be discarded by the caller.
     """
@@ -119,9 +134,10 @@ def mask_upload(data: dict) -> tuple[dict, list[Detection]]:
             masked[name], det = mask_field(name, masked[name])
             if det:
                 detections.append(det)
-    if masked.get("raw_text"):
-        masked["raw_text"], text_dets = mask_text(masked["raw_text"])
-        detections.extend(text_dets)
+    for name in ("vendor_name", "vendor_invoice_number", "source_document", "raw_text"):
+        if masked.get(name):
+            masked[name], text_dets = mask_text(masked[name])
+            detections.extend(text_dets)
     return masked, detections
 
 
