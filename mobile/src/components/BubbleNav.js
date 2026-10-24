@@ -211,7 +211,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...float,
   },
-  // Waiting count on a tab icon's top-right corner: Deep Teal, the colour for "work waiting".
+  // Waiting count on a tab icon's top-right corner, in red: invoices whose payment is withheld until
+  // someone decides. The deeper risk red keeps the small white digits readable.
   tabBadge: {
     position: "absolute",
     top: -6,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     height: 18,
     paddingHorizontal: 4,
     borderRadius: 9,
-    backgroundColor: colors.accentStrong,
+    backgroundColor: colors.riskHigh,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,

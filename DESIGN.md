@@ -312,6 +312,7 @@ Soft, pill-shaped and tactile.
 ### Chips (badges, count pills, deltas)
 - **Badge:** 22px pill, 9px padding, 12px/600, sentence case. Tint background with coloured text per the Polarity Rule; solid red with white text for blocked/failed/rejected; neutral Fog with Badge Slate for non-risk states.
 - **Count pill:** 22px circle-to-pill beside a heading; Deep Teal with white text when work waits, quiet grey when zero.
+- **Tab badge (phone app):** 18px circle on the top-right of the Inbox tab icon with the number of invoices awaiting a decision, in Risk Red with white text and a white ring; hidden at zero. Red here means withheld money waiting on a person.
 - **Delta pill:** 22px, Mint Wash with green text for an upward or healthy change (the hero's "% paid", a KPI's up-arrow count for today); Fog with muted text otherwise.
 
 ### Cards / Containers
