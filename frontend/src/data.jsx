@@ -1,10 +1,10 @@
 // Dashboard data shared by the Overview, Inbox and Invoices pages and the top nav's waiting count:
-// fetched once, polled every 15 s, refreshed after an inbox sync or a decision.
+// fetched once, polled every 5 s, refreshed after an inbox sync or a decision.
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { api, AWAITING_HUMAN } from "./api/client.js";
 
-const REFRESH_MS = 15_000;
+const REFRESH_MS = 5_000;
 
 const DashboardContext = createContext(null);
 

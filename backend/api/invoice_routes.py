@@ -70,7 +70,7 @@ def get_source_document_pdf(
     invoice = svc.get(invoice_id)
     stored = svc.source_pdf(invoice_id)
     if stored is not None:
-        content, name = stored.pdf, f"{invoice_id}-redacted.pdf"
+        content, name = stored.pdf, f"{invoice_id}.pdf"
     elif invoice.source_text:
         content, name = render_masked_pdf(invoice), f"{invoice_id}-masked.pdf"
     else:

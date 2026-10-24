@@ -230,7 +230,7 @@ colours, type, components and rules. Read both before changing either UI.
 ## Invoices by email (Gmail)
 
 The backend watches a Gmail inbox (read-only) for emails whose attachment is named
-`invoice.pdf` — any case — and runs each one through the agents automatically.
+a PDF with "invoice" in its name — any case — and runs each one through the agents automatically.
 
 The PDF's text is read with a `Label: value` parser first. The model fills in only the fields
 the parser missed, and only from masked text. A value is kept only if it actually appears in the
@@ -239,7 +239,7 @@ document, and the model is never asked for bank, routing or tax numbers.
 1. Google Cloud: create a project, enable the **Gmail API**, create an **OAuth client ID (Desktop app)**, download it to `secrets/credentials.json` (gitignored).
 2. `python -m backend.inbox.authorize` — browser consent, writes `secrets/token.json`.
 3. `.env`: `INBOX_ENABLED=true`, restart the backend. Poll interval `INBOX_POLL_SECONDS` (60).
-4. `python scripts/make_invoice_pdfs.py` → `data/invoices/pdf/*.pdf`; email one to that account as `invoice.pdf`.
+4. `python scripts/make_invoice_pdfs.py` → `data/invoices/pdf/*.pdf`; email one to that account (any PDF name containing "invoice").
 
 The **Inbox** card (on the web dashboard, and as its own tab in the phone app) shows
 authorization, the last poll, and a **Check inbox now** button; `GET /inbox/status` and

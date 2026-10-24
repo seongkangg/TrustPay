@@ -1,14 +1,14 @@
 # backend/inbox/
 
 Gmail intake. Watches one mailbox (read-only) for emails whose attachment is named
-`invoice.pdf` (any case), pulls the PDF, parses it, and runs it through the normal
+a PDF attachment whose name contains "invoice" (any case, e.g. `Invoice_1042.pdf`), pulls the PDF, parses it, and runs it through the normal
 `InvoiceService.create → process` path — so an emailed invoice gets exactly the same masking,
 agents, policy, and audit trail as one posted to the API.
 
 | File | What it does |
 |------|--------------|
 | `__init__.py` | `InboxMessage`, `InboxError`, `is_invoice_attachment(name)` (the detection rule). |
-| `gmail_client.py` | `GmailClient` over the Gmail v1 API: `list_candidates(days)` (`has:attachment filename:pdf newer_than:Nd`), `fetch(id)` (walks MIME parts for `invoice.pdf`, downloads and decodes it). Scope `gmail.readonly`; the mailbox is never modified. `from_files()` loads/refreshes the token. |
+| `gmail_client.py` | `GmailClient` over the Gmail v1 API: `list_candidates(days)` (`has:attachment filename:pdf newer_than:Nd`), `fetch(id)` (walks MIME parts for the first PDF named with "invoice", downloads and decodes it). Scope `gmail.readonly`; the mailbox is never modified. `from_files()` loads/refreshes the token. |
 | `authorize.py` | `python -m backend.inbox.authorize` — one-time OAuth consent in the browser; writes the token file. |
 | `pdf_parser.py` | `extract_text(bytes)` (pypdf) and `upload_from_text(text, source)` — a regex over `Label: value` lines (`LABELS`), `normalize_date()` ("November 22, 2026" → `2026-11-22`), currency from a lone `$`/`€`/`£`. Unfound fields stay `None`. No LLM. |
 | `llm_extraction.py` | `extract_missing_fields(llm, text, upload)` — asks the model only for the fields the labels missed, on masked text, then keeps a value **only if it is written in the document** (`appears_in_document`): IDs and names verbatim, the amount as a number that appears, the due date as a date that appears in any format. Anything else is discarded. Never asks for bank / routing / tax. |
@@ -43,8 +43,8 @@ cannot fully read is never paid. With Granite on a laptop this adds ~5–8 s per
 ## Demo
 
 `python scripts/make_invoice_pdfs.py` writes `data/invoices/pdf/*.pdf` from the fixtures.
-Email one to the watched account **as `invoice.pdf`**, then click **Check inbox now** on the
-dashboard (or wait ≤ 60 s). `POST /demo/reset` also clears `inbox_messages`, so the same email
+Email one to the watched account **with "invoice" in the PDF's name** (e.g. `invoice.pdf`), then click **Check inbox now** on the
+dashboard (or wait ≤ 10 s). `POST /demo/reset` also clears `inbox_messages`, so the same email
 can be re-ingested for a repeat run.
 
 ## Privacy

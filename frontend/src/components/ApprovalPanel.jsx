@@ -45,11 +45,25 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
                   <strong>Why</strong>
                 </div>
                 <ul className="why small">
-                  {why.reasons.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
+                  {why.reasons.map((r, i) => {
+                    // "New vendor: …" — the short heading before the colon is bold.
+                    const cut = r.indexOf(": ");
+                    return cut > 0 && cut < 40 ? (
+                      <li key={i}>
+                        <strong>{r.slice(0, cut)}.</strong> {r.slice(cut + 2)}
+                      </li>
+                    ) : (
+                      <li key={i}>{r}</li>
+                    );
+                  })}
                 </ul>
               </>
+            )}
+            {why.recommended_next_step && (
+              <div className="small" style={{ marginTop: 8 }}>
+                <strong>What to do</strong>
+                <div>{why.recommended_next_step}</div>
+              </div>
             )}
             {why.policy_rules_triggered?.length > 0 && (
               <div className="small muted">

@@ -6,6 +6,7 @@ import Svg, { Path } from "react-native-svg";
 
 import { api, fmtAgo } from "../api/client.js";
 import { colors, radius } from "../theme.js";
+import { Bone, Shimmer } from "./Skeleton.js";
 import { Alert, Card, Muted } from "./ui.js";
 
 export default function InboxCard({ status, unavailable, onSynced }) {
@@ -21,10 +22,25 @@ export default function InboxCard({ status, unavailable, onSynced }) {
     );
   }
   if (!status) {
+    // Skeleton of this card: icon and two lines, the four stat tiles, the button.
     return (
-      <Card>
-        <Muted>Loading…</Muted>
-      </Card>
+      <Shimmer>
+        <Card>
+          <View style={styles.head}>
+            <Bone width={44} height={44} round={radius.field} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Bone width="40%" height={14} />
+              <Bone width="60%" height={10} />
+            </View>
+          </View>
+          <View style={styles.stats}>
+            {[0, 1, 2, 3].map((i) => (
+              <Bone key={i} width={0} height={52} round={radius.field} style={{ flex: 1 }} />
+            ))}
+          </View>
+          <Bone height={44} round={radius.pill} style={{ marginTop: 14 }} />
+        </Card>
+      </Shimmer>
     );
   }
 

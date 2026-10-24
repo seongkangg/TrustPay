@@ -7,6 +7,7 @@ import { fmtMoney } from "../../api/client.js";
 import ApprovalQueue from "../../components/ApprovalQueue.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import InboxCard from "../../components/InboxCard.js";
+import { ListSkeleton } from "../../components/Skeleton.js";
 import { Alert, Card, H2, Muted } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
 import { colors, space } from "../../theme.js";
@@ -27,7 +28,9 @@ export default function Inbox() {
     >
       {error && <Alert kind="danger">{error}</Alert>}
 
-      {awaiting.length === 0 ? (
+      {!summary ? (
+        <ListSkeleton rows={2} />
+      ) : awaiting.length === 0 ? (
         <Card style={styles.clear}>
           <View style={styles.clearIcon}>
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.ok} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
@@ -36,7 +39,7 @@ export default function Inbox() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.clearTitle}>All caught up</Text>
-            <Muted small>{summary ? "Nothing needs your approval. New invoices are checked automatically." : "Loading…"}</Muted>
+            <Muted small>Nothing needs your approval. New invoices are checked automatically.</Muted>
           </View>
         </Card>
       ) : (

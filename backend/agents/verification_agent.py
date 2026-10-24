@@ -239,16 +239,25 @@ class VerificationAgent(BaseAgent):
         if not conditions:
             return None
         stmt = (
-            select(InvoiceRow.invoice_id, InvoiceRow.vendor_id, InvoiceRow.vendor_name)
+            select(
+                InvoiceRow.invoice_id,
+                InvoiceRow.vendor_id,
+                InvoiceRow.vendor_name,
+                InvoiceRow.vendor_invoice_number,
+            )
             .where(InvoiceRow.invoice_id != ctx.invoice_id, or_(*conditions))
             .order_by(InvoiceRow.created_at)
         )
-        for invoice_id, other_id, other_name in self.gov.session.execute(stmt):
+        for invoice_id, other_id, other_name, other_number in self.gov.session.execute(stmt):
             same_vendor = (
                 other_id == ctx.vendor_id
                 if ctx.vendor_id and other_id
                 else bool(vendor_name) and normalize_vendor_name(other_name) == vendor_name
             )
             if same_vendor:
+                same_number = bool(ctx.vendor_invoice_number) and (
+                    other_number == ctx.vendor_invoice_number
+                )
+                ctx.duplicate_match = "invoice_number" if same_number else "amount"
                 return invoice_id
         return None

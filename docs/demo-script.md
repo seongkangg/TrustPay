@@ -18,7 +18,7 @@ npm run reset                    # POST /demo/reset — wipes invoice state, kee
 Invoices arrive **by email**: Gmail must be authorized once (`backend/inbox/README.md`) and
 `INBOX_ENABLED=true`. Have the four PDFs from `python scripts/make_invoice_pdfs.py`
 (`data/invoices/pdf/*.pdf`) ready in a mail draft, each to be sent **as `invoice.pdf`**.
-The poller checks every 60 s; **Check inbox now** on the Overview forces it.
+The poller checks every 10 s; **Check inbox now** on the Overview forces it.
 
 Keep <http://localhost:8000/docs> in a second tab for the "look, it's a real API" moment.
 Record a backup video of this script before the session.

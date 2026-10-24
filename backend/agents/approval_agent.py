@@ -3,13 +3,15 @@
 Allowed tool: approval_request_create (the governance engine creates the request during
 finalize, so this agent normally needs no tool call). May never execute a payment.
 
-The recommendation is derived deterministically from the policy result; the model supplies
-the reasons and next step. Confidence is evidence-based (the lower of the Reading and
-Verification scores), never the model's self-report. The model may only make the outcome
-more cautious (approve → escalate), never more permissive.
+The recommendation is derived deterministically from the policy result. The explanation shown
+to the reviewer is written from the recorded evidence (explanations.py), not by the model; the
+model only adds a note when it disagreed or was unsure. Confidence is evidence-based (the
+lower of the Reading and Verification scores), never the model's self-report. The model may
+only make the outcome more cautious (approve → escalate), never more permissive.
 """
 
 from backend.agents.base_agent import BaseAgent
+from backend.agents.explanations import explain
 from backend.llm.output_parser import RecommendationOutput
 from backend.llm.prompts import recommendation_prompt
 from backend.models import (
@@ -73,18 +75,13 @@ class ApprovalAgent(BaseAgent):
 
         if model is None:
             recommendation = Recommendation.ESCALATE
-            reasons = ["Model output was invalid; defaulting to escalate."]
-            next_step = "route to a finance reviewer"
+            notes = ["Model output was invalid; defaulting to escalate."]
         else:
-            recommendation, reasons, next_step = (
-                required,
-                list(model.reasons),
-                model.next_step,
-            )
+            recommendation, notes = required, []
             if model.recommendation != required:
                 if required == Recommendation.APPROVE:
                     recommendation = Recommendation.ESCALATE  # caution is always allowed
-                reasons.append(
+                notes.append(
                     f"Model suggested {model.recommendation.value}; policy requires {required.value}. "
                     f"Final recommendation: {recommendation.value}."
                 )
@@ -95,7 +92,7 @@ class ApprovalAgent(BaseAgent):
                 # The model's self-report is not shown as confidence, but its doubt may still make
                 # the outcome more cautious — an unsure "approve" never auto-pays.
                 recommendation = Recommendation.ESCALATE
-                reasons.append(
+                notes.append(
                     f"Model was unsure ({model.confidence:.0%}) about approving; "
                     "sent to a reviewer instead."
                 )
@@ -115,10 +112,15 @@ class ApprovalAgent(BaseAgent):
             evidence_refs=evidence,
         )
 
+        reasons, next_step, missing = explain(ctx, self.gov.policy)
         explanation = self.gov.build_explanation(
-            recommendation.value.capitalize(), policy, evidence, next_step=next_step
+            recommendation.value.capitalize(),
+            policy,
+            evidence,
+            missing=missing,
+            next_step=next_step,
         )
-        explanation.reasons = reasons + explanation.reasons
+        explanation.reasons = reasons + notes
         return self.decide(
             ctx,
             decision=f"recommend_{recommendation.value}",

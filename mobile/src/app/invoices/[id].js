@@ -35,6 +35,7 @@ import {
   sentence,
 } from "../../components/ui.js";
 import ConfidenceChart from "../../components/ConfidenceChart.js";
+import { ReviewSkeleton } from "../../components/Skeleton.js";
 import { useDashboard } from "../../data.js";
 import { colors, radius, space } from "../../theme.js";
 
@@ -114,7 +115,7 @@ export default function InvoiceScreen() {
   if (!invoice) {
     return (
       <View style={styles.page}>
-        <Muted>Loading…</Muted>
+        <ReviewSkeleton />
       </View>
     );
   }

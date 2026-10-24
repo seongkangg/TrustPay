@@ -39,6 +39,7 @@ class WorkflowContext:
     purchase_order: dict[str, Any] | None = None
     po_found: bool | None = None
     duplicate_of: str | None = None
+    duplicate_match: str | None = None  # "invoice_number" or "amount": what the duplicate shared
 
     # governance flags (set by BaseAgent.request_tool / run)
     mock_unavailable: bool = False

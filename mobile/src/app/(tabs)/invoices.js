@@ -11,6 +11,7 @@ import Svg, { Path } from "react-native-svg";
 import { fmtMoney } from "../../api/client.js";
 import { BAR_HEIGHT } from "../../components/BubbleNav.js";
 import { FilterButton, FilterMenu } from "../../components/FilterMenu.js";
+import { ListSkeleton } from "../../components/Skeleton.js";
 import VendorAvatar from "../../components/VendorAvatar.js";
 import { Alert, Badge, Card, Muted, RiskBadge, StatusBadge } from "../../components/ui.js";
 import { useDashboard } from "../../data.js";
@@ -122,9 +123,11 @@ export default function Invoices() {
         />
       )}
 
-      {invoices.length === 0 ? (
+      {!summary && invoices.length === 0 ? (
+        <ListSkeleton rows={4} />
+      ) : invoices.length === 0 ? (
         <Card>
-          <Muted>{summary ? "No invoices yet. They appear here as the inbox delivers them." : "Loading…"}</Muted>
+          <Muted>No invoices yet. They appear here as the inbox delivers them.</Muted>
         </Card>
       ) : shown.length === 0 ? (
         <Card>

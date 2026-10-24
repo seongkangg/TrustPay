@@ -73,7 +73,7 @@ served. `null` for structured uploads without text.
 ### `GET /invoices/{invoice_id}/document.pdf`
 The source document as a PDF download:
 - the **redacted original** when `has_source_pdf` is `true`: the emailed PDF itself with every
-  bank, routing and tax number removed under a black box (`filename="INV-1003-redacted.pdf"`);
+  bank, routing and tax number removed under a black box (`filename="INV-1003.pdf"`);
 - otherwise a **masked copy** rebuilt from `source_text` (`filename="INV-1003-masked.pdf"`).
 
 The unredacted original is never kept or served. **Response 200** `application/pdf` with
@@ -195,7 +195,7 @@ Gmail intake state.
   ]
 }
 ```
-`status` ∈ `processed` (invoice created and run) · `skipped` (no `invoice.pdf` on the email) · `failed` (unreadable PDF or processing error; see `error`).
+`status` ∈ `processed` (invoice created and run) · `skipped` (no PDF named with "invoice" on the email) · `failed` (unreadable PDF or processing error; see `error`).
 
 ### `POST /inbox/sync`
 Run one intake pass now. Same result shape as `last_result`.

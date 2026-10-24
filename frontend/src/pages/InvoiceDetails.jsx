@@ -331,7 +331,7 @@ function SourceDocument({ invoice }) {
         </svg>
       </span>
       <div className="doc-text">
-        <strong>{`${invoice.invoice_id}-${hasPdf ? "redacted" : "masked"}.pdf`}</strong>
+        <strong>{`${invoice.invoice_id}${hasPdf ? "" : "-masked"}.pdf`}</strong>
         {error && <span className="warn-text small">{error}</span>}
       </div>
       <button className="primary" onClick={download} disabled={busy}>

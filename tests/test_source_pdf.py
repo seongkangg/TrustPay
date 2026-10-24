@@ -84,7 +84,7 @@ def test_emailed_invoice_downloads_as_its_redacted_original(session, gov, fixtur
 
     r = client.get(f"/invoices/{inv_id}/document.pdf")
     assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
-    assert f'filename="{inv_id}-redacted.pdf"' in r.headers["content-disposition"]
+    assert f'filename="{inv_id}.pdf"' in r.headers["content-disposition"]
     assert r.content == stored.pdf
     assert "Example Supplies" in _text(r.content)
     assert not any(raw in _text(r.content) for raw in RAW)

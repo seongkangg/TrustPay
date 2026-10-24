@@ -45,7 +45,7 @@
 |-----------|-------|--------|-------|
 | Dashboard | Frontend | `frontend/` | Read-only except the explicit human approve/reject action. Never receives raw sensitive values. |
 | REST API | Backend | `backend/api/` | Thin routers; all responses pass through `masking_service`. |
-| Gmail intake | Ingestion | `backend/inbox/` | Read-only poll for `invoice.pdf` attachments → PDF text → fields → the same `create → process` path as the API. PDF bytes are never stored. |
+| Gmail intake | Ingestion | `backend/inbox/` | Read-only poll for PDF attachments named with "invoice" → PDF text → fields → the same `create → process` path as the API. PDF bytes are never stored. |
 | Orchestrator | Orchestration | `backend/orchestration/` | In-process sequential runner. Stand-in for watsonx Orchestrate. Owns the state machine. |
 | Agents | Agent services | `backend/agents/` | Stateless; receive `WorkflowContext`, return `AgentDecision`. No direct tool access. |
 | LLM client | Agent services | `backend/llm/` | Granite via watsonx.ai, or `MockLLM` returning fixture responses. |

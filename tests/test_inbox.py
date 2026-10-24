@@ -104,7 +104,26 @@ def test_gmail_client_lists_pages_and_fetches_nested_invoice_pdf():
     assert msg.pdf_bytes == pdf and msg.attachment_name == "Invoice.PDF"
     assert msg.sender == "ap@vendor.example" and msg.subject == "Invoice m1"
     assert msg.received_at is not None and msg.thread_id == "t-m1"
-    assert client.fetch("m2") is None  # name contains 'invoice' but is not invoice.pdf
+    assert client.fetch("m2").attachment_name == "invoice_1001.pdf"  # any name with 'invoice'
+
+
+@pytest.mark.parametrize(
+    "name,ok",
+    [
+        ("invoice.pdf", True),
+        ("Invoice_1042.PDF", True),
+        ("ACME Invoice - October.pdf", True),
+        ("my-invoices.pdf", True),
+        ("receipt.pdf", False),
+        ("invoice.docx", False),
+        ("invoice.pdf.exe", False),
+        (None, False),
+    ],
+)
+def test_any_pdf_named_with_invoice_counts(name, ok):
+    from backend.inbox import is_invoice_attachment
+
+    assert is_invoice_attachment(name) is ok
 
 
 def test_gmail_client_wraps_provider_errors():

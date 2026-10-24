@@ -1,10 +1,10 @@
 // Dashboard data shared by the Overview, Inbox and Invoices tabs and the bottom nav: fetched once,
-// polled every 15 s, and refreshed on pull-to-refresh or after an inbox sync.
+// polled every 5 s, and refreshed on pull-to-refresh or after an inbox sync.
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { AWAITING_HUMAN, BASE, api } from "./api/client.js";
 
-const REFRESH_MS = 15_000;
+const REFRESH_MS = 5_000;
 
 const DashboardContext = createContext(null);
 
