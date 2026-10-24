@@ -71,9 +71,14 @@ class BaseAgent(ABC):
 
     # ---------------------------------------------------------------- model
 
-    def ask(self, prompt: str, schema: type[T]) -> T | None:
+    def ask(self, prompt: str, schema: type[T], *, temperature: float = 0.0) -> T | None:
         try:
-            return parse_as(schema, self.llm.complete(prompt))
+            raw = (
+                self.llm.complete(prompt, temperature=temperature)
+                if temperature
+                else self.llm.complete(prompt)
+            )
+            return parse_as(schema, raw)
         except (LLMError, MalformedOutput, TimeoutError) as exc:
             log.warning(
                 "%s: model output rejected: %s",

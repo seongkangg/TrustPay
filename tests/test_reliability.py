@@ -23,7 +23,7 @@ class HangingLLM:
 
     mode = "hanging"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         raise TimeoutError("model did not respond within the deadline")
 
 
@@ -32,7 +32,7 @@ class CrashingLLM:
 
     mode = "crashing"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         raise RuntimeError("provider exploded")
 
 

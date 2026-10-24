@@ -1,7 +1,8 @@
 import { fmtPct } from "../api/client.js";
 
 // Confidence by agent step as a bar chart (Intake → Verify → Risk → Approval), same as the phone
-// app: bar height is that step's evidence-based confidence, value on top, step underneath. The
+// app: bar height is that step's confidence (Approval: how often the model gave the final answer
+// across 5 samples; the others are evidence-based), value on top, step underneath. The
 // dashed line is the policy threshold (GET /mock/thresholds, from data/approval_limits.json —
 // never hard-coded here); bars under it are amber. Bars grow in once (CSS, off for reduced motion).
 const STEPS = [

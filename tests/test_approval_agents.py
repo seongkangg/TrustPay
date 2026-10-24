@@ -11,7 +11,7 @@ from tests.conftest import insert_invoice_row, run_agents
 class BrokenLLM:
     mode = "broken"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         return '{"recommendation": "approve"'  # truncated JSON
 
 
@@ -20,7 +20,7 @@ class PermissiveLLM:
 
     mode = "permissive"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         if "<schema>recommendation</schema>" in prompt:
             return '{"recommendation": "approve", "confidence": 0.99, "reasons": ["looks fine"], "next_step": "pay"}'
         return (
@@ -90,7 +90,7 @@ def test_model_cannot_make_outcome_more_permissive(gov, fixture_by_id):
 
 def test_model_may_make_outcome_more_cautious(gov, fixture_by_id):
     class CautiousLLM(PermissiveLLM):
-        def complete(self, prompt):
+        def complete(self, prompt, *, temperature=0.0):
             if "<schema>recommendation</schema>" in prompt:
                 return '{"recommendation": "escalate", "confidence": 0.8, "reasons": ["unsure"], "next_step": "review"}'
             return super().complete(prompt)
@@ -105,8 +105,8 @@ def test_invalid_model_output_defaults_to_escalate(gov, fixture_by_id):
 
     d = ApprovalAgent(gov, BrokenLLM()).run(ctx)
     assert d.recommendation == Recommendation.ESCALATE
-    # confidence is evidence-based (exact fields 98%, all checks confirmed), not the model's
-    assert d.confidence == 0.98
+    # no valid answer in any sample → nothing backs the recommendation
+    assert d.confidence == 0.0
     assert any("invalid" in r for r in d.explanation.reasons)
 
 
@@ -146,3 +146,84 @@ def test_agent_event_sequence_matches_fixture(gov, fixture_by_id):
     agent_level = [e for e in expected if e in emitted]
     assert [e for e in emitted if e in agent_level] == agent_level
     assert emitted[0] == "sensitive_data_masked"
+
+
+# --- recommendation confidence = agreement across samples ----------------------------------------
+
+
+class SequenceLLM(PermissiveLLM):
+    """Answers the recommendation question from a fixed list (one per sample), recording the
+    temperature each call used; everything else behaves like PermissiveLLM."""
+
+    def __init__(self, answers):
+        self.answers = list(answers)
+        self.temperatures = []
+
+    def complete(self, prompt, *, temperature=0.0):
+        if "<schema>recommendation</schema>" not in prompt:
+            return super().complete(prompt)
+        self.temperatures.append(temperature)
+        rec = self.answers.pop(0)
+        if rec is None:
+            return "not json"
+        return f'{{"recommendation": "{rec}", "confidence": 0.9, "reasons": [], "next_step": "x"}}'
+
+
+def _approve_with(gov, fixture_by_id, invoice_id, answers):
+    from backend.agents import ApprovalAgent
+
+    ctx = run_agents(gov, fixture_by_id(invoice_id), upto=3)
+    llm = SequenceLLM(answers)
+    return ApprovalAgent(gov, llm).run(ctx), llm
+
+
+def test_recommendation_is_sampled_five_times_with_randomness(gov, fixture_by_id):
+    from backend.agents.approval_agent import RECOMMENDATION_SAMPLES, SAMPLE_TEMPERATURE
+
+    d, llm = _approve_with(gov, fixture_by_id, "INV-1002", ["escalate"] * 5)
+    assert RECOMMENDATION_SAMPLES == 5
+    assert llm.temperatures == [SAMPLE_TEMPERATURE] * 5 and SAMPLE_TEMPERATURE > 0
+    assert d.confidence == 1.0
+
+
+def test_confidence_is_the_share_of_samples_that_agree(gov, fixture_by_id):
+    # INV-1002 is high risk → policy requires escalate; the model agrees 3 times of 5
+    answers = ["escalate", "approve", "escalate", "reject", "escalate"]
+    d, _ = _approve_with(gov, fixture_by_id, "INV-1002", answers)
+    assert d.recommendation == Recommendation.ESCALATE
+    assert d.confidence == 0.6
+    assert any("3 of 5" in r for r in d.explanation.reasons)
+
+
+def test_invalid_samples_count_as_disagreeing(gov, fixture_by_id):
+    d, _ = _approve_with(gov, fixture_by_id, "INV-1002", ["escalate", None, "escalate", None, None])
+    assert d.recommendation == Recommendation.ESCALATE and d.confidence == 0.4
+
+
+def test_majority_disagreeing_with_approve_escalates(gov, fixture_by_id):
+    # INV-1001 is low risk → policy would approve, but most samples say escalate
+    answers = ["escalate", "escalate", "approve", "escalate", "approve"]
+    d, _ = _approve_with(gov, fixture_by_id, "INV-1001", answers)
+    assert d.recommendation == Recommendation.ESCALATE
+    assert d.confidence == 0.6  # 3 of 5 back the final "escalate"
+
+
+def test_unsure_approve_is_not_paid_automatically(session, gov, fixture_by_id):
+    """Low-risk invoice, model approves only 3 of 5 times: governance holds it for a person."""
+    from backend.models import InvoiceStatus, InvoiceUpload, ReasonCode
+    from backend.services.invoice_service import InvoiceService
+
+    llm = SequenceLLM(["approve", "approve", "escalate", "approve", "reject"])
+    svc = InvoiceService(session, gov, llm)
+    inv = svc.create(InvoiceUpload(**fixture_by_id("INV-1001")["upload"]))
+    result = svc.process(inv.invoice_id)
+    assert result.invoice.recommendation == Recommendation.APPROVE.value
+    assert result.invoice.recommendation_confidence == 0.6
+    assert result.invoice.status == InvoiceStatus.PENDING_APPROVAL.value
+    assert gov.payments.get_payment(inv.invoice_id) is None
+    blocked = [
+        e
+        for e in gov.audit.list_for_invoice(inv.invoice_id)
+        if e.event_type == EventType.PAYMENT_BLOCKED
+    ]
+    assert ReasonCode.LOW_CONFIDENCE in blocked[-1].reason_codes

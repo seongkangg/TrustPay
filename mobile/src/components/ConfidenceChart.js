@@ -1,6 +1,6 @@
 // Confidence by agent step as a bar chart (Intake → Verify → Risk → Approval): bar height is that
-// step's evidence-based confidence (Intake: how fields were read; Verify: share of vendor / PO /
-// duplicate checks confirmed; Risk: fixed rules; Approval: lower of Intake and Verify), value on
+// step's confidence (Intake: how fields were read; Verify: share of vendor / PO / duplicate checks
+// confirmed; Risk: fixed rules; Approval: share of 5 model answers matching the final one), value on
 // top, step underneath. The dashed line is the policy threshold
 // (GET /mock/thresholds, from data/approval_limits.json — never hard-coded here); bars under it are
 // amber. Bars grow up from the baseline on mount (height on absolutely positioned, childless views,

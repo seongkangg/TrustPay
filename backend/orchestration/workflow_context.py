@@ -53,7 +53,8 @@ class WorkflowContext:
     recommendation: Recommendation | None = None
     recommendation_confidence: float | None = None
 
-    # Evidence-based confidence per step (not the model's opinion of itself)
+    # Evidence-based confidence per step (not the model's opinion of itself). The recommendation's
+    # confidence above is different: the model's agreement across samples (approval_agent.py).
     reading_confidence: float | None = None  # how reliably the invoice's fields were read
     verification_confidence: float | None = (
         None  # share of vendor / PO / duplicate checks confirmed

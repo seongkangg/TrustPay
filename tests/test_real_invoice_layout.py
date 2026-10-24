@@ -56,7 +56,7 @@ def supplier_invoice(vendor: str = VENDOR) -> bytes:
 class GraniteLike(MockLLM):
     """Answers the field-extraction prompt the way Granite did on the real invoice."""
 
-    def complete(self, prompt):
+    def complete(self, prompt, *, temperature=0.0):
         if "<schema>invoice_fields</schema>" in prompt:
             return json.dumps(
                 {
@@ -189,7 +189,7 @@ class NamedLike(GraniteLike):
     def __init__(self, vendor_name):
         self.vendor_name = vendor_name
 
-    def complete(self, prompt):
+    def complete(self, prompt, *, temperature=0.0):
         out = super().complete(prompt)
         if "<schema>invoice_fields</schema>" in prompt:
             data = json.loads(out)
@@ -228,7 +228,7 @@ def test_different_new_vendor_with_the_same_number_is_not_a_duplicate(session, r
     assert ReasonCode.DUPLICATE_INVOICE not in _policy_codes(svc, second)
 
 
-# --- evidence-based confidence (the mobile ConfidenceChart bars) ---------------------------------
+# --- confidence by step (the mobile ConfidenceChart bars) -------------------------------------
 
 
 def _confidences(svc, invoice_id):
@@ -245,7 +245,7 @@ def test_fully_matched_invoice_scores_high_everywhere(session, ref, fixture_by_i
         "intake_agent": 0.98,  # exact fields
         "verification_agent": 1.0,  # vendor verified, PO matches, not a duplicate
         "policy_risk_agent": 1.0,
-        "approval_agent": 0.98,  # lower of reading and verification
+        "approval_agent": 1.0,  # the model gave the final answer in all 5 samples
     }
 
 
@@ -256,8 +256,9 @@ def test_new_vendor_without_po_shows_what_was_and_wasnt_confirmed(session, ref):
     conf = _confidences(svc, res.created[0])
     assert conf["intake_agent"] == 0.8  # fields read by the model, all found in the PDF
     assert conf["verification_agent"] == 0.33  # only "not a duplicate" confirmed
-    assert conf["approval_agent"] == 0.33
-    assert svc.get(res.created[0]).recommendation_confidence == 0.33
+    # the recommendation's confidence is the model's agreement, not the evidence: 5 of 5 here
+    assert conf["approval_agent"] == 1.0
+    assert svc.get(res.created[0]).recommendation_confidence == 1.0
     # a low Verification score is not "Unclear details": vendor / PO have their own flags
     policy = next(d for d in svc.decisions(res.created[0]) if d.agent.value == "policy_risk_agent")
     assert ReasonCode.LOW_CONFIDENCE not in policy.reason_codes
@@ -265,7 +266,7 @@ def test_new_vendor_without_po_shows_what_was_and_wasnt_confirmed(session, ref):
 
 def test_unreadable_invoice_number_means_unclear_details(session, ref):
     class NoNumber(GraniteLike):
-        def complete(self, prompt):
+        def complete(self, prompt, *, temperature=0.0):
             out = super().complete(prompt)
             if "<schema>invoice_fields</schema>" in prompt:
                 data = json.loads(out)
@@ -285,7 +286,7 @@ def test_unreadable_invoice_number_means_unclear_details(session, ref):
 
 def test_assumed_currency_lowers_reading_confidence(session, ref):
     class NoCurrency(GraniteLike):
-        def complete(self, prompt):
+        def complete(self, prompt, *, temperature=0.0):
             out = super().complete(prompt)
             if "<schema>invoice_fields</schema>" in prompt:
                 data = json.loads(out)

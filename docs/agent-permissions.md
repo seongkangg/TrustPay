@@ -88,8 +88,8 @@ Enforced by `backend/governance/permission_checker.py`. Anything not listed is d
 | **Forbidden tools** | `payment_authorize` (always blocked → POLICY-014) |
 | **Required evidence** | Must cite every evidence ID used in reasons |
 | **Failure behavior** | Invalid output → default recommendation `escalate` |
-| **Confidence** | Lower of Reading and Verification (evidence-based; the model's self-report is not used as the score) |
-| **Escalates when** | Risk ≥ Medium, or the model is unsure (< 0.75) about an approve; must escalate — can never complete a high-risk payment |
+| **Confidence** | How sure the model is of the final recommendation: the share of 5 sampled answers (temperature 0.7) that match it. Its self-reported number is not the score |
+| **Escalates when** | Risk ≥ Medium, or the model's majority answer is not approve, or it reports being unsure (< 0.75) about an approve; must escalate — can never complete a high-risk payment |
 
 ### Governance Layer (`governance/`)
 

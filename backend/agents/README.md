@@ -31,7 +31,7 @@ Where the model is used — and where it is not:
 | Intake | `document_parser`, missing/malformed checks | per-field confidence |
 | Verification | vendor / PO / duplicate lookups (confidence 1.0) | one-sentence summary |
 | Policy/Risk | the policy engine assigns risk | reviewer-facing explanation sentence |
-| Approval | duplicate → reject, auto-allowed → approve, else escalate | confidence, reasons, next step; may turn approve → escalate, never the reverse |
+| Approval | duplicate → reject, auto-allowed → approve, else escalate | asked 5 times (temperature 0.7): confidence = share of answers matching the final recommendation; majority vote or self-reported doubt may turn approve → escalate, never the reverse |
 
 ## Rules all agents follow
 
