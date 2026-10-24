@@ -14,7 +14,7 @@ const TABS = {
 };
 
 function TabBar({ state, emitter, navigateToTab }) {
-  const { awaiting } = useDashboard();
+  const { awaiting, processing } = useDashboard();
   // The Inbox tab carries the count of invoices waiting for a human decision.
   const tabs = state.routes.map((r) => ({
     key: r.key,
@@ -40,7 +40,12 @@ function TabBar({ state, emitter, navigateToTab }) {
       active={focusedKey}
       onSelect={onSelect}
       action={{
-        label: awaiting.length ? `Review next invoice, ${awaiting.length} waiting` : "Nothing waiting for approval",
+        label: processing
+          ? "Checking a new invoice"
+          : awaiting.length
+            ? `Review next invoice, ${awaiting.length} waiting`
+            : "Nothing waiting for approval",
+        busy: processing,
         onPress: reviewNext,
       }}
     />

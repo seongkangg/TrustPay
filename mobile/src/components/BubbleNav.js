@@ -1,9 +1,12 @@
 // Floating bottom nav: a white pill of tabs with a grey bubble behind the active one, and a black
 // round action button beside it. The bubble springs between tabs; reduce-motion makes it jump.
+// While an emailed invoice is being read and run (action.busy), the button's tick becomes a
+// spinning arc; reduce-motion shows the arc without spinning.
 import { useEffect, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
+  Easing,
   Pressable,
   StyleSheet,
   Text,
@@ -60,7 +63,30 @@ export const ApproveIcon = (p) => (
   </Icon>
 );
 
-// tabs: [{ key, label, Icon, badge? }]; action: { label, onPress }.
+// A three-quarter ring that turns once a second.
+function Spinner({ color, size = 24, still }) {
+  const [turn] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (still) return undefined;
+    turn.setValue(0);
+    const loop = Animated.loop(
+      Animated.timing(turn, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [still, turn]);
+  const rotate = turn.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  return (
+    <Animated.View style={{ transform: [{ rotate }] }}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Circle cx="12" cy="12" r="8" stroke={color} strokeOpacity={0.25} strokeWidth={2.2} />
+        <Path d="M12 4a8 8 0 0 1 8 8" stroke={color} strokeWidth={2.2} strokeLinecap="round" />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+// tabs: [{ key, label, Icon, badge? }]; action: { label, onPress, busy? }.
 export default function BubbleNav({ tabs, active, onSelect, action }) {
   const insets = useSafeAreaInsets();
   const [tabWidth, setTabWidth] = useState(0);
@@ -146,10 +172,15 @@ export default function BubbleNav({ tabs, active, onSelect, action }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={action.label}
+        accessibilityState={{ busy: Boolean(action.busy) }}
         onPress={action.onPress}
         style={({ pressed }) => [styles.action, pressed && styles.pressed]}
       >
-        <ApproveIcon color="#fff" size={24} />
+        {action.busy ? (
+          <Spinner color="#fff" still={reduceMotion} />
+        ) : (
+          <ApproveIcon color="#fff" size={24} />
+        )}
       </Pressable>
     </View>
   );

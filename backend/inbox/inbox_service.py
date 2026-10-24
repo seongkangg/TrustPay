@@ -29,6 +29,13 @@ from backend.utils.timestamps import now_utc
 log = logging.getLogger(__name__)
 
 _SYNC_LOCK = threading.Lock()
+# Set while an emailed invoice is being read and run (the model is called then), so
+# GET /inbox/status can tell the dashboard work is in progress.
+_PROCESSING = threading.Event()
+
+
+def is_processing() -> bool:
+    return _PROCESSING.is_set()
 
 
 def sanitize_upload(upload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -127,6 +134,7 @@ class InboxService:
             self._record(message_id, None, "skipped")
             result.skipped += 1
             return
+        _PROCESSING.set()
         try:
             invoice_id = self._ingest(msg)
         except Exception as exc:  # noqa: BLE001 — one bad email must not stop the batch
@@ -138,6 +146,8 @@ class InboxService:
                 error = f"Couldn't process this invoice ({ref})."
             self._fail(message_id, msg, error, result)
             return
+        finally:
+            _PROCESSING.clear()
         self._record(message_id, msg, "processed", invoice_id=invoice_id)
         result.created.append(invoice_id)
 

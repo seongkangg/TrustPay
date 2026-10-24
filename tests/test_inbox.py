@@ -12,7 +12,7 @@ from backend.database.tables import InboxMessageRow
 from backend.governance import GovernanceEngine
 from backend.inbox import InboxError, InboxMessage
 from backend.inbox.gmail_client import GmailClient
-from backend.inbox.inbox_service import InboxService
+from backend.inbox.inbox_service import InboxService, is_processing
 from backend.main import app
 from backend.mock_systems.payment_service import PaymentService
 from backend.services.invoice_service import InvoiceService
@@ -226,6 +226,23 @@ def test_processing_crash_shows_clean_message_and_logs_detail(
     )
 
 
+def test_processing_flag_is_set_only_while_an_invoice_is_run(
+    session, gov, fixture_by_id, monkeypatch
+):
+    """GET /inbox/status reports `processing` so the phone can show a spinner during the run."""
+    seen = []
+    real = InvoiceService.process
+
+    def spy(self, invoice_id, **kwargs):
+        seen.append(is_processing())
+        return real(self, invoice_id, **kwargs)
+
+    monkeypatch.setattr(InvoiceService, "process", spy)
+    pdf = render_invoice_pdf(fixture_by_id("INV-1001")["upload"])
+    InboxService(session, gov, FakeGmailClient({"m-x": inbox_msg("m-x", pdf)})).sync()
+    assert seen == [True] and is_processing() is False
+
+
 def test_emailed_suspicious_invoice_is_blocked_and_masked(session, gov, fixture_by_id):
     pdf = render_invoice_pdf(fixture_by_id("INV-1003")["upload"])
     result = InboxService(session, gov, FakeGmailClient({"m-sus": inbox_msg("m-sus", pdf)})).sync()
@@ -277,6 +294,7 @@ def client(session):
 def test_status_and_sync_without_authorization(client):
     status = client.get("/inbox/status").json()
     assert status["authorized"] is False and status["enabled"] is False and status["recent"] == []
+    assert status["processing"] is False
     r = client.post("/inbox/sync")
     assert r.status_code == 503 and r.json()["error"] == "INBOX_NOT_AUTHORIZED"
     assert "authorize" in r.json()["message"]

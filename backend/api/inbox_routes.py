@@ -12,7 +12,7 @@ from backend.database.database import get_session
 from backend.governance import GovernanceEngine
 from backend.inbox import InboxError
 from backend.inbox.gmail_client import GmailClient
-from backend.inbox.inbox_service import InboxService, recent_messages
+from backend.inbox.inbox_service import InboxService, is_processing, recent_messages
 from backend.inbox.poller import InboxState
 from backend.llm.granite_client import LLMClient
 from backend.services.errors import InboxNotAuthorizedError, UpstreamUnavailableError
@@ -52,6 +52,7 @@ def inbox_status(
         "last_sync_at": state.last_sync_at,
         "last_result": state.last_result,
         "last_error": state.last_error,
+        "processing": is_processing(),
         "recent": recent_messages(session),
     }
 

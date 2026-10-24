@@ -189,6 +189,7 @@ Gmail intake state.
   "last_sync_at": "2026-10-24T10:00:00Z",
   "last_result": { "checked": 2, "created": ["INV-1005"], "skipped": 1, "failed": [] },
   "last_error": null,
+  "processing": false,
   "recent": [
     { "message_id": "18f3…", "sender": "ap@vendor.example", "subject": "Invoice", "received_at": "…",
       "attachment_name": "invoice.pdf", "invoice_id": "INV-1005", "status": "processed", "error": null, "synced_at": "…" }
