@@ -23,6 +23,7 @@ from backend.inbox.pdf_parser import PdfParseError, extract_text, upload_from_te
 from backend.llm.granite_client import LLMClient, MockLLM
 from backend.models import InvoiceUpload
 from backend.services.invoice_service import InvoiceService
+from backend.utils.logging_config import log_dev_error
 from backend.utils.timestamps import now_utc
 
 log = logging.getLogger(__name__)
@@ -118,9 +119,9 @@ class InboxService:
     def _handle(self, message_id: str, result: SyncResult) -> None:
         try:
             msg = self.client.fetch(message_id)
-        except InboxError as exc:
-            self._record(message_id, None, "failed", error=str(exc))
-            result.failed.append((message_id, str(exc)))
+        except InboxError:
+            log_dev_error(log, f"inbox: fetch of message {message_id} failed")
+            self._fail(message_id, None, "Couldn't download this email.", result)
             return
         if msg is None:
             self._record(message_id, None, "skipped")
@@ -129,19 +130,26 @@ class InboxService:
         try:
             invoice_id = self._ingest(msg)
         except Exception as exc:  # noqa: BLE001 — one bad email must not stop the batch
-            log.warning("inbox: message %s failed: %s", message_id, exc)
+            ref = log_dev_error(log, f"inbox: message {message_id} failed")
             self.session.rollback()
-            self._record(message_id, msg, "failed", error=f"{type(exc).__name__}: {exc}"[:300])
-            result.failed.append((message_id, str(exc)))
+            if isinstance(exc, PdfParseError):
+                error = "Couldn't read the invoice PDF."
+            else:
+                error = f"Couldn't process this invoice ({ref})."
+            self._fail(message_id, msg, error, result)
             return
         self._record(message_id, msg, "processed", invoice_id=invoice_id)
         result.created.append(invoice_id)
 
+    def _fail(
+        self, message_id: str, msg: InboxMessage | None, error: str, result: SyncResult
+    ) -> None:
+        """User-facing text only; the detail is already in the dev log."""
+        self._record(message_id, msg, "failed", error=error)
+        result.failed.append((message_id, error))
+
     def _ingest(self, msg: InboxMessage) -> str:
-        try:
-            text = extract_text(msg.pdf_bytes)
-        except PdfParseError as exc:
-            raise ValueError(str(exc)) from exc
+        text = extract_text(msg.pdf_bytes)
         source = f"{msg.attachment_name} (email from {msg.sender or 'unknown sender'})"
         upload = upload_from_text(text, source)
 

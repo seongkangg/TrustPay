@@ -26,7 +26,7 @@ Sensitive fields are **always** masked in responses. Schemas reference `backend/
 | 404 | Invoice / resource not found |
 | 409 | Invalid state transition, duplicate event |
 | 422 | Pydantic validation error (FastAPI default) |
-| 500 | Unexpected — always also emits `agent_failed` or equivalent audit event |
+| 500 | Unexpected — always also emits `agent_failed` or equivalent audit event. Body is `INTERNAL_ERROR` with a generic message and an `ERR-…` ref; the traceback goes to the dev log (`DEV_LOG_FILE`) only |
 
 ### Authorization (prototype)
 

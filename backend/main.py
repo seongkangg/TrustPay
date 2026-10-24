@@ -16,7 +16,7 @@ from backend.inbox.gmail_client import GmailClient
 from backend.inbox.poller import InboxState, start_poller
 from backend.orchestration.state_machine import InvalidTransition
 from backend.services.errors import ServiceError
-from backend.utils.logging_config import setup_logging
+from backend.utils.logging_config import log_dev_error, setup_logging
 from backend.utils.timestamps import now_utc, to_iso
 
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    setup_logging(settings.log_level)
+    setup_logging(settings.log_level, settings.dev_log_file)
     init_db()
     ref = get_reference_data()
     log.info(
@@ -94,6 +94,12 @@ def create_app() -> FastAPI:
         return JSONResponse(
             status_code=409, content=_error_body("INVALID_TRANSITION", str(exc), None)
         )
+
+    @app.exception_handler(Exception)
+    def _unexpected(request: Request, _exc: Exception) -> JSONResponse:
+        ref = log_dev_error(log, f"unhandled error on {request.method} {request.url.path}")
+        message = f"Something went wrong. Please try again ({ref})."
+        return JSONResponse(status_code=500, content=_error_body("INTERNAL_ERROR", message, None))
 
     return app
 
