@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { fmtMoney, fmtTime } from "../api/client.js";
 import { ArrowUpIcon, CalendarIcon } from "../components/Icons.jsx";
+import PageHeader from "../components/PageHeader.jsx";
 import ReasonTag from "../components/ReasonTag.jsx";
 import RollingNumber, { useRolling } from "../components/RollingNumber.jsx";
 import { dayLabel, DayCalendar, RiskBars, Sparkline, VolumeChart } from "../components/SummaryCharts.jsx";
@@ -49,7 +50,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <h1 className="sr-only">Invoice governance overview</h1>
+      <PageHeader title="Overview">How invoices are moving through governance{range ? `, ${range}` : ""}.</PageHeader>
       {error && <div className="alert danger">{error}</div>}
 
       <section className="hero panel-plain" aria-labelledby="volume-h">

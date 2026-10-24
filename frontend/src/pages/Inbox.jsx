@@ -2,6 +2,7 @@ import { fmtMoney } from "../api/client.js";
 import ApprovalQueue from "../components/ApprovalQueue.jsx";
 import { CheckIcon } from "../components/Icons.jsx";
 import InboxCard from "../components/InboxCard.jsx";
+import PageHeader from "../components/PageHeader.jsx";
 import { useDashboard } from "../data.jsx";
 
 // Inbox, as on the phone: what is waiting on you (count and money on hold, then the invoices behind
@@ -16,7 +17,7 @@ export default function Inbox() {
 
   return (
     <>
-      <h1 className="sr-only">Inbox</h1>
+      <PageHeader title="Inbox">Invoices waiting on your decision, and the email intake that feeds them in.</PageHeader>
       {error && <div className="alert danger">{error}</div>}
       <div className="split-page">
         <section aria-labelledby="approvals-h">

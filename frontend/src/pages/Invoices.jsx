@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { fmtMoney, human } from "../api/client.js";
+import { ChevronRightIcon } from "../components/Icons.jsx";
+import PageHeader from "../components/PageHeader.jsx";
 import RiskBadge from "../components/RiskBadge.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import VendorAvatar from "../components/VendorAvatar.jsx";
@@ -33,34 +35,7 @@ const PAGE = 12;
 const wholeDollars = (amount) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
 
-// "Today", "Yesterday", or "Oct 22" (adds the year when it is not this year), by the browser's date.
-function dayHeading(date) {
-  const today = new Date();
-  const startOf = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const diff = Math.round((startOf(today) - startOf(date)) / 86400000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    ...(date.getFullYear() !== today.getFullYear() && { year: "numeric" }),
-  });
-}
-
-// Consecutive invoices (already newest first) grouped under their day's heading.
-function groupByDay(items) {
-  const groups = [];
-  for (const inv of items) {
-    const heading = inv.updated_at ? dayHeading(new Date(inv.updated_at)) : "Undated";
-    const last = groups[groups.length - 1];
-    if (last && last.heading === heading) last.items.push(inv);
-    else groups.push({ heading, items: [inv] });
-  }
-  return groups;
-}
-
-// Invoices: a summary strip, outcome filters, and every invoice grouped by day, a page at a time.
+// Invoices: a summary strip, outcome filters, and every invoice as a table row, a page at a time.
 export default function Invoices() {
   const { invoices, summary, error } = useDashboard();
   const navigate = useNavigate();
@@ -76,7 +51,7 @@ export default function Invoices() {
 
   return (
     <>
-      <h1 className="sr-only">Invoices</h1>
+      <PageHeader title="Invoices">Every invoice the inbox has delivered, newest first. Open one to see its review.</PageHeader>
       {error && <div className="alert danger">{error}</div>}
 
       <section className="inv-summary panel" aria-label="Summary">
@@ -133,16 +108,26 @@ export default function Invoices() {
         <p className="panel empty muted">{EMPTY[filter.key]}</p>
       ) : (
         <>
-          {groupByDay(visible).map((g) => (
-            <section key={g.heading} className="inv-group" aria-label={g.heading}>
-              <h3 className="day-heading">{g.heading}</h3>
-              <div className="inv-list panel">
-                {g.items.map((inv) => (
+          <div className="panel table-panel">
+            <table className="inv-table">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th className="hide-sm">Received</th>
+                  <th>Status</th>
+                  <th className="hide-sm">Risk</th>
+                  <th className="hide-md">AI recommendation</th>
+                  <th className="right">Amount</th>
+                  <th aria-label="Open" />
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((inv) => (
                   <InvoiceRow key={inv.invoice_id} inv={inv} onOpen={() => navigate(`/invoices/${inv.invoice_id}`)} />
                 ))}
-              </div>
-            </section>
-          ))}
+              </tbody>
+            </table>
+          </div>
           {remaining > 0 ? (
             <button className="more" onClick={() => setLimit((n) => n + PAGE)}>
               Show {Math.min(PAGE, remaining)} more <span className="muted">· {remaining} left</span>
@@ -160,34 +145,53 @@ export default function Invoices() {
   );
 }
 
+// "Oct 22, 3:04 PM" (adds the year when it is not this year), by the browser's clock.
+function received(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(!sameYear && { year: "numeric" }),
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function InvoiceRow({ inv, onOpen }) {
-  const time = inv.updated_at
-    ? new Date(inv.updated_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-    : "";
   return (
-    <div
-      className="inv-row"
-      role="link"
+    <tr
+      className="clickable"
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen())}
       aria-label={`${inv.vendor_name || "Unknown vendor"}, ${fmtMoney(inv.amount, inv.currency)}`}
     >
-      <VendorAvatar name={inv.vendor_name} />
-      <span className="inv-who">
-        <span className="inv-vendor">{inv.vendor_name || "Unknown vendor"}</span>
-        <span className="muted small">
-          {inv.invoice_id}
-          {time ? ` · ${time}` : ""}
+      <td>
+        <span className="cell-vendor">
+          <VendorAvatar name={inv.vendor_name} />
+          <span className="inv-who">
+            <span className="inv-vendor">{inv.vendor_name || "Unknown vendor"}</span>
+            <span className="muted small">{inv.invoice_id}</span>
+          </span>
         </span>
-      </span>
-      <span className="inv-badges">
-        <StatusBadge status={inv.status} />
+      </td>
+      <td className="muted nowrap hide-sm">{received(inv.updated_at)}</td>
+      <td>
+        <span className="inv-badges">
+          <StatusBadge status={inv.status} />
+          {inv.sensitive_data_detected && <span className="badge">Masked</span>}
+        </span>
+      </td>
+      <td className="hide-sm">
         <RiskBadge level={inv.risk_level} />
-        {inv.sensitive_data_detected && <span className="badge">Masked</span>}
-      </span>
-      <span className="inv-rec muted small">{inv.recommendation ? `AI: ${human(inv.recommendation)}` : "—"}</span>
-      <span className="inv-amount">{fmtMoney(inv.amount, inv.currency)}</span>
-    </div>
+      </td>
+      <td className="muted hide-md">{inv.recommendation ? human(inv.recommendation) : "—"}</td>
+      <td className="right inv-amount">{fmtMoney(inv.amount, inv.currency)}</td>
+      <td className="row-go" aria-hidden="true">
+        <ChevronRightIcon />
+      </td>
+    </tr>
   );
 }

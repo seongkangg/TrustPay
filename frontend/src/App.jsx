@@ -10,17 +10,18 @@ import Inbox from "./pages/Inbox.jsx";
 import InvoiceDetails from "./pages/InvoiceDetails.jsx";
 import Invoices from "./pages/Invoices.jsx";
 
-// The same three pages as the phone app; Inbox carries the count of invoices waiting on a human.
+// The same three pages as the phone app, in a desktop sidebar; Inbox carries the count of invoices
+// waiting on a human.
 const NAV = [
   { to: "/", label: "Overview", Icon: HomeIcon, end: true },
   { to: "/inbox", label: "Inbox", Icon: InboxIcon, badge: "awaiting" },
   { to: "/invoices", label: "Invoices", Icon: ListIcon },
 ];
 
-function PillNav() {
+function SideNav() {
   const { awaiting } = useDashboard();
   return (
-    <nav className="pillnav" aria-label="Main">
+    <nav className="sidenav" aria-label="Main">
       {NAV.map(({ to, label, Icon, end, badge }) => {
         const count = badge === "awaiting" ? awaiting.length : 0;
         return (
@@ -31,11 +32,9 @@ function PillNav() {
             className={({ isActive }) => (isActive ? "active" : undefined)}
             aria-label={count ? `${label}, ${count} waiting` : label}
           >
-            <span className={`icon ${count > 0 ? "has-badge" : ""}`}>
-              <Icon />
-              {count > 0 && <span className="nav-badge">{count > 99 ? "99+" : count}</span>}
-            </span>
+            <Icon />
             <span className="label">{label}</span>
+            {count > 0 && <span className="nav-badge">{count > 99 ? "99+" : count}</span>}
           </NavLink>
         );
       })}
@@ -54,17 +53,17 @@ export default function App() {
 
   return (
     <DashboardProvider>
-      <div className="window">
-        <header className="topbar">
+      <div className="shell">
+        <aside className="sidebar">
           <NavLink to="/" className="brand" aria-label="TrustPay overview">
             <img src="/trustpay-logo.svg" alt="TrustPay" width="131" height="46" />
           </NavLink>
-          <PillNav />
+          <SideNav />
           <span className={`health ${health ? (ok ? "up" : "down") : ""}`}>
             <span className="dot" aria-hidden="true" />
             {health ? `Backend ${health.status}${health.llm_mode ? ` · LLM ${health.llm_mode}` : ""}` : "Connecting…"}
           </span>
-        </header>
+        </aside>
         <main className="page">
           <Routes>
             <Route path="/" element={<Dashboard />} />
