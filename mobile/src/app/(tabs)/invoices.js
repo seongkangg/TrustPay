@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
   // The same spacing as a panel (space.card on every side) but no grey box behind it.
   summary: { gap: 2, padding: space.card },
   // Names the list being shown (the filter), so it reads as the page heading.
-  summaryLabel: { fontSize: 15, fontWeight: "700", color: colors.text, letterSpacing: -0.15 },
-  summaryTotal: { fontSize: 30, fontWeight: "700", letterSpacing: -0.9, color: colors.text, fontVariant: ["tabular-nums"] },
+  summaryLabel: { fontSize: 16, fontWeight: "700", color: colors.text, letterSpacing: -0.16 },
+  summaryTotal: { fontSize: 36, fontWeight: "700", letterSpacing: -1.1, color: colors.text, fontVariant: ["tabular-nums"] },
   splitBar: { flexDirection: "row", height: 8, gap: 3, borderRadius: radius.pill, overflow: "hidden", marginTop: 14 },
   splitLegend: { flexDirection: "row", flexWrap: "wrap", columnGap: 16, rowGap: 4, marginTop: 10 },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
