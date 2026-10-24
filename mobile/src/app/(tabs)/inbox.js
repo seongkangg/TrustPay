@@ -41,7 +41,7 @@ export default function Inbox() {
         </Card>
       ) : (
         <>
-          <Card style={styles.summary}>
+          <View style={styles.summary}>
             <Text style={styles.summaryLabel}>Needs your approval</Text>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryCount}>{awaiting.length}</Text>
@@ -50,7 +50,7 @@ export default function Inbox() {
             <Text style={styles.summaryMoney}>
               {fmtMoney(onHold)} on hold{blocked ? ` · ${blocked} blocked` : ""}
             </Text>
-          </Card>
+          </View>
           <ApprovalQueue items={awaiting} reasonCodes={reasonCodes} />
         </>
       )}
@@ -74,7 +74,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   clearTitle: { fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 2 },
-  summary: { gap: 2, marginBottom: 14 },
+  // Sits straight on the page, no panel, so the invoices card below is the only box.
+  summary: { gap: 2, marginBottom: 14, paddingHorizontal: 4 },
   summaryLabel: { fontSize: 13, fontWeight: "500", color: colors.muted },
   summaryRow: { flexDirection: "row", alignItems: "baseline", gap: 8 },
   summaryCount: { fontSize: 34, fontWeight: "700", letterSpacing: -1, color: colors.text, fontVariant: ["tabular-nums"] },
