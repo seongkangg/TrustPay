@@ -1,4 +1,4 @@
-import { fmtPct, fmtTime, human } from "../api/client.js";
+import { fmtPct, fmtTime, human, readable } from "../api/client.js";
 import { AuthBadge } from "./StatusBadge.jsx";
 import ReasonTag from "./ReasonTag.jsx";
 
@@ -37,7 +37,7 @@ function EventItem({ data }) {
           ))}
         </div>
       )}
-      {data.output_summary && <div className="small">{data.output_summary}</div>}
+      {data.output_summary && <div className="small">{readable(data.output_summary)}</div>}
       <Evidence ids={data.evidence_refs} />
     </li>
   );
@@ -51,7 +51,7 @@ function ToolCallItem({ data }) {
         {human(data.agent)} → {human(data.tool)} <AuthBadge value={data.authorization} />
       </div>
       <div className="meta">
-        {fmtTime(data.timestamp)} · {data.purpose}
+        {fmtTime(data.timestamp)} · {readable(data.purpose)}
         {data.denial_reason && (
           <>
             {" "}
@@ -59,7 +59,7 @@ function ToolCallItem({ data }) {
           </>
         )}
       </div>
-      {data.result_summary && <div className="small muted">{data.result_summary}</div>}
+      {data.result_summary && <div className="small muted">{readable(data.result_summary)}</div>}
       <Evidence ids={data.evidence_id ? [data.evidence_id] : []} />
     </li>
   );
@@ -81,7 +81,7 @@ function DecisionItem({ data }) {
       {why.reasons?.length > 0 && (
         <ul className="why small">
           {why.reasons.map((r, i) => (
-            <li key={i}>{r}</li>
+            <li key={i}>{readable(r)}</li>
           ))}
         </ul>
       )}

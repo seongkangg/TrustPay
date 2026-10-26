@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { AWAITING_HUMAN, api, fmtPct, human } from "../api/client.js";
+import { AWAITING_HUMAN, api, fmtPct, human, readable } from "../api/client.js";
 
 // AI recommendation on the left, explicit human decision on the right — never conflated.
 export default function ApprovalPanel({ invoice, decisions, events, onDecided }) {
@@ -46,7 +46,7 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
                 </div>
                 <ul className="why small">
                   {why.reasons.map((r, i) => (
-                    <li key={i}>{r}</li>
+                    <li key={i}>{readable(r)}</li>
                   ))}
                 </ul>
               </>
@@ -77,8 +77,8 @@ export default function ApprovalPanel({ invoice, decisions, events, onDecided })
         <h3>Human decision</h3>
         {humanEvent ? (
           <div className="alert info">
-            <strong>{human(humanEvent.output_summary)}</strong>
-            <div className="small">{humanEvent.input_summary}</div>
+            <strong>{readable(humanEvent.output_summary)}</strong>
+            <div className="small">{readable(humanEvent.input_summary)}</div>
           </div>
         ) : awaiting ? (
           <>

@@ -1,4 +1,4 @@
-import { fmtTime, human } from "../api/client.js";
+import { fmtTime, human, readable } from "../api/client.js";
 import { AuthBadge } from "./StatusBadge.jsx";
 import ReasonTag from "./ReasonTag.jsx";
 
@@ -35,7 +35,7 @@ export default function AuditLog({ trail }) {
               <td>{human(e.actor)}</td>
               <td>
                 <strong>{human(e.event_type)}</strong>
-                {e.output_summary && <div className="small muted">{e.output_summary}</div>}
+                {e.output_summary && <div className="small muted">{readable(e.output_summary)}</div>}
               </td>
               <td>{human(e.severity)}</td>
               <td>

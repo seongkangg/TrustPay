@@ -99,4 +99,44 @@ export const human = (s) => {
   return t.charAt(0).toUpperCase() + t.slice(1);
 };
 
+// Convert compact tool/model summaries into text a reviewer can scan quickly.
+const readableValue = (value) => {
+  if (value == null || value === "") return "—";
+  if (Array.isArray(value)) return value.map(readableValue).join(", ");
+  if (typeof value === "object") {
+    return Object.entries(value)
+      .map(([key, item]) => `${human(key)}: ${readableValue(item)}`)
+      .join(" · ");
+  }
+  return human(value);
+};
+
+export const readable = (value) => {
+  if (value == null || value === "") return "—";
+  if (typeof value === "object") return readableValue(value);
+
+  const text = String(value).trim();
+  if (!text) return "—";
+
+  if (text.startsWith("{") || text.startsWith("[")) {
+    try {
+      return readableValue(JSON.parse(text));
+    } catch {
+      // Keep malformed free text visible.
+    }
+  }
+
+  if (text.includes("=")) {
+    const parts = text.split(/;\s*/);
+    if (parts.every((part) => /^[^=]+=.*/.test(part))) {
+      return parts.map((part) => {
+        const [key, ...rest] = part.split("=");
+        return `${human(key.trim())}: ${readableValue(rest.join("=").trim())}`;
+      }).join(" · ");
+    }
+  }
+
+  return text;
+};
+
 export const AWAITING_HUMAN = ["PENDING_APPROVAL", "BLOCKED"];

@@ -1,4 +1,4 @@
-import { fmtTime, human } from "../api/client.js";
+import { fmtTime, human, readable } from "../api/client.js";
 import { AuthBadge } from "./StatusBadge.jsx";
 import ReasonTag from "./ReasonTag.jsx";
 
@@ -27,7 +27,7 @@ export default function ToolCallTable({ calls }) {
               {human(c.tool)}
               {c.is_write && <span className="small muted"> (write)</span>}
             </td>
-            <td className="small">{c.purpose}</td>
+            <td className="small">{readable(c.purpose)}</td>
             <td>
               <AuthBadge value={c.authorization} />
               {c.denial_reason && (
@@ -36,7 +36,7 @@ export default function ToolCallTable({ calls }) {
                 </div>
               )}
             </td>
-            <td className="small">{c.result_summary || "—"}</td>
+            <td className="small">{readable(c.result_summary)}</td>
             <td>{c.evidence_id ? <code>{c.evidence_id}</code> : "—"}</td>
           </tr>
         ))}
