@@ -30,3 +30,9 @@ Thumbs.db
 
 # Dev error log
 logs/
+
+# Local agent worktrees
+.claude/worktrees/
+
+# Launch-video build files (scripts, frames, node_modules)
+brag-output/work/

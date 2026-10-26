@@ -1,0 +1,1 @@
+I built TrustPay: four AI agents read, verify and risk-score your invoices, but none of them can pay one. A deterministic governance layer masks bank details, logs every tool call, and holds anything over $10,000 until a human taps Approve.
