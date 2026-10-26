@@ -6,7 +6,7 @@ Rejects:
 - unmasked sensitive values anywhere in the decision text
 - role violations (policy agent without a risk level, approval agent without a recommendation)
 
-Flags (but does not reject) confidence below the threshold → LOW_CONFIDENCE.
+Flags (but does not reject) a Reading (intake) confidence below the threshold → LOW_CONFIDENCE.
 """
 
 import re
@@ -87,8 +87,10 @@ def validate_decision(
     if not valid:
         codes.insert(0, ReasonCode.AGENT_FAILURE)
 
-    # 4. Confidence is advisory: flag, never reject.
-    low = decision.confidence < confidence_threshold
+    # 4. Confidence is advisory: flag, never reject. Only the Reading (intake) confidence means
+    # "unclear details"; a low Verification score is an unconfirmed vendor / PO / duplicate check,
+    # each already flagged by its own reason code.
+    low = decision.agent == AgentName.INTAKE and decision.confidence < confidence_threshold
     if low:
         codes.append(ReasonCode.LOW_CONFIDENCE)
 

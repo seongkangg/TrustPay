@@ -181,10 +181,18 @@ class VerificationAgent(BaseAgent):
             reasons.append(summary.summary)
 
         decision = self._decision_label(codes, po_matches)
+        # Confidence = share of the three checks that came back confirmed. A lookup that could
+        # not run (system down, no vendor or PO on the invoice) is unconfirmed, not passed.
+        confirmed = [
+            ctx.vendor_found is True and status == "verified",
+            po_matches,
+            not duplicate_of,
+        ]
+        ctx.verification_confidence = round(sum(confirmed) / len(confirmed), 2)
         return self.decide(
             ctx,
             decision=decision,
-            confidence=0.5 if ctx.mock_unavailable else 1.0,
+            confidence=ctx.verification_confidence,
             evidence_ids=evidence,
             explanation=Explanation(
                 decision=decision,
@@ -230,17 +238,32 @@ class VerificationAgent(BaseAgent):
             conditions.append(and_(InvoiceRow.amount == ctx.amount, InvoiceRow.created_at >= since))
         if not conditions:
             return None
+        # Only earlier invoices count: the original is never a duplicate of its own later copies
+        # (matters when an invoice is re-run after a resend has arrived).
+        this_created = self.gov.session.scalar(
+            select(InvoiceRow.created_at).where(InvoiceRow.invoice_id == ctx.invoice_id)
+        )
+        earlier = [InvoiceRow.created_at < this_created] if this_created is not None else []
         stmt = (
-            select(InvoiceRow.invoice_id, InvoiceRow.vendor_id, InvoiceRow.vendor_name)
-            .where(InvoiceRow.invoice_id != ctx.invoice_id, or_(*conditions))
+            select(
+                InvoiceRow.invoice_id,
+                InvoiceRow.vendor_id,
+                InvoiceRow.vendor_name,
+                InvoiceRow.vendor_invoice_number,
+            )
+            .where(InvoiceRow.invoice_id != ctx.invoice_id, or_(*conditions), *earlier)
             .order_by(InvoiceRow.created_at)
         )
-        for invoice_id, other_id, other_name in self.gov.session.execute(stmt):
+        for invoice_id, other_id, other_name, other_number in self.gov.session.execute(stmt):
             same_vendor = (
                 other_id == ctx.vendor_id
                 if ctx.vendor_id and other_id
                 else bool(vendor_name) and normalize_vendor_name(other_name) == vendor_name
             )
             if same_vendor:
+                same_number = bool(ctx.vendor_invoice_number) and (
+                    other_number == ctx.vendor_invoice_number
+                )
+                ctx.duplicate_match = "invoice_number" if same_number else "amount"
                 return invoice_id
         return None

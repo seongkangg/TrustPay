@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     # Gmail intake (read-only). Off by default; needs the one-time `python -m backend.inbox.authorize`.
     inbox_enabled: bool = False
-    inbox_poll_seconds: int = 60
+    inbox_poll_seconds: int = 10
     inbox_lookback_days: int = 30
     gmail_credentials_file: str = "./secrets/credentials.json"
     gmail_token_file: str = "./secrets/token.json"

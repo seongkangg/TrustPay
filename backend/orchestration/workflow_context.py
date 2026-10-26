@@ -22,6 +22,11 @@ class WorkflowContext:
     scan_evidence_id: str | None = None
     acting_agent: AgentName = AgentName.APPROVAL
 
+    # How each field was obtained, set by the email intake: "model" (read by the LLM and found in
+    # the document), "default" (filled in, e.g. currency), "placeholder" (unreadable, e.g. the
+    # EMAIL-… invoice number). Fields not listed were exact (labelled line or structured upload).
+    field_sources: dict[str, str] = field(default_factory=dict)
+
     # intake
     extracted: dict[str, Any] = field(default_factory=dict)
     extraction: list[ExtractedField] = field(default_factory=list)
@@ -34,6 +39,7 @@ class WorkflowContext:
     purchase_order: dict[str, Any] | None = None
     po_found: bool | None = None
     duplicate_of: str | None = None
+    duplicate_match: str | None = None  # "invoice_number" or "amount": what the duplicate shared
 
     # governance flags (set by BaseAgent.request_tool / run)
     mock_unavailable: bool = False
@@ -46,6 +52,13 @@ class WorkflowContext:
     policy: PolicyResult | None = None
     recommendation: Recommendation | None = None
     recommendation_confidence: float | None = None
+
+    # Evidence-based confidence per step (not the model's opinion of itself). The recommendation's
+    # confidence above is different: the model's agreement across samples (approval_agent.py).
+    reading_confidence: float | None = None  # how reliably the invoice's fields were read
+    verification_confidence: float | None = (
+        None  # share of vendor / PO / duplicate checks confirmed
+    )
 
     # ------------------------------------------------------------------
 
@@ -105,7 +118,9 @@ class WorkflowContext:
 
     @property
     def min_confidence(self) -> float | None:
-        return min((d.confidence for d in self.decisions), default=None)
+        """The confidence POLICY-013 (LOW_CONFIDENCE, "Unclear details") checks: how reliably the
+        invoice was *read*. An unconfirmed vendor or PO is reported by its own rule, not here."""
+        return self.reading_confidence
 
     def to_policy_input(self) -> PolicyInput:
         return PolicyInput(

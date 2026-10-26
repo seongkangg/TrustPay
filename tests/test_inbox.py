@@ -12,7 +12,7 @@ from backend.database.tables import InboxMessageRow
 from backend.governance import GovernanceEngine
 from backend.inbox import InboxError, InboxMessage
 from backend.inbox.gmail_client import GmailClient
-from backend.inbox.inbox_service import InboxService
+from backend.inbox.inbox_service import InboxService, is_processing
 from backend.main import app
 from backend.mock_systems.payment_service import PaymentService
 from backend.services.invoice_service import InvoiceService
@@ -104,7 +104,26 @@ def test_gmail_client_lists_pages_and_fetches_nested_invoice_pdf():
     assert msg.pdf_bytes == pdf and msg.attachment_name == "Invoice.PDF"
     assert msg.sender == "ap@vendor.example" and msg.subject == "Invoice m1"
     assert msg.received_at is not None and msg.thread_id == "t-m1"
-    assert client.fetch("m2") is None  # name contains 'invoice' but is not invoice.pdf
+    assert client.fetch("m2").attachment_name == "invoice_1001.pdf"  # any name with 'invoice'
+
+
+@pytest.mark.parametrize(
+    "name,ok",
+    [
+        ("invoice.pdf", True),
+        ("Invoice_1042.PDF", True),
+        ("ACME Invoice - October.pdf", True),
+        ("my-invoices.pdf", True),
+        ("receipt.pdf", False),
+        ("invoice.docx", False),
+        ("invoice.pdf.exe", False),
+        (None, False),
+    ],
+)
+def test_any_pdf_named_with_invoice_counts(name, ok):
+    from backend.inbox import is_invoice_attachment
+
+    assert is_invoice_attachment(name) is ok
 
 
 def test_gmail_client_wraps_provider_errors():
@@ -191,7 +210,7 @@ def test_processing_crash_shows_clean_message_and_logs_detail(
 ):
     """The raw exception (e.g. a SQLAlchemy rollback error) goes to the dev log, not the UI."""
 
-    def boom(self, invoice_id):
+    def boom(self, invoice_id, **_kwargs):
         raise RuntimeError("This Session's transaction has been rolled back")
 
     monkeypatch.setattr(InvoiceService, "process", boom)
@@ -205,6 +224,23 @@ def test_processing_crash_shows_clean_message_and_logs_detail(
     assert any(
         ref in r.getMessage() and "rolled back" in str(r.exc_info[1]) for r in caplog.records
     )
+
+
+def test_processing_flag_is_set_only_while_an_invoice_is_run(
+    session, gov, fixture_by_id, monkeypatch
+):
+    """GET /inbox/status reports `processing` so the phone can show a spinner during the run."""
+    seen = []
+    real = InvoiceService.process
+
+    def spy(self, invoice_id, **kwargs):
+        seen.append(is_processing())
+        return real(self, invoice_id, **kwargs)
+
+    monkeypatch.setattr(InvoiceService, "process", spy)
+    pdf = render_invoice_pdf(fixture_by_id("INV-1001")["upload"])
+    InboxService(session, gov, FakeGmailClient({"m-x": inbox_msg("m-x", pdf)})).sync()
+    assert seen == [True] and is_processing() is False
 
 
 def test_emailed_suspicious_invoice_is_blocked_and_masked(session, gov, fixture_by_id):
@@ -258,6 +294,7 @@ def client(session):
 def test_status_and_sync_without_authorization(client):
     status = client.get("/inbox/status").json()
     assert status["authorized"] is False and status["enabled"] is False and status["recent"] == []
+    assert status["processing"] is False
     r = client.post("/inbox/sync")
     assert r.status_code == 503 and r.json()["error"] == "INBOX_NOT_AUTHORIZED"
     assert "authorize" in r.json()["message"]

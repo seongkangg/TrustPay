@@ -1,38 +1,41 @@
 import { useEffect, useState } from "react";
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { NavLink, Route, Routes } from "react-router-dom";
 
 import { api } from "./api/client.js";
-import { ApprovalIcon, HomeIcon, InboxIcon, ListIcon } from "./components/Icons.jsx";
+import { HomeIcon, InboxIcon, ListIcon } from "./components/Icons.jsx";
+import { DashboardProvider, useDashboard } from "./data.jsx";
 import AuditDetails from "./pages/AuditDetails.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Inbox from "./pages/Inbox.jsx";
 import InvoiceDetails from "./pages/InvoiceDetails.jsx";
+import Invoices from "./pages/Invoices.jsx";
 
-// The overview is one page; the other nav items jump to its sections.
+// The same three pages as the phone app, in a desktop sidebar; Inbox carries the count of invoices
+// waiting on a human.
 const NAV = [
-  { to: "/", hash: "", label: "Overview", Icon: HomeIcon },
-  { to: "/#approvals", hash: "#approvals", label: "Approvals", Icon: ApprovalIcon },
-  { to: "/#inbox", hash: "#inbox", label: "Inbox", Icon: InboxIcon },
-  { to: "/#invoices", hash: "#invoices", label: "Invoices", Icon: ListIcon },
+  { to: "/", label: "Overview", Icon: HomeIcon, end: true },
+  { to: "/inbox", label: "Inbox", Icon: InboxIcon, badge: "awaiting" },
+  { to: "/invoices", label: "Invoices", Icon: ListIcon },
 ];
 
-function PillNav() {
-  const { pathname, hash } = useLocation();
+function SideNav() {
+  const { awaiting } = useDashboard();
   return (
-    <nav className="pillnav" aria-label="Main">
-      {NAV.map(({ to, hash: h, label, Icon }) => {
-        const active = pathname === "/" && hash === h;
+    <nav className="sidenav" aria-label="Main">
+      {NAV.map(({ to, label, Icon, end, badge }) => {
+        const count = badge === "awaiting" ? awaiting.length : 0;
         return (
-          <Link
-            key={label}
+          <NavLink
+            key={to}
             to={to}
-            className={active ? "active" : undefined}
-            aria-current={active ? "page" : undefined}
-            aria-label={label}
-            title={label}
+            end={end}
+            className={({ isActive }) => (isActive ? "active" : undefined)}
+            aria-label={count ? `${label}, ${count} waiting` : label}
           >
             <Icon />
             <span className="label">{label}</span>
-          </Link>
+            {count > 0 && <span className="nav-badge">{count > 99 ? "99+" : count}</span>}
+          </NavLink>
         );
       })}
     </nav>
@@ -49,24 +52,28 @@ export default function App() {
   const ok = health?.status === "ok";
 
   return (
-    <div className="window">
-      <header className="topbar">
-        <Link to="/" className="brand" aria-label="TrustPay overview">
-          <img src="/trustpay-logo.svg" alt="TrustPay" width="131" height="46" />
-        </Link>
-        <PillNav />
-        <span className={`health ${health ? (ok ? "up" : "down") : ""}`}>
-          <span className="dot" aria-hidden="true" />
-          {health ? `Backend ${health.status}${health.llm_mode ? ` · LLM ${health.llm_mode}` : ""}` : "Connecting…"}
-        </span>
-      </header>
-      <main className="page">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/invoices/:id" element={<InvoiceDetails />} />
-          <Route path="/invoices/:id/audit" element={<AuditDetails />} />
-        </Routes>
-      </main>
-    </div>
+    <DashboardProvider>
+      <div className="shell">
+        <aside className="sidebar">
+          <NavLink to="/" className="brand" aria-label="TrustPay overview">
+            <img src="/trustpay-logo.svg" alt="TrustPay" width="131" height="46" />
+          </NavLink>
+          <SideNav />
+          <span className={`health ${health ? (ok ? "up" : "down") : ""}`}>
+            <span className="dot" aria-hidden="true" />
+            {health ? `Backend ${health.status}${health.llm_mode ? ` · LLM ${health.llm_mode}` : ""}` : "Connecting…"}
+          </span>
+        </aside>
+        <main className="page">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/inbox" element={<Inbox />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/invoices/:id" element={<InvoiceDetails />} />
+            <Route path="/invoices/:id/audit" element={<AuditDetails />} />
+          </Routes>
+        </main>
+      </div>
+    </DashboardProvider>
   );
 }

@@ -30,6 +30,14 @@
       "tax_id_masked": "****3344",
       "onboarded_at": "2026-10-01",
       "payment_terms_days": 30
+    },
+    {
+      "vendor_id": "V-104",
+      "name": "Victor Racquets North America",
+      "verification_status": "verified",
+      "country": "CA",
+      "onboarded_at": "2026-10-01",
+      "payment_terms_days": 0
     }
   ]
 }

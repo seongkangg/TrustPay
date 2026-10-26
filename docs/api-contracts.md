@@ -63,6 +63,22 @@ Create an invoice from an upload. Runs the sensitive-data scanner **before** sto
 ### `GET /invoices/{invoice_id}`
 **Response 200** — `Invoice` · **404** if unknown
 
+`source_text` is the text read from the source document (e.g. an emailed PDF), with bank
+account, routing number, tax ID and other sensitive values masked exactly as in the fields
+(`****6789`). It is masked at ingestion and again when served; the original file is not kept or
+served. `null` for structured uploads without text.
+
+`has_source_pdf` is `true` when a redacted copy of the emailed PDF was kept at ingestion.
+
+### `GET /invoices/{invoice_id}/document.pdf`
+The source document as a PDF download:
+- the **redacted original** when `has_source_pdf` is `true`: the emailed PDF itself with every
+  bank, routing and tax number removed under a black box (`filename="INV-1003.pdf"`);
+- otherwise a **masked copy** rebuilt from `source_text` (`filename="INV-1003-masked.pdf"`).
+
+The unredacted original is never kept or served. **Response 200** `application/pdf` with
+`Content-Disposition: attachment` · **404** if the invoice is unknown or has no source document.
+
 ### `POST /invoices/{invoice_id}/process`
 Run the full agent workflow. Synchronous for the demo (< 10 s).
 
@@ -173,13 +189,14 @@ Gmail intake state.
   "last_sync_at": "2026-10-24T10:00:00Z",
   "last_result": { "checked": 2, "created": ["INV-1005"], "skipped": 1, "failed": [] },
   "last_error": null,
+  "processing": false,
   "recent": [
     { "message_id": "18f3…", "sender": "ap@vendor.example", "subject": "Invoice", "received_at": "…",
       "attachment_name": "invoice.pdf", "invoice_id": "INV-1005", "status": "processed", "error": null, "synced_at": "…" }
   ]
 }
 ```
-`status` ∈ `processed` (invoice created and run) · `skipped` (no `invoice.pdf` on the email) · `failed` (unreadable PDF or processing error; see `error`).
+`status` ∈ `processed` (invoice created and run) · `skipped` (no PDF named with "invoice" on the email) · `failed` (unreadable PDF or processing error; see `error`).
 
 ### `POST /inbox/sync`
 Run one intake pass now. Same result shape as `last_result`.

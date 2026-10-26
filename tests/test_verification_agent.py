@@ -95,4 +95,7 @@ def test_vendor_system_down_stops_and_escalates(session, ref, fixture_by_id):
     assert d.decision == "verification_unavailable" and ctx.mock_unavailable
     assert ReasonCode.MOCK_SYSTEM_UNAVAILABLE in d.reason_codes
     assert ctx.vendor_found is None  # never assumed valid
-    assert d.governance_result == Authorization.ESCALATED  # confidence 0.5 → human review
+    # vendor check couldn't run → unconfirmed; PO matched and no duplicate → 2 of 3 confirmed
+    assert d.confidence == 0.67
+    # escalation comes from MOCK_SYSTEM_UNAVAILABLE in policy, not from a "low confidence" flag
+    assert d.governance_result == Authorization.ALLOWED

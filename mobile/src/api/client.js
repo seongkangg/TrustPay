@@ -73,12 +73,24 @@ export const api = {
   reject: (id, reviewer, note) => request(`/invoices/${id}/reject`, json("POST", { reviewer, note })),
   inboxStatus: () => request("/inbox/status"),
   inboxSync: () => request("/inbox/sync", json("POST")),
+  // Policy constants from data/approval_limits.json (auto-approve max, confidence threshold, ...).
+  thresholds: () => request("/mock/thresholds"),
 };
 
 export const fmtMoney = (amount, currency = "USD") =>
   amount == null ? "—" : `${currency === "USD" ? "$" : `${currency} `}${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "—");
+
+// "just now", "5 min ago", "3 h ago", "2 d ago"; "—" when missing.
+export const fmtAgo = (iso) => {
+  if (!iso) return "—";
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)} h ago`;
+  return `${Math.round(mins / (60 * 24))} d ago`;
+};
 
 export const fmtPct = (x) => (x == null ? "—" : `${Math.round(x * 100)}%`);
 

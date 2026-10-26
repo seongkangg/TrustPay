@@ -1,10 +1,11 @@
 // Dashboard data shared by the Overview, Inbox and Invoices tabs and the bottom nav: fetched once,
-// polled every 15 s, and refreshed on pull-to-refresh or after an inbox sync.
+// polled every 5 s, and refreshed on pull-to-refresh or after an inbox sync.
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import { AWAITING_HUMAN, BASE, api } from "./api/client.js";
 
-const REFRESH_MS = 15_000;
+const REFRESH_MS = 5_000;
+const PROCESSING_REFRESH_MS = 1_500;
 
 const DashboardContext = createContext(null);
 
@@ -36,9 +37,14 @@ export function DashboardProvider({ children }) {
     // load() is async: state is set after the fetch resolves, not synchronously in the effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-    const timer = setInterval(load, REFRESH_MS);
-    return () => clearInterval(timer);
   }, [load]);
+
+  // While an emailed invoice is being run, check more often so the nav spinner stops promptly.
+  const processing = Boolean(inbox.status?.processing);
+  useEffect(() => {
+    const timer = setInterval(load, processing ? PROCESSING_REFRESH_MS : REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [load, processing]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -47,7 +53,7 @@ export function DashboardProvider({ children }) {
   }, [load]);
 
   const awaiting = invoices.filter((inv) => AWAITING_HUMAN.includes(inv.status));
-  const value = { summary, invoices, inbox, error, refreshing, refresh, load, awaiting };
+  const value = { summary, invoices, inbox, processing, error, refreshing, refresh, load, awaiting };
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
 }
 

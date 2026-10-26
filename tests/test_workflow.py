@@ -20,7 +20,7 @@ from backend.services.invoice_service import InvoiceService
 class BrokenLLM:
     mode = "broken"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         return "not json"
 
 

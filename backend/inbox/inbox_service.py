@@ -29,6 +29,13 @@ from backend.utils.timestamps import now_utc
 log = logging.getLogger(__name__)
 
 _SYNC_LOCK = threading.Lock()
+# Set while an emailed invoice is being read and run (the model is called then), so
+# GET /inbox/status can tell the dashboard work is in progress.
+_PROCESSING = threading.Event()
+
+
+def is_processing() -> bool:
+    return _PROCESSING.is_set()
 
 
 def sanitize_upload(upload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -127,6 +134,7 @@ class InboxService:
             self._record(message_id, None, "skipped")
             result.skipped += 1
             return
+        _PROCESSING.set()
         try:
             invoice_id = self._ingest(msg)
         except Exception as exc:  # noqa: BLE001 — one bad email must not stop the batch
@@ -138,6 +146,8 @@ class InboxService:
                 error = f"Couldn't process this invoice ({ref})."
             self._fail(message_id, msg, error, result)
             return
+        finally:
+            _PROCESSING.clear()
         self._record(message_id, msg, "processed", invoice_id=invoice_id)
         result.created.append(invoice_id)
 
@@ -156,12 +166,16 @@ class InboxService:
         # Fields the labels didn't give us: ask the model, keep only what is in the document.
         model = extract_missing_fields(self.llm, text, upload)
         upload.update(model.filled)
+        # How each field was obtained — the Reading confidence is scored from this.
+        sources = {name: "model" for name in model.filled}
 
         if not upload.get("vendor_invoice_number"):
-            # Required column; the Intake agent still flags the missing field.
+            # Required column; an unreadable number gets a placeholder and 0% reading confidence.
             upload["vendor_invoice_number"] = f"EMAIL-{msg.message_id[:8]}"
+            sources["vendor_invoice_number"] = "placeholder"
         if not upload.get("currency"):
             upload["currency"] = "USD"
+            sources["currency"] = "default"
         upload, dropped = sanitize_upload(upload)
         if dropped:
             log.info(
@@ -170,7 +184,12 @@ class InboxService:
                 sorted(dropped),
             )
         created = self.invoices.create(InvoiceUpload(**upload))
-        self.invoices.process(created.invoice_id)
+        # Keep a redacted copy of the PDF for download; a refusal (e.g. a scan) is not an error.
+        if not self.invoices.store_source_pdf(
+            created.invoice_id, msg.pdf_bytes, msg.attachment_name
+        ):
+            log.info("inbox: %s kept without a redacted PDF", created.invoice_id)
+        self.invoices.process(created.invoice_id, field_sources=sources)
         return created.invoice_id
 
     def _record(

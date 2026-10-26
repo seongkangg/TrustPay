@@ -33,7 +33,7 @@ action prevents automatic completion.
 | POLICY-010 | Tool call not on the agent's allowlist | **High** | Block call, record violation; invoice → escalate | `UNAUTHORIZED_TOOL_CALL` |
 | POLICY-011 | Required invoice field missing | Medium | Escalate for review | `MISSING_REQUIRED_FIELD` |
 | POLICY-012 | Field present but malformed (bad date, non-numeric amount, bad ID format) | Medium | Escalate for review | `MALFORMED_FIELD` |
-| POLICY-013 | Any agent decision confidence < `CONFIDENCE_THRESHOLD` | Medium | Require human review | `LOW_CONFIDENCE` |
+| POLICY-013 | **Reading** (intake) confidence < `CONFIDENCE_THRESHOLD` — the invoice itself was hard to read (fields model-read below threshold, assumed, placeholder, or malformed). Unconfirmed vendor / PO / duplicate checks are flagged by their own rules, not here | Medium | Require human review | `LOW_CONFIDENCE` |
 | POLICY-014 | `payment_authorize` requested by any actor other than `governance_layer` / `human_reviewer` | **High** | Block immediately, record violation | `UNAUTHORIZED_TOOL_CALL` |
 | POLICY-015 | Agent raised an exception, timed out, or returned unparseable output | Medium | Invoice → `FAILED`, escalate | `AGENT_FAILURE` |
 | POLICY-016 | Mock enterprise system unavailable | Medium | Stop, escalate (never assume vendor/PO is valid) | `MOCK_SYSTEM_UNAVAILABLE` |
@@ -80,6 +80,12 @@ A human can approve amounts up to the `human_reviewer` limit. Above that → sta
 4. Raw values never appear in an explanation, audit event, or log line. `decision_validator` re-scans explanations and rejects violations.
 5. Every detection produces a `SCAN-NNN` evidence ID and a `sensitive_data_masked` event.
 6. Retention: raw values are not retained at all; masked values follow the invoice record.
+7. Source documents: an emailed PDF is kept only as a **redacted copy** (`source_documents` table,
+   `backend/services/source_pdf.py`). Every value the text rules above detect is removed under a
+   black box before the copy is written, scanned / image-only pages are refused, and the finished
+   file is re-read: if any sensitive value is still readable or present in its bytes, nothing is
+   kept. The original file is discarded as before. Without a redacted copy, downloads fall back
+   to a PDF rebuilt from the masked text.
 
 ## Reason code reference
 
@@ -93,7 +99,27 @@ A human can approve amounts up to the `human_reviewer` limit. Above that → sta
 | `INVALID_PURCHASE_ORDER` | PO missing or belongs to another vendor |
 | `SENSITIVE_DATA_DETECTED` | Scanner found and masked protected data |
 | `UNAUTHORIZED_TOOL_CALL` | Agent attempted a tool outside its allowlist |
-| `LOW_CONFIDENCE` | Agent confidence below threshold |
+| `LOW_CONFIDENCE` | Invoice fields couldn't be read reliably (Reading confidence below threshold) |
+
+## Confidence scores
+
+Each step's score is measured, never taken from the model's opinion of itself (a local model
+reports 1.0 for everything). Reading and Verification measure the evidence the system checked.
+Recommendation measures how sure the model is of the final approve / reject / escalate: the
+Approval Agent asks it the same question 5 times with sampling temperature 0.7 and scores the share
+of answers that match the final recommendation. Invalid answers count as disagreeing.
+
+The recommendation itself still comes from the policy rules. The model's majority answer, and its
+self-reported confidence, can only make an outcome more cautious: an "approve" it votes against or
+is unsure about (< `CONFIDENCE_THRESHOLD`) is escalated. A Recommendation score below
+`CONFIDENCE_THRESHOLD` also stops automatic payment (POLICY-013 backstop, reason `LOW_CONFIDENCE`).
+
+| Step | Score |
+|------|-------|
+| Reading (Intake) | Lowest field found. Per field: exact label or structured upload **98%** · read by the model and found verbatim in the PDF **80%** · assumed default (currency) **50%** · placeholder (unreadable invoice number) / malformed / missing **0%** |
+| Verification | Share of three checks confirmed: vendor on the list and verified · PO matches vendor and amount · not a duplicate (1/3 = 33%) |
+| Policy / Risk | 100% — fixed rules |
+| Recommendation | Share of 5 model answers that match the final recommendation (4 of 5 = 80%; no valid answer = 0%) |
 | `MISSING_REQUIRED_FIELD` | A required field could not be extracted |
 | `MALFORMED_FIELD` | A field was present but invalid |
 | `AGENT_FAILURE` | Agent error, timeout, or invalid output |

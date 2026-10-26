@@ -18,7 +18,8 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "TrustPay" }} />
-        <Stack.Screen name="invoices/[id]" options={{ title: "Invoice" }} />
+        {/* Back shows just the arrow, not the previous screen's "TrustPay" title. */}
+        <Stack.Screen name="invoices/[id]" options={{ title: "Invoice", headerBackButtonDisplayMode: "minimal" }} />
       </Stack>
     </DashboardProvider>
   );

@@ -17,6 +17,7 @@ from backend.database.tables import (
     AuditEventRow,
     InboxMessageRow,
     InvoiceRow,
+    SourceDocumentRow,
     ToolCallRow,
 )
 from backend.mock_systems.payment_service import PaymentService
@@ -30,6 +31,7 @@ STATE_TABLES = (
     AgentDecisionRow,
     ApprovalRow,
     InboxMessageRow,
+    SourceDocumentRow,
     InvoiceRow,
 )
 

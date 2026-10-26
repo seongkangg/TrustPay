@@ -45,6 +45,8 @@ const REASONS = {
   INSUFFICIENT_EVIDENCE: "Not enough information",
   POLICY_PASSED: "All checks passed",
 };
+export const reasonLabel = (code) => REASONS[code] || human(code);
+
 // Same colour split as the web: green = passed, yellow = needs a check, red = violation.
 const UNCERTAIN = new Set([
   "UNKNOWN_VENDOR", "VENDOR_UNVERIFIED", "SENSITIVE_DATA_DETECTED", "LOW_CONFIDENCE", "MISSING_REQUIRED_FIELD",

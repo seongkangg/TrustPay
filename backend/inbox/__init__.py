@@ -1,4 +1,5 @@
-"""Gmail intake: watch a mailbox for `invoice.pdf` attachments and feed them into the workflow.
+"""Gmail intake: watch a mailbox for PDF attachments named like an invoice and feed them into the
+workflow.
 
 Read-only Gmail scope. PDF bytes live only in memory for the duration of one sync; what is
 stored is the parsed upload after `GovernanceEngine.ingest()` has masked it.
@@ -7,7 +8,7 @@ stored is the parsed upload after `GovernanceEngine.ingest()` has masked it.
 from dataclasses import dataclass
 from datetime import datetime
 
-INVOICE_FILENAME = "invoice.pdf"  # matched case-insensitively
+INVOICE_WORD = "invoice"  # a PDF whose file name contains this (any case) is an invoice
 
 
 class InboxError(RuntimeError):
@@ -26,4 +27,6 @@ class InboxMessage:
 
 
 def is_invoice_attachment(filename: str | None) -> bool:
-    return bool(filename) and filename.strip().lower() == INVOICE_FILENAME
+    """`invoice.pdf`, `Invoice_1042.PDF`, `ACME invoice Oct.pdf` … — any PDF named with "invoice"."""
+    name = (filename or "").strip().lower()
+    return name.endswith(".pdf") and INVOICE_WORD in name

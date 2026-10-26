@@ -75,6 +75,63 @@ def test_mask_upload_masks_suspicious_fixture(demo_invoices):
     assert suspicious["upload"]["bank_account"] == "987654326789"
 
 
+def test_served_source_text_is_masked(session, ref, demo_invoices):
+    # The review screen shows the source document's text; it must never carry a raw identifier,
+    # including from a row whose raw_text was somehow stored unmasked.
+    from backend.governance import GovernanceEngine
+    from backend.models import InvoiceUpload
+    from backend.services.invoice_service import InvoiceService
+
+    invoices = InvoiceService(session, GovernanceEngine(session, ref))
+    suspicious = next(d for d in demo_invoices if d["expected"]["invoice_id"] == "INV-1003")
+    created = invoices.create(InvoiceUpload(**suspicious["upload"]))
+
+    text = invoices.get(created.invoice_id).source_text
+    assert text and "****6789" in text
+    assert not contains_unmasked(text)
+
+    row = invoices.get_row(created.invoice_id)
+    row.raw_text = "Bank Account: 987654326789 Routing Number: 021000021 Tax ID: 12-3454321"
+    session.commit()
+    served = invoices.get(created.invoice_id).source_text
+    assert not contains_unmasked(served)
+    assert "987654326789" not in served and "021000021" not in served
+
+
+def test_source_document_pdf_is_a_masked_copy(session, demo_invoices):
+    # GET /invoices/{id}/document.pdf rebuilds the source document from its masked text; the
+    # downloaded file must never carry a raw identifier. No source text means 404.
+    from io import BytesIO
+
+    from fastapi.testclient import TestClient
+    from pypdf import PdfReader
+
+    from backend.api.deps import get_session
+    from backend.main import app
+
+    app.dependency_overrides[get_session] = lambda: session
+    try:
+        client = TestClient(app)
+        suspicious = next(d for d in demo_invoices if d["expected"]["invoice_id"] == "INV-1003")
+        inv_id = client.post("/invoices", json=suspicious["upload"]).json()["invoice_id"]
+
+        r = client.get(f"/invoices/{inv_id}/document.pdf")
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "application/pdf"
+        assert "attachment" in r.headers["content-disposition"]
+        text = " ".join(p.extract_text() for p in PdfReader(BytesIO(r.content)).pages)
+        assert "****6789" in text and "masked copy" in text
+        assert not contains_unmasked(text)
+        for raw in ("987654326789", "021000021", "12-3454321"):
+            assert raw not in text
+
+        clean = next(d for d in demo_invoices if d["expected"]["invoice_id"] == "INV-1001")
+        clean_id = client.post("/invoices", json=clean["upload"]).json()["invoice_id"]
+        assert client.get(f"/invoices/{clean_id}/document.pdf").status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_mask_upload_clean_fixture_has_no_detections(demo_invoices):
     low = next(d for d in demo_invoices if d["expected"]["invoice_id"] == "INV-1001")
     _, detections = mask_upload(low["upload"])

@@ -12,7 +12,7 @@ from tests.conftest import run_agents
 class BrokenLLM:
     mode = "broken"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         return "I'm sorry, I can't help with that."
 
 

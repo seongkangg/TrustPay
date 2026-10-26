@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { fmtMoney } from "../api/client.js";
 
@@ -47,12 +47,18 @@ const dayLines = (n) => ({ offset }) =>
   Array.from({ length: n }, (_, i) => offset.left + (n > 1 ? (i / (n - 1)) * offset.width : offset.width / 2));
 const quarterLines = ({ offset }) => [0, 1, 2, 3, 4].map((k) => offset.top + (k / 4) * offset.height);
 
-export function VolumeChart({ days }) {
+// `onHover(index | null)` reports the day under the pointer, so the page can show that day's figures.
+export function VolumeChart({ days, onHover }) {
   const data = days.map((d) => ({ ...d, label: dayLabel(d.date) }));
   return (
     <div className="volume-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 12, right: 4, left: 4, bottom: 0 }}>
+        <ComposedChart
+          data={data}
+          margin={{ top: 12, right: 4, left: 4, bottom: 0 }}
+          onMouseMove={(state) => onHover?.(state?.isTooltipActive ? state.activeTooltipIndex ?? null : null)}
+          onMouseLeave={() => onHover?.(null)}
+        >
           <defs>
             <linearGradient id="volumeFade" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={COLOR.accent} stopOpacity={0.16} />
@@ -82,7 +88,7 @@ export function VolumeChart({ days }) {
             stroke={COLOR.accentSoft}
             strokeWidth={2}
             dot={false}
-            activeDot={false}
+            activeDot={{ r: 4, fill: COLOR.accentSoft, stroke: "#fff", strokeWidth: 2 }}
             isAnimationActive={!REDUCED_MOTION}
             animationDuration={700}
           />
@@ -98,7 +104,7 @@ export function VolumeChart({ days }) {
             animationDuration={700}
             animationEasing="ease-out"
           />
-        </AreaChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

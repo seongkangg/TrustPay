@@ -18,7 +18,13 @@ export function useRolling(target) {
       shown.current = target;
       return undefined;
     }
-    const from = shown.current ?? target;
+    const from = shown.current;
+    if (from == null) {
+      // The first real value (data just loaded) appears as is; only later changes roll.
+      shown.current = target;
+      const frame = requestAnimationFrame(() => setDisplay(target));
+      return () => cancelAnimationFrame(frame);
+    }
     if (from === target) return undefined;
     const start = Date.now();
     let frame;
@@ -33,7 +39,8 @@ export function useRolling(target) {
     return () => cancelAnimationFrame(frame);
   }, [target, reduce]);
 
-  return reduce || target == null ? target : display;
+  // `display` can lag one frame behind a first value, so fall back to the target itself.
+  return reduce || target == null ? target : (display ?? target);
 }
 
 // <RollingText value={1234.5} format={fmtMoney} style={...} /> — renders "—" for a missing value.

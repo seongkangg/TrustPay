@@ -12,7 +12,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.database.ids import next_id
-from backend.database.tables import AgentDecisionRow, ApprovalRow, AuditEventRow, InvoiceRow
+from backend.database.tables import (
+    AgentDecisionRow,
+    ApprovalRow,
+    AuditEventRow,
+    InvoiceRow,
+    SourceDocumentRow,
+)
 from backend.governance import GovernanceEngine
 from backend.llm.granite_client import LLMClient
 from backend.models import (
@@ -27,6 +33,8 @@ from backend.models import (
 )
 from backend.orchestration.invoice_workflow import InvoiceWorkflow, WorkflowResult
 from backend.services.errors import InvalidStateError, NotFoundError
+from backend.services.masking_service import mask_text
+from backend.services.source_pdf import redact_pdf
 from backend.utils.timestamps import now_utc
 
 FIRST_INVOICE_NUMBER = 1001
@@ -53,6 +61,8 @@ def row_to_invoice(row: InvoiceRow) -> Invoice:
         routing_number=row.routing_number,
         tax_id=row.tax_id,
         source_document=row.source_document,
+        # Stored masked at ingestion; masked again here so no response can carry a raw value.
+        source_text=mask_text(row.raw_text)[0] if row.raw_text else None,
         status=row.status,
         risk_level=row.risk_level,
         recommendation=row.recommendation,
@@ -138,7 +148,29 @@ class InvoiceService:
         return row
 
     def get(self, invoice_id: str) -> Invoice:
-        return row_to_invoice(self.get_row(invoice_id))
+        invoice = row_to_invoice(self.get_row(invoice_id))
+        has_pdf = self.session.get(SourceDocumentRow, invoice_id) is not None
+        return invoice.model_copy(update={"has_source_pdf": has_pdf})
+
+    # ------------------------------------------------------------ source PDF
+
+    def store_source_pdf(self, invoice_id: str, pdf_bytes: bytes, file_name: str | None) -> bool:
+        """Redact the emailed PDF and keep only the redacted copy. False when redaction refused
+        (scan, unreadable, unverifiable): nothing is stored and the invoice is unaffected."""
+        redacted = redact_pdf(pdf_bytes)
+        if redacted is None:
+            return False
+        self.session.merge(
+            SourceDocumentRow(
+                invoice_id=invoice_id, file_name=file_name, pdf=redacted, created_at=now_utc()
+            )
+        )
+        self.session.commit()
+        return True
+
+    def source_pdf(self, invoice_id: str) -> SourceDocumentRow | None:
+        """The stored redacted PDF for `invoice_id`, if one was kept at ingestion."""
+        return self.session.get(SourceDocumentRow, invoice_id)
 
     def list_invoices(
         self,
@@ -161,7 +193,11 @@ class InvoiceService:
 
     # -------------------------------------------------------------- process
 
-    def process(self, invoice_id: str) -> WorkflowResult:
+    def process(
+        self, invoice_id: str, field_sources: dict[str, str] | None = None
+    ) -> WorkflowResult:
+        """`field_sources` (from the email intake) says how each field was obtained; fields not
+        listed — and every field of a structured API upload — count as exact."""
         row = self.get_row(invoice_id)
         if row.status != InvoiceStatus.RECEIVED.value:
             raise InvalidStateError(
@@ -169,7 +205,7 @@ class InvoiceService:
                 invoice_id=invoice_id,
                 correlation_id=row.correlation_id,
             )
-        return InvoiceWorkflow(self.session, self.gov, self.llm).run(row)
+        return InvoiceWorkflow(self.session, self.gov, self.llm).run(row, field_sources)
 
     # ---------------------------------------------------------------- views
 

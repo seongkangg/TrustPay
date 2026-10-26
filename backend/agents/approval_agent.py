@@ -3,12 +3,22 @@
 Allowed tool: approval_request_create (the governance engine creates the request during
 finalize, so this agent normally needs no tool call). May never execute a payment.
 
-The recommendation is derived deterministically from the policy result; the model
-supplies the confidence, reasons, and next step. The model may only make the outcome
+The recommendation is derived deterministically from the policy result. The explanation shown
+to the reviewer is written from the recorded evidence (explanations.py), not by the model; the
+model only adds a note when it disagreed or was unsure. The model may only make the outcome
 more cautious (approve → escalate), never more permissive.
+
+Confidence = how sure the model is of the final recommendation, measured rather than asked: the
+same question is put to it RECOMMENDATION_SAMPLES times with some randomness, and the score is
+the share of answers that match the final approve / reject / escalate (4 of 5 → 80%). Invalid
+answers count as disagreeing. The model's self-reported number is not the score (a local model
+says 1.0 for everything); it can only make an "approve" more cautious.
 """
 
+from collections import Counter
+
 from backend.agents.base_agent import BaseAgent
+from backend.agents.explanations import explain
 from backend.llm.output_parser import RecommendationOutput
 from backend.llm.prompts import recommendation_prompt
 from backend.models import (
@@ -27,7 +37,11 @@ _SEVERITY = {
     RiskLevel.MEDIUM: Severity.MEDIUM,
     RiskLevel.HIGH: Severity.HIGH,
 }
-FALLBACK_CONFIDENCE = 0.5
+
+# How the recommendation confidence is measured (see the module docstring). Not policy thresholds:
+# five answers give 20% steps, and 0.7 lets an unsure model vary without turning to noise.
+RECOMMENDATION_SAMPLES = 5
+SAMPLE_TEMPERATURE = 0.7
 
 
 def deterministic_recommendation(ctx: WorkflowContext) -> Recommendation:
@@ -49,40 +63,62 @@ class ApprovalAgent(BaseAgent):
         policy = ctx.policy
         required = deterministic_recommendation(ctx)
 
-        model = self.ask(
-            recommendation_prompt(
-                {
-                    "risk_level": policy.risk_level.value,
-                    "reason_codes": [c.value for c in policy.reason_codes],
-                    "rules_triggered": policy.rules_triggered,
-                    "amount": ctx.amount,
-                    "currency": ctx.currency,
-                    "vendor_status": (ctx.vendor or {}).get("verification_status"),
-                    "duplicate_of": ctx.duplicate_of,
-                    "sensitive_detected": ctx.sensitive_detected,
-                }
-            ),
-            RecommendationOutput,
+        prompt = recommendation_prompt(
+            {
+                "risk_level": policy.risk_level.value,
+                "reason_codes": [c.value for c in policy.reason_codes],
+                "rules_triggered": policy.rules_triggered,
+                "amount": ctx.amount,
+                "currency": ctx.currency,
+                "vendor_status": (ctx.vendor or {}).get("verification_status"),
+                "duplicate_of": ctx.duplicate_of,
+                "sensitive_detected": ctx.sensitive_detected,
+            }
         )
+        answers = [
+            self.ask(prompt, RecommendationOutput, temperature=SAMPLE_TEMPERATURE)
+            for _ in range(RECOMMENDATION_SAMPLES)
+        ]
+        valid = [a for a in answers if a is not None]
 
-        if model is None:
-            recommendation, confidence = Recommendation.ESCALATE, FALLBACK_CONFIDENCE
-            reasons = ["Model output was invalid; defaulting to escalate."]
-            next_step = "route to a finance reviewer"
+        if not valid:
+            recommendation = Recommendation.ESCALATE
+            notes = ["Model output was invalid; defaulting to escalate."]
         else:
-            recommendation, confidence, reasons, next_step = (
-                required,
-                model.confidence,
-                list(model.reasons),
-                model.next_step,
-            )
-            if model.recommendation != required:
+            # The model's answer is its most common one across the samples.
+            vote = Counter(a.recommendation for a in valid).most_common(1)[0][0]
+            recommendation, notes = required, []
+            if vote != required:
                 if required == Recommendation.APPROVE:
                     recommendation = Recommendation.ESCALATE  # caution is always allowed
-                reasons.append(
-                    f"Model suggested {model.recommendation.value}; policy requires {required.value}. "
+                notes.append(
+                    f"Model suggested {vote.value}; policy requires {required.value}. "
                     f"Final recommendation: {recommendation.value}."
                 )
+            else:
+                said = sum(a.confidence for a in valid if a.recommendation == vote) / sum(
+                    1 for a in valid if a.recommendation == vote
+                )
+                if (
+                    recommendation == Recommendation.APPROVE
+                    and said < self.gov.policy.confidence_threshold
+                ):
+                    # Its self-report is not the score, but its doubt may still make the outcome
+                    # more cautious — an unsure "approve" never auto-pays.
+                    recommendation = Recommendation.ESCALATE
+                    notes.append(
+                        f"Model was unsure ({said:.0%}) about approving; "
+                        "sent to a reviewer instead."
+                    )
+
+        # Share of all samples (invalid ones included) that back the final recommendation.
+        agreeing = sum(1 for a in valid if a.recommendation == recommendation)
+        confidence = round(agreeing / RECOMMENDATION_SAMPLES, 2)
+        if valid and agreeing < len(answers):
+            notes.append(
+                f"Model gave this answer {agreeing} of {RECOMMENDATION_SAMPLES} times "
+                f"({confidence:.0%} confidence)."
+            )
 
         ctx.recommendation = recommendation
         ctx.recommendation_confidence = confidence
@@ -99,10 +135,15 @@ class ApprovalAgent(BaseAgent):
             evidence_refs=evidence,
         )
 
+        reasons, next_step, missing = explain(ctx, self.gov.policy)
         explanation = self.gov.build_explanation(
-            recommendation.value.capitalize(), policy, evidence, next_step=next_step
+            recommendation.value.capitalize(),
+            policy,
+            evidence,
+            missing=missing,
+            next_step=next_step,
         )
-        explanation.reasons = reasons + explanation.reasons
+        explanation.reasons = reasons + notes
         return self.decide(
             ctx,
             decision=f"recommend_{recommendation.value}",

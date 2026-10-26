@@ -63,3 +63,21 @@ export const ChevronRightIcon = (p) => (
     <path d="m9.5 6 6 6-6 6" />
   </Icon>
 );
+
+export const ChevronDownIcon = (p) => (
+  <Icon size={16} {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Icon>
+);
+
+export const CheckIcon = (p) => (
+  <Icon size={16} strokeWidth="2.4" {...p}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </Icon>
+);
+
+export const XIcon = (p) => (
+  <Icon size={16} strokeWidth="2.4" {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Icon>
+);

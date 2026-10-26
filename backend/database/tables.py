@@ -6,7 +6,17 @@ List/dict fields are stored as JSON columns to keep the prototype simple.
 
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    Integer,
+    LargeBinary,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.database.database import Base
@@ -100,6 +110,21 @@ class AuditEventRow(Base):
     event_hash: Mapped[str] = mapped_column(String)
     out_of_order: Mapped[bool] = mapped_column(Boolean, default=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class SourceDocumentRow(Base):
+    """The redacted copy of an invoice's emailed PDF (backend/services/source_pdf.py → redact_pdf).
+
+    Every bank, routing and tax number is removed before the row is written; the original file is
+    never stored. One row per invoice, written once at ingestion.
+    """
+
+    __tablename__ = "source_documents"
+
+    invoice_id: Mapped[str] = mapped_column(String, primary_key=True)
+    file_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    pdf: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class InboxMessageRow(Base):

@@ -21,7 +21,9 @@ class LLMError(RuntimeError):
 class LLMClient(Protocol):
     mode: str
 
-    def complete(self, prompt: str) -> str: ...
+    # temperature 0 = deterministic (the default for every call). Only the Approval Agent samples
+    # with a higher temperature, to measure how consistently the model gives the same answer.
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str: ...
 
 
 _SCHEMA = re.compile(r"<schema>(\w+)</schema>")
@@ -37,7 +39,7 @@ class MockLLM:
 
     mode = "mock"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:  # noqa: ARG002 — deterministic
         schema = _SCHEMA.search(prompt)
         ctx_match = _CONTEXT.search(prompt)
         if not schema or not ctx_match:
@@ -141,9 +143,14 @@ class WatsonxLLM:
             params={"decoding_method": "greedy", "max_new_tokens": 600, "temperature": 0},
         )
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
+        params = (
+            {"decoding_method": "sample", "temperature": temperature, "max_new_tokens": 600}
+            if temperature > 0
+            else None
+        )
         try:
-            return self._model.generate_text(prompt=prompt)
+            return self._model.generate_text(prompt=prompt, params=params)
         except Exception as exc:  # noqa: BLE001 — provider errors are all LLMError to callers
             raise LLMError(str(exc)) from exc
 
@@ -164,7 +171,7 @@ class OllamaLLM:
             base_url=settings.ollama_url, timeout=OLLAMA_TIMEOUT_SECONDS
         )
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         try:
             resp = self._client.post(
                 "/api/generate",
@@ -173,7 +180,7 @@ class OllamaLLM:
                     "prompt": prompt,
                     "stream": False,
                     "format": "json",
-                    "options": {"temperature": 0},
+                    "options": {"temperature": temperature},
                 },
             )
             resp.raise_for_status()

@@ -56,7 +56,7 @@ def supplier_invoice(vendor: str = VENDOR) -> bytes:
 class GraniteLike(MockLLM):
     """Answers the field-extraction prompt the way Granite did on the real invoice."""
 
-    def complete(self, prompt):
+    def complete(self, prompt, *, temperature=0.0):
         if "<schema>invoice_fields</schema>" in prompt:
             return json.dumps(
                 {
@@ -189,7 +189,7 @@ class NamedLike(GraniteLike):
     def __init__(self, vendor_name):
         self.vendor_name = vendor_name
 
-    def complete(self, prompt):
+    def complete(self, prompt, *, temperature=0.0):
         out = super().complete(prompt)
         if "<schema>invoice_fields</schema>" in prompt:
             data = json.loads(out)
@@ -226,3 +226,110 @@ def test_different_new_vendor_with_the_same_number_is_not_a_duplicate(session, r
     )
     assert svc.get(second).vendor_name == other  # the name was really read from the PDF
     assert ReasonCode.DUPLICATE_INVOICE not in _policy_codes(svc, second)
+
+
+# --- confidence by step (the mobile ConfidenceChart bars) -------------------------------------
+
+
+def _confidences(svc, invoice_id):
+    return {d.agent.value: d.confidence for d in svc.decisions(invoice_id)}
+
+
+def test_fully_matched_invoice_scores_high_everywhere(session, ref, fixture_by_id):
+    from tests.conftest import run_agents
+
+    gov = GovernanceEngine(session, ref)
+    ctx = run_agents(gov, fixture_by_id("INV-1001"))
+    conf = {d.agent.value: d.confidence for d in ctx.decisions}
+    assert conf == {
+        "intake_agent": 0.98,  # exact fields
+        "verification_agent": 1.0,  # vendor verified, PO matches, not a duplicate
+        "policy_risk_agent": 1.0,
+        "approval_agent": 1.0,  # the model gave the final answer in all 5 samples
+    }
+
+
+def test_new_vendor_without_po_shows_what_was_and_wasnt_confirmed(session, ref):
+    gov = GovernanceEngine(session, ref)
+    res = InboxService(session, gov, OneEmail(), llm=GraniteLike()).sync()
+    svc = InvoiceService(session, gov)
+    conf = _confidences(svc, res.created[0])
+    assert conf["intake_agent"] == 0.8  # fields read by the model, all found in the PDF
+    assert conf["verification_agent"] == 0.33  # only "not a duplicate" confirmed
+    # the recommendation's confidence is the model's agreement, not the evidence: 5 of 5 here
+    assert conf["approval_agent"] == 1.0
+    assert svc.get(res.created[0]).recommendation_confidence == 1.0
+    # a low Verification score is not "Unclear details": vendor / PO have their own flags
+    policy = next(d for d in svc.decisions(res.created[0]) if d.agent.value == "policy_risk_agent")
+    assert ReasonCode.LOW_CONFIDENCE not in policy.reason_codes
+
+
+def test_unreadable_invoice_number_means_unclear_details(session, ref):
+    class NoNumber(GraniteLike):
+        def complete(self, prompt, *, temperature=0.0):
+            out = super().complete(prompt)
+            if "<schema>invoice_fields</schema>" in prompt:
+                data = json.loads(out)
+                data["vendor_invoice_number"] = None
+                return json.dumps(data)
+            return out
+
+    gov = GovernanceEngine(session, ref)
+    res = InboxService(session, gov, OneEmail(), llm=NoNumber()).sync()
+    svc = InvoiceService(session, gov)
+    inv = svc.get(res.created[0])
+    assert inv.vendor_invoice_number.startswith("EMAIL-")  # placeholder
+    assert _confidences(svc, inv.invoice_id)["intake_agent"] == 0.0
+    policy = next(d for d in svc.decisions(inv.invoice_id) if d.agent.value == "policy_risk_agent")
+    assert ReasonCode.LOW_CONFIDENCE in policy.reason_codes
+
+
+def test_assumed_currency_lowers_reading_confidence(session, ref):
+    class NoCurrency(GraniteLike):
+        def complete(self, prompt, *, temperature=0.0):
+            out = super().complete(prompt)
+            if "<schema>invoice_fields</schema>" in prompt:
+                data = json.loads(out)
+                data["currency"] = None
+                return json.dumps(data)
+            return out
+
+    pdf = supplier_invoice().replace(b"USD", b"   ")  # no currency anywhere in the text
+
+    class NoCurrencyEmail(OneEmail):
+        def fetch(self, message_id):
+            return InboxMessage(message_id, "t", "a@b.test", "Invoice", None, "invoice.pdf", pdf)
+
+    gov = GovernanceEngine(session, ref)
+    res = InboxService(session, gov, NoCurrencyEmail(), llm=NoCurrency()).sync()
+    svc = InvoiceService(session, gov)
+    inv = svc.get(res.created[0])
+    assert inv.currency.value == "USD"  # assumed
+    fields = {f.field: f.confidence for f in inv.extraction}
+    assert fields["currency"] == 0.5
+    assert _confidences(svc, inv.invoice_id)["intake_agent"] == 0.5
+
+
+def test_original_is_not_a_duplicate_of_its_later_copy(session, ref):
+    """Re-running the first copy after a resend arrived must not flag the original."""
+    from backend.agents.verification_agent import VerificationAgent
+    from backend.orchestration.workflow_context import WorkflowContext
+
+    gov = GovernanceEngine(session, ref)
+    pdf = supplier_invoice()
+    first, second = (
+        InboxService(session, gov, Inbox({"m-1": pdf, "m-2": pdf}), llm=GraniteLike())
+        .sync()
+        .created
+    )
+    svc = InvoiceService(session, gov)
+    assert ReasonCode.DUPLICATE_INVOICE in _policy_codes(svc, second)
+
+    inv = svc.get(first)
+    ctx = WorkflowContext(invoice_id=first, correlation_id="c", upload={})
+    ctx.extracted = {
+        "vendor_name": inv.vendor_name,
+        "vendor_invoice_number": inv.vendor_invoice_number,
+        "amount": inv.amount,
+    }
+    assert VerificationAgent(gov, GraniteLike())._find_duplicate(ctx) is None

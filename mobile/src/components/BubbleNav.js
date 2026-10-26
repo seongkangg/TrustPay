@@ -1,9 +1,13 @@
 // Floating bottom nav: a white pill of tabs with a grey bubble behind the active one, and a black
 // round action button beside it. The bubble springs between tabs; reduce-motion makes it jump.
-import { useEffect, useState } from "react";
+// While an emailed invoice is being read and run (action.busy), the button's tick becomes a small
+// invoice with a teal scan line sweeping over it; when the run ends the tick pops back in.
+// Reduce-motion holds the line still and swaps the icons without the pop.
+import { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
+  Easing,
   Pressable,
   StyleSheet,
   Text,
@@ -60,7 +64,63 @@ export const ApproveIcon = (p) => (
   </Icon>
 );
 
-// tabs: [{ key, label, Icon, badge? }]; action: { label, onPress }.
+// A sheet with a folded corner and three text lines; a teal line with a soft glow sweeps down
+// and back up it, like a scanner reading the page.
+const SCAN = 28;
+const SCAN_TOP = 5;
+const SCAN_BOTTOM = 22;
+
+function Scanner({ color, still }) {
+  const [sweep] = useState(() => new Animated.Value(0.5));
+  useEffect(() => {
+    if (still) {
+      sweep.setValue(0.5);
+      return undefined;
+    }
+    sweep.setValue(0);
+    const pass = (to) =>
+      Animated.timing(sweep, { toValue: to, duration: 850, easing: Easing.inOut(Easing.quad), useNativeDriver: true });
+    const loop = Animated.loop(Animated.sequence([pass(1), pass(0)]));
+    loop.start();
+    return () => loop.stop();
+  }, [still, sweep]);
+  const translateY = sweep.interpolate({ inputRange: [0, 1], outputRange: [SCAN_TOP, SCAN_BOTTOM] });
+  return (
+    <View style={{ width: SCAN, height: SCAN }}>
+      <Svg width={SCAN} height={SCAN} viewBox="0 0 28 28" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <Path d="M8 4h8.5L21 8.5V23a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" />
+        <Path d="M16.5 4v4.5H21" />
+        <Path d="M10.5 13h7M10.5 16.5h7M10.5 20h4.5" strokeOpacity={0.55} />
+      </Svg>
+      <Animated.View pointerEvents="none" style={[styles.scanLine, { transform: [{ translateY }] }]}>
+        <View style={styles.scanGlow} />
+        <View style={styles.scanBeam} />
+      </Animated.View>
+    </View>
+  );
+}
+
+// The tick, popping back in (scale and fade) after a scan finishes.
+function ActionIcon({ busy, still }) {
+  const [pop] = useState(() => new Animated.Value(1));
+  const wasBusy = useRef(busy);
+  useEffect(() => {
+    if (wasBusy.current && !busy && !still) {
+      pop.setValue(0);
+      Animated.spring(pop, { toValue: 1, useNativeDriver: true, damping: 11, stiffness: 260, mass: 0.7 }).start();
+    }
+    wasBusy.current = busy;
+  }, [busy, still, pop]);
+  if (busy) return <Scanner color="#fff" still={still} />;
+  const scale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
+  return (
+    <Animated.View style={{ opacity: pop, transform: [{ scale }] }}>
+      <ApproveIcon color="#fff" size={24} />
+    </Animated.View>
+  );
+}
+
+// tabs: [{ key, label, Icon, badge? }]; action: { label, onPress, busy? }.
 export default function BubbleNav({ tabs, active, onSelect, action }) {
   const insets = useSafeAreaInsets();
   const [tabWidth, setTabWidth] = useState(0);
@@ -146,10 +206,11 @@ export default function BubbleNav({ tabs, active, onSelect, action }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={action.label}
+        accessibilityState={{ busy: Boolean(action.busy) }}
         onPress={action.onPress}
         style={({ pressed }) => [styles.action, pressed && styles.pressed]}
       >
-        <ApproveIcon color="#fff" size={24} />
+        <ActionIcon busy={Boolean(action.busy)} still={reduceMotion} />
       </Pressable>
     </View>
   );
@@ -227,5 +288,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.surface,
   },
+  // The scan line spans the sheet's width; its glow trails just above it.
+  scanLine: { position: "absolute", left: 4, right: 4, top: 0, height: 2 },
+  scanGlow: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.brandTeal,
+    opacity: 0.3,
+  },
+  scanBeam: { height: 2, borderRadius: 1, backgroundColor: colors.brandTeal },
   tabBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700", fontVariant: ["tabular-nums"] },
 });

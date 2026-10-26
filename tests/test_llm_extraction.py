@@ -57,7 +57,7 @@ class FieldsLLM(MockLLM):
         self.answer = answer
         self.field_prompts: list[str] = []
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, *, temperature: float = 0.0) -> str:
         if "<schema>invoice_fields</schema>" in prompt:
             self.field_prompts.append(prompt)
             return self.answer if isinstance(self.answer, str) else json.dumps(self.answer)
@@ -179,7 +179,7 @@ def test_bad_model_output_fills_nothing(answer):
 
 def test_model_down_fills_nothing():
     class Down(MockLLM):
-        def complete(self, prompt):
+        def complete(self, prompt, *, temperature=0.0):
             raise LLMError("ollama not running")
 
     text = extract_text(two_column_invoice())

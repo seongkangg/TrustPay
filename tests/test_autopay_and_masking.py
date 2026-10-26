@@ -27,7 +27,7 @@ class UnsureLLM(MockLLM):
     def __init__(self, reasons=None):
         self.reasons = reasons or []
 
-    def complete(self, prompt):
+    def complete(self, prompt, *, temperature=0.0):
         out = json.loads(super().complete(prompt))
         if "recommendation" in out:
             out["confidence"] = 0.10

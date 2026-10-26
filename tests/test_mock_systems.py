@@ -11,8 +11,8 @@ from backend.models.enums import AgentName
 
 
 def test_reference_data_loaded(ref):
-    assert set(ref.vendors) == {"V-101", "V-102", "V-103"}
-    assert set(ref.purchase_orders) == {"PO-5001", "PO-5002", "PO-5003"}
+    assert set(ref.vendors) == {"V-101", "V-102", "V-103", "V-104"}
+    assert set(ref.purchase_orders) == {"PO-5001", "PO-5002", "PO-5003", "PO-5004"}
     assert ref.thresholds["auto_approve_max_amount"] == 10000.0
     assert ref.approval_limits["approval_agent"]["max_amount"] == 10000.0
 

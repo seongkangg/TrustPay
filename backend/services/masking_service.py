@@ -123,6 +123,21 @@ def mask_text(text: str | None) -> tuple[str | None, list[Detection]]:
     return out, detections
 
 
+def sensitive_values(text: str | None) -> list[str]:
+    """The raw sensitive substrings `mask_text` would mask in `text`, longest first.
+
+    Only for redacting a document in place (backend/services/source_pdf.py): the values are
+    located and blacked out, never returned by the API, logged or stored.
+    """
+    if not text:
+        return []
+    found: set[str] = set()
+    for _field_type, pattern, _mode in _TEXT_RULES:
+        for m in pattern.finditer(text):
+            found.add(next((g for g in m.groups() if g), None) or m.group(0))
+    return sorted(found, key=len, reverse=True)
+
+
 def mask_upload(data: dict) -> tuple[dict, list[Detection]]:
     """Mask every sensitive field and the free-text fields of an InvoiceUpload-shaped dict.
 

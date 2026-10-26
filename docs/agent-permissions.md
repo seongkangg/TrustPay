@@ -49,7 +49,7 @@ Enforced by `backend/governance/permission_checker.py`. Anything not listed is d
 | **Forbidden tools** | everything else |
 | **Required evidence** | `PARSE-NNN` evidence ID from the parser call |
 | **Failure behavior** | Parser error or unparseable LLM output → `AGENT_FAILURE`, invoice `FAILED`, escalate |
-| **Confidence** | Per-field; overall = min(field confidences). Below 0.75 → `LOW_CONFIDENCE` |
+| **Confidence** | Per-field, by how the value was obtained (exact 98%, model-read 80%, assumed 50%, placeholder 0%); overall = min over fields found. Below 0.75 → `LOW_CONFIDENCE` |
 | **Escalates when** | Any required field missing or malformed |
 
 ### Verification Agent (`verification_agent.py`)
@@ -62,7 +62,7 @@ Enforced by `backend/governance/permission_checker.py`. Anything not listed is d
 | **Forbidden tools** | Any write; `approval_limit_lookup` |
 | **Required evidence** | `VENDOR-LOOKUP-NNN`, `PO-LOOKUP-NNN`, `DUP-CHECK-NNN` |
 | **Failure behavior** | Mock system unavailable → `MOCK_SYSTEM_UNAVAILABLE`, stop and escalate (never assume valid) |
-| **Confidence** | Deterministic lookups → 1.0; LLM summary confidence is advisory |
+| **Confidence** | Share of checks confirmed (vendor verified, PO matches, not a duplicate); a check that couldn't run counts as unconfirmed |
 | **Escalates when** | Unknown vendor, unverified vendor, invalid PO, amount mismatch, duplicate |
 
 ### Policy / Risk Agent (`policy_risk_agent.py`)
@@ -88,8 +88,8 @@ Enforced by `backend/governance/permission_checker.py`. Anything not listed is d
 | **Forbidden tools** | `payment_authorize` (always blocked → POLICY-014) |
 | **Required evidence** | Must cite every evidence ID used in reasons |
 | **Failure behavior** | Invalid output → default recommendation `escalate` |
-| **Confidence** | Overall recommendation confidence; < 0.75 → human review |
-| **Escalates when** | Risk ≥ Medium, or confidence low; must escalate — can never complete a high-risk payment |
+| **Confidence** | How sure the model is of the final recommendation: the share of 5 sampled answers (temperature 0.7) that match it. Its self-reported number is not the score |
+| **Escalates when** | Risk ≥ Medium, or the model's majority answer is not approve, or it reports being unsure (< 0.75) about an approve; must escalate — can never complete a high-risk payment |
 
 ### Governance Layer (`governance/`)
 
