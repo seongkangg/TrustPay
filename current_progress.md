@@ -12,6 +12,8 @@
 9. 2026-10-24 — Alex Nguyen — Replaced raw exception text in inbox errors and unhandled 500s with short user-facing messages carrying an `ERR-…` ref, with full tracebacks written to a dev log file (`DEV_LOG_FILE`).
 10. 2026-10-24 — Alex Nguyen — Added `scripts/seed_history.py`, which seeds 13 days of past demo invoices so the dashboard's 14-day chart shows history.
 11. 2026-10-24 — Alex Nguyen — Replaced raw exception text in the dashboard, mobile app and API errors with short user messages (with `ERR-` refs), and sent full masked tracebacks to a dev log file (`DEV_LOG_FILE`).
+12. 2026-10-25 — Alex Nguyen — Made tool, model and decision summaries in the invoice review screens display as readable text via `readable()`, merged onto main's redesigned invoice page.
+13. 2026-10-25 — Alex Nguyen — Added app screenshots, the demo video and a 22-second launch video (`brag-output/`, 1080p and 4K), and git-ignored local worktrees and video build files.
 
 ## What's next
 **Audit the design docs against the implementation with the `orchestrate` workflow, one area at a time, to confirm current code works and matches its intended spec.**
